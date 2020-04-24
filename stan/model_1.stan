@@ -1,60 +1,88 @@
-data {
-    int<lower=1> N_pt; // number of observations
-    // For logistic regression
-    // logit(C) = a0 + X*a
-    int<lower=0> N_cov;
-    matrix[N_pt, N_cov] X; //covariate design matrix
+functions {
+  real induced_dirichlet_lpdf(vector c, vector alpha, real phi) {
+    int K = num_elements(c) + 1;
+    vector[K - 1] sigma = inv_logit(phi - c);
+    vector[K] p;
+    matrix[K, K] J = rep_matrix(0, K, K);
     
-    // For latent class model
-    // Currently have no covariate for manifest variables
-    // For binary manifest var (mv): P(U[i] == 1|c) = b[c,i] + Z[i]e[i] 
-    // where Z[i] is cov design matrix for indicator i and e[i] is param vector for indicator i.
-    // For continuous mv: mean[U[i]] = b[c,i] + Z[i]e[i] and U[i] ~ normal(mean[U[i]], s) 
-    int<lower=1> N_ind;
-    int<lower=0, upper=1> U[N_pt, N_ind]; //indicator design matrix
+    // Induced ordinal probabilities
+    p[1] = 1 - sigma[1];
+    for (k in 2:(K - 1))
+      p[k] = sigma[k - 1] - sigma[k];
+    p[K] = sigma[K - 1];
+    
+    // Baseline column of Jacobian
+    for (k in 1:K) J[k, 1] = 1;
+    
+    // Diagonal entries of Jacobian
+    for (k in 2:K) {
+      real rho = sigma[k - 1] * (1 - sigma[k - 1]);
+      J[k, k] = - rho;
+      J[k - 1, k] = rho;
+    }
+    
+    return   dirichlet_lpdf(p | alpha)
+           + log_determinant(J);
+  }
+}
+
+data {
+ int<lower = 1> N; //Number of patient
+ int<lower = 0, upper = 1> Y_Smear[N];
+ int<lower = 0, upper = 1> Y_Mgit[N];
+ int<lower = 0, upper = 1> Y_Xpert[N];
+ int<lower = 0> Y_Img[N];
+ real Y_lnLymGlu[N]; 
+ matrix[N, 13] X; //Covariates
 }
 
 parameters {
-    vector[N_pt] logitPc; //logit-probabiliy of latent class
-    // real<lower=0> sigma_logitPc;
-    // For logistic regression
-    real a0; //intercept
-    vector[N_cov] a; //slope
-    
-    // For latent model
-    matrix[2, N_ind] b;
-    real b_re; //random effect param
-    vector[N_pt] re; //random effect value
+  // For probit regression
+  real a0; //intercept
+  vector[13] a; //slope
+  
+  //Probability of each vars
+  ordered[2] z_Smear; 
+  ordered[2] z_Mgit;
+  ordered[2] z_Xpert;
+  ordered[2] eta_Img;
+  ordered[6] c_Img1;
+  ordered[6] c_Img2;
+  ordered[2] mu_lnLymGlu;
 }
 
 transformed parameters{
-    // Latent class probability
-    vector<lower=0, upper=1>[N_pt] Pc = exp(logitPc)./(1+exp(logitPc));
-    matrix<lower=0, upper=1>[N_pt,2] C = [(1-Pc)', Pc']';
-    // matrix[N_pt,2] RE = [rep_vector(0, N_pt)', re']'; 
+  vector<lower=0, upper=1>[N] theta = Phi(a0 + X*a);
+  
+  ordered[2] p_Smear = Phi(z_Smear); 
+  ordered[2] p_Mgit = Phi(z_Mgit);
+  ordered[2] p_Xpert = Phi(z_Xpert);
 }
 
 model {
-    // Latent class model sampling
-    b[1,] ~ normal(0,.5);
-    b[2,1] ~ normal(2.886, 7.923);//to be change. for xpert.
-    b[2,2] ~ normal(3.023, 7.923);//to be change. for culture.
-    b[2,3] ~ normal(0,1);
-    b_re ~ uniform(0,5);
-    
-    re ~ normal(0,.5);
-    for (i in 1:N_ind){
-        U[:,i] ~ bernoulli_logit(C*(b[:,i]) + b_re * C[:,2] .* re);
-    }
-    
-    // Logistic regression sampling
-    a0 ~ normal(0,1);
-    a[1:N_cov-1] ~ normal(0,.1);
-    a[N_cov] ~ normal(2.5, 1); //for xray
-    // sigma_logitPc ~ normal(0, 5);
-    // for (n in 1:N_pt){
-    //     logitPc[n] ~ normal(a0 + X[n]*a, 10);
-    // }
-    
-    logitPc ~ normal(a0 + X*a, 0.5);
+  
+ //Specificity of each test
+ z_Xpert[1] ~ normal(2.886, 7.923);
+ z_Mgit[1] ~ normal(3.023, 7.923);
+ z_Smear[1] ~ normal(1, 7.923);
+
+// Other class
+ z_Xpert[2] ~ normal(0, 1);
+ z_Mgit[2] ~ normal(0, 1);
+ z_Smear[2] ~ normal(0, 1);
+ 
+ a0 ~ normal(0, 1);
+ a ~ normal(0, 1);
+
+  mu_lnLymGlu[1] ~ normal(0, 1);
+  mu_lnLymGlu[2] ~ normal(5, 2);
+  c_Img1 ~ induced_dirichlet(rep_vector(1, 7), 0);
+  c_Img2 ~ induced_dirichlet(rep_vector(1, 7), 0);
+ 
+ // z_theta ~ normal(a0 + X*a, 1);
+ 
+ for (n in 1:N)
+   target += log_mix(theta[n],
+                     bernoulli_lpmf(Y_Xpert[n] | p_Xpert[1]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[1]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[1]) + ordered_probit_lpmf(Y_Img[n] | eta_Img[1], c_Img1) + normal_lpdf(Y_lnLymGlu[n]|mu_lnLymGlu[1], 5),
+                     bernoulli_lpmf(Y_Xpert[n] | p_Xpert[2]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[2]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[2]) + ordered_probit_lpmf(Y_Img[n] | eta_Img[2], c_Img2) + normal_lpdf(Y_lnLymGlu[n]|mu_lnLymGlu[2], 5));
 }

@@ -5,3 +5,5 @@
 data
 doc
 .vscode
+stan/*.rds
+*.cpp

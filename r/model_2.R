@@ -1,4 +1,4 @@
-# Model without random effect
+# Model with random effect
 # Author trinhdhk
 # Version: 0.1.2004
 
@@ -19,7 +19,6 @@ maindt <- rbind(data_23TB,
                 data_05TB[,names(data_23TB),with = FALSE])[,-1]
 maindt[, lym_glu_ratio := (csf_lym_pct/glucose_ratio)/100]
 maindt[, `:=`(
-  # hiv_stat = hiv_sta,
   clin_symptoms = as.numeric(clin_symptoms),
   clin_nerve_palsy = as.numeric(clin_nerve_palsy),
   clin_motor_palsy = as.numeric(clin_motor_palsy),
@@ -31,9 +30,9 @@ maindt[, `:=`(
 # 2. Build input
 
 maindtcomplete <- na.omit(maindt, cols = c('age', 'sex', 'bmi', 'csf_smear', 'csf_mgit', 'csf_xpert', 'lym_glu_ratio', #'img_score'
-                         'hiv_stat','clin_illness_day', 'clin_symptoms', 'clin_contact_tb', 'clin_gcs', 
-                         'clin_nerve_palsy', 'clin_motor_palsy', 'csf_clear',  'csf_lympho', #'csf_protein',
-                         'xray_miliary_tb', 'xray_pul_tb'))
+                                           'hiv_stat','clin_illness_day', 'clin_symptoms', 'clin_contact_tb', 'clin_gcs', 
+                                           'clin_nerve_palsy', 'clin_motor_palsy', 'csf_clear',  'csf_lympho', #'csf_protein',
+                                           'xray_miliary_tb', 'xray_pul_tb'))
 X <- maindtcomplete %$% as.matrix(cbind(hiv_stat, age, sex, bmi, clin_illness_day, clin_contact_tb,
                                         clin_nerve_palsy, clin_motor_palsy, glucose_ratio, csf_lympho,
                                         xray_pul_tb))
@@ -45,21 +44,18 @@ model_input <- maindtcomplete %$%
     Y_Mgit = csf_mgit,
     Y_Xpert = csf_xpert,
     Y_Img = xray_miliary_tb,
-    # Y_Img = img_score>0,
     Y_lnLymGlu = log(lym_glu_ratio+1),
-    # Y_lympho = csf_lympho,
-    # Y_protein = csf_protein,
     X = X
   )
 
-model_1 <- stan_model('stan/model_1.stan')
-result_1 <- sampling(model_1, data=model_input, chain=6, iter=8000, seed=128, warmup=1000, control = list(max_treedepth = 18, adapt_delta=.97))
-extract_1 <- extract(result_1)
+model_2 <- stan_model('stan/model_2.stan')
+result_2 <- sampling(model_2, data=model_input, chain=6, iter=8000, seed=128, warmup=1000, control = list(max_treedepth = 18, adapt_delta=.97))
+extract_2 <- extract(result_2)
 # plot((extract_1$theta), extract_1$a[,1])
 
 library(bayesplot)
-posterior_1 <- as.array(result_1)
-np_1 <- nuts_params(result_1)
-mcmc_parcoord(posterior_1, np = np_1, pars=dplyr::vars(-lp__))
-mcmc_pairs(posterior_1, np = np_1, pars = c("z_Mgit[1]", 'z_Img[1]'),
+posterior_2 <- as.array(result_2)
+np_2 <- nuts_params(result_2)
+mcmc_parcoord(posterior_2, np = np_2, pars=dplyr::vars(-lp__))
+mcmc_pairs(posterior_2, np = np_2, pars = c("z_Mgit[1]", 'z_Img[1]'),
            off_diag_args = list(size = 0.75))

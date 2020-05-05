@@ -17,7 +17,7 @@ setDT(neuro)
 # setDT(bl)
 
 hist[, `:=`(clin_symptoms=(weightloss=='yes')|(nightsweats=='yes'),
-            clin_contact_tb=contact_tb1y=='Yes',
+            clin_contact_tb=contact_tb1y=='yes',
             hiv_stat = hiv_strat == 'positive')]
 neuro[, `:=`(clin_nerve_palsy = cnp=='yes',
             clin_motor_palsy = hemiplegia == 'yes' | paraplegia == 'yes' | quadriplegia == 'yes'), by=ParNo]

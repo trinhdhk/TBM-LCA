@@ -13,22 +13,30 @@ parameters {
   // For probit regression
   real a0; //intercept
   vector[nX] a; //slope
-  vector[N] RE;
-  real<lower=0> sigma_RE; //var of random effects
+  // random effect = sd_RE * z_RE ~ normal(0, sd_RE) where z_RE ~ normal(0,1) - diverged so set sigma as 1
+  // real<lower=0> sd_RE; //sd of random effects
+  // vector[N] z_RE; //scale of random effects
+  vector[N] RE; //random effects
   
   //Probability of each vars
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
   ordered[2] z_Img;
-  positive_ordered[2] mu_lnLymGlu;
+  ordered[2] mu_lnLymGlu;
   real<lower=0> sigma_lnLymGlu[2];
 }
+
+// transformed parameters{
+//   
+// }
 
 model {
   //Prevalence of TBM
   real theta[N] = to_array_1d(Phi(a0 + X*a));
+  
   //Random effects
+  // vector[N] RE;
 
   // z of each test positivitiy with random effect
   matrix[N,2] z_Smear_RE; 
@@ -36,35 +44,48 @@ model {
   matrix[N,2] z_Xpert_RE;
   
   //Probs of each test become positive
-  vector[2] p_Img = Phi(z_Img);
+  vector[2] p_Img;
   matrix[N,2] p_Smear;
   matrix[N,2] p_Mgit;
   matrix[N,2] p_Xpert;
   
   // Priors of covariates
-  a0 ~ normal(0, 1);
-  a ~ normal(0, 1);
+  a0 ~ normal(0,1);
+  a ~ normal(0,1);
   
   //Random effects covariates
-  RE ~ normal(0, sigma_RE);
+  // sd_RE ~ uniform(0,1);
+  // z_RE ~ normal(0,1);
+  // RE = sd_RE * z_RE;
+  RE ~ normal(0,1);
   
   //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7^2);
-  z_Mgit[1] ~ normal(-3.023, 2.378);
+  z_Mgit[1] ~ normal(-3.023, 2.378);//2.378
   z_Smear[1] ~ normal(-3.023, 2.378);
   
   //Sensitivity of each test
-  z_Xpert[2] ~ normal(inv_Phi(.593), .5^2);
-  z_Mgit[2] ~ normal(inv_Phi(.665), .5^2);
-  z_Smear[2] ~ normal(inv_Phi(.786), .5^2);
+  z_Xpert[2] ~ normal(inv_Phi(.593), .25^2);
+  z_Mgit[2] ~ normal(inv_Phi(.665), .1^2);
+  z_Smear[2] ~ normal(inv_Phi(.786), .1^2);
   
-  z_Smear_RE = rep_matrix(z_Smear', N) + append_col(rep_vector(0, N), RE);
-  z_Mgit_RE = rep_matrix(z_Mgit', N)  + append_col(rep_vector(0, N), RE);
-  z_Xpert_RE = rep_matrix(z_Xpert', N) + append_col(rep_vector(0, N), RE);
+  z_Smear_RE = rep_matrix(z_Smear', N);
+  z_Mgit_RE = rep_matrix(z_Mgit', N);
+  z_Xpert_RE = rep_matrix(z_Xpert', N);
   
+  z_Smear_RE[,2] += RE;
+  z_Mgit_RE[,2] += RE;
+  z_Xpert_RE[,2] += RE;
+  
+  // z_Smear_RE = rep_matrix(z_Smear', N) + append_col(rep_vector(0, N), RE);
+  // z_Mgit_RE = rep_matrix(z_Mgit', N)  + append_col(rep_vector(0, N), RE);
+  // z_Xpert_RE = rep_matrix(z_Xpert', N) + append_col(rep_vector(0, N), RE);
+  
+  // Phi to convert to the probabilities of tests returning +
   p_Smear = Phi(z_Smear_RE);
   p_Mgit = Phi(z_Mgit_RE);
   p_Xpert = Phi(z_Xpert_RE);
+  p_Img = Phi(z_Img);
   
   //Same prior of sens and spcs for two classes
   mu_lnLymGlu ~ normal(0,1);

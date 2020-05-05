@@ -9,3 +9,8 @@ get_nearest <- function(x, deltaDate){
   dt <- data.table(x, deltaDate)
   sort(dt[!is.na(x) & deltaDate==min(deltaDate)]$x,decreasing = TRUE)[1]
 }
+
+# Load model
+load_model <- function(id){
+  source(paste0('r/model/model_',id,'.R'))
+}

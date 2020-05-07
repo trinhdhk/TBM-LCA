@@ -49,8 +49,9 @@ csf <- basecsf[, .(
     csf_lym_pct = CSFLYMLE/100,
     csf_protein = PROTEIN,
     csf_glucose = CSFGLUC,
-    bld_glucose = PAIREDGLUC), by=USUBJID][,
-    glucose_ratio:=csf_glucose/bld_glucose][,
+    bld_glucose = PAIREDGLUC), by=USUBJID][,`:=`(
+        glucose_ratio = csf_glucose/bld_glucose,
+        csf_lympho = csf_lym_pct*csf_wbc)][,
     csf_score := min(sum(csf_clear, csf_wbc>=10&csf_wbc<=500, csf_lym_pct>.5, csf_protein>1, glucose_ratio<.5|csf_glucose<2.2, na.rm=TRUE),4), 
     by=USUBJID]
 

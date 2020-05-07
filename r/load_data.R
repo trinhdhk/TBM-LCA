@@ -3,11 +3,24 @@
 # Version 0.1.2005
 
 # 1. Load data
+rm(list=ls())
 cleaned_data_dir <- 'data/cleaned'
-data_23TB <- readRDS(file.path(cleaned_data_dir, 'data_23TB.RDS'))
-data_05TB <- readRDS(file.path(cleaned_data_dir, 'data_05TB.RDS'))
-maindt <- rbind(data_23TB,
-                data_05TB[,names(data_23TB),with = FALSE])[,-1]
+data.files <- list.files(cleaned_data_dir, '.RDS')
+# data.names <- gsub('.RDS$', '', data.files)
+for (f in data.files)
+  assign(gsub('.RDS$', '', f), readRDS(file.path(cleaned_data_dir, f)))
+# data_23TB <- readRDS(file.path(cleaned_data_dir, 'data_23TB.RDS'))
+# data_05TB <- readRDS(file.path(cleaned_data_dir, 'data_05TB.RDS'))
+data.names <- gsub('.RDS$', '', data.files)
+cols <- Reduce(intersect, lapply(data.names, function(x) names(get(x))))
+
+maindt <- dplyr::bind_rows(
+  lapply(data.names, function(x){
+    x <- get(x, envir=globalenv())
+    x[, cols, with=FALSE]
+  }))
+# maindt <- rbind(data_23TB,
+#                 data_05TB[,names(data_23TB),with = FALSE])[,-1]
 maindt[, lym_glu_ratio := ((csf_lym_pct+1)/glucose_ratio)/100]
 maindt[, `:=`(
   clin_symptoms = as.numeric(clin_symptoms),

@@ -2,6 +2,24 @@
 # Author: trinhdhk
 # Vers 0.1.2004
 
+#Automatically import excel files
+import.Excel <- function(dataPath){
+  requireNamespace('readxl')
+  sheets <- readxl::excel_sheets(dataPath)
+  tables <- sapply(sheets, 
+                   function(sheet) {
+                     tryCatch(
+                       readxl::read_excel(dataPath, sheet = sheet, guess_max = 3000),
+                       warning = function(w) {
+                         print(sheet)
+                         readxl::read_excel(dataPath, sheet = sheet, guess_max = 3000)
+                       })
+                   }, 
+                   simplify = FALSE,
+                   USE.NAMES = TRUE)
+  return(list(tables = tables, tableNames = sheets))
+}
+
 # Get the nearest date that have tests
 get_nearest <- function(x, deltaDate){
   assertthat::assert_that(length(x) == length(deltaDate),msg = 'Length mismatched!')

@@ -57,7 +57,7 @@ maindt <- joindt[, .(
     csf_mgit = MYCORESULT == 'POS'
 )][, `:=`(
     clin_score = pmin(4*clin_illness_day+2*as.numeric(clin_symptoms)+(2*clin_contact_tb)+1*clin_motor_palsy+1*clin_nerve_palsy+1*(clin_gcs<15),6),
-    csf_score = csf_clear + (csf_wbc >= 10 & csf_wbc <= 500) + (csf_lym_pct > .5) + (csf_protein > 1) + (glucose_ratio < .5 | csf_glucose < 2.2),
+    csf_score = pmin(4, csf_clear + (csf_wbc >= 10 & csf_wbc <= 500) + (csf_lym_pct > .5) + (csf_protein > 1) + (glucose_ratio < .5 | csf_glucose < 2.2)),
     img_score = img_hydro+2*img_basal+2*img_tuber+img_infarct+2*img_precon,
     tube_score = 2*xray_pul_tb+4*xray_miliary_tb
 )][, crude_total_score := rowSums(.SD[, .(clin_score, csf_score, img_score, tube_score)], na.rm=T)]

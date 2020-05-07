@@ -22,10 +22,10 @@ maindt[, `:=`(
 
 maindtcomplete <- na.omit(maindt, cols = c('age', 'sex', 'bmi', 'csf_smear', 'csf_mgit', 'csf_xpert', 'lym_glu_ratio', #'img_score'
                                            'hiv_stat','clin_illness_day', 'clin_symptoms', 'clin_gcs', 
-                                           'clin_nerve_palsy', 'clin_motor_palsy', 'csf_clear',  'csf_lympho', 'csf_protein',
+                                           'clin_nerve_palsy', 'clin_motor_palsy', 'csf_clear', 'csf_protein',
                                            'xray_miliary_tb', 'xray_pul_tb'))
 X <- maindtcomplete %$% as.matrix(cbind(hiv_stat, age, sex, bmi, clin_illness_day, #remove contact_tb due to many "unknown"s
-                                        clin_nerve_palsy, clin_motor_palsy, glucose_ratio, csf_lympho, csf_protein,
+                                        clin_nerve_palsy, clin_motor_palsy, glucose_ratio, csf_protein,
                                         xray_pul_tb))
 
 model_input <- maindtcomplete %$% 
@@ -35,6 +35,7 @@ model_input <- maindtcomplete %$%
     Y_Mgit = csf_mgit,
     Y_Xpert = csf_xpert,
     Y_Img = xray_miliary_tb,
-    Y_lnLymGlu = log(lym_glu_ratio),
+    Y_lympho = csf_lympho,
+    # Y_lnLymGlu = log(lym_glu_ratio),
     X = X
   )

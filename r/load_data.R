@@ -3,7 +3,6 @@
 # Version 0.1.2005
 
 # 1. Load data
-rm(list=ls())
 cleaned_data_dir <- 'data/cleaned'
 data.files <- list.files(cleaned_data_dir, '.RDS')
 # data.names <- gsub('.RDS$', '', data.files)
@@ -14,14 +13,17 @@ for (f in data.files)
 data.names <- gsub('.RDS$', '', data.files)
 cols <- Reduce(intersect, lapply(data.names, function(x) names(get(x))))
 
+rm(data_23TB) #remove due to potential bias
+data.names <- data.names[data.names!='data_23TB']
 maindt <- dplyr::bind_rows(
   lapply(data.names, function(x){
     x <- get(x, envir=globalenv())
     x[, cols, with=FALSE]
   }))
+maindt <- data_05TB
 # maindt <- rbind(data_23TB,
 #                 data_05TB[,names(data_23TB),with = FALSE])[,-1]
-maindt[, lym_glu_ratio := ((csf_lym_pct+1)/glucose_ratio)/100]
+maindt[, lym_glu_ratio := ((csf_lympho+1)/glucose_ratio)]
 maindt[, `:=`(
   clin_symptoms = as.numeric(clin_symptoms),
   clin_nerve_palsy = as.numeric(clin_nerve_palsy),
@@ -38,17 +40,28 @@ maindtcomplete <- na.omit(maindt, cols = c('age', 'sex', 'bmi', 'csf_smear', 'cs
                                            'clin_nerve_palsy', 'clin_motor_palsy', 'csf_clear', 'csf_protein',
                                            'xray_miliary_tb', 'xray_pul_tb'))
 X <- maindtcomplete %$% as.matrix(cbind(hiv_stat, age, sex, bmi, clin_illness_day, #remove contact_tb due to many "unknown"s
-                                        clin_nerve_palsy, clin_motor_palsy, glucose_ratio, csf_protein,
+                                        clin_nerve_palsy, clin_motor_palsy, csf_lympho, glucose_ratio, csf_protein,
                                         xray_pul_tb))
 
-model_input <- maindtcomplete %$% 
+model_input_cont <- maindtcomplete %$% 
   list(
     N = nrow(maindtcomplete), nX = ncol(X),
-    Y_Smear = csf_smear,
-    Y_Mgit = csf_mgit,
-    Y_Xpert = csf_xpert,
-    Y_Img = xray_miliary_tb,
-    Y_lympho = csf_lympho,
-    # Y_lnLymGlu = log(lym_glu_ratio),
+    Y_Smear = as.integer(csf_smear),
+    Y_Mgit = as.integer(csf_mgit),
+    Y_Xpert = as.integer(csf_xpert),
+    Y_Img = as.integer(xray_miliary_tb),
+    # Y_lympho = csf_lympho,
+    Y_lnLymGlu = lym_glu_ratio,
+    X = X
+  )
+
+model_input_disc <- maindtcomplete %$%
+  list(
+    N = nrow(maindtcomplete), nX = ncol(X),
+    Y_Smear = as.integer(csf_smear),
+    Y_Mgit = as.integer(csf_mgit),
+    Y_Xpert = as.integer(csf_xpert),
+    Y_Img = as.integer(xray_miliary_tb),
+    Y_LymGluRatio = csf_lym_pct > .5 & (glucose_ratio<.5|csf_glucose<2.2),
     X = X
   )

@@ -18,6 +18,12 @@ source('r/load_data.R')
 
 # Load model
 ## model 1: without random effect
-load_model(1)
+model_cont_1 <- load_model('cont_1', data=model_input_cont, chain = 5, iter=30000, seed=128, warmup=5000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))
 ## model 2: with random effect ~ normal(0,5)
-load_model(2)
+
+model_disc_2 <- load_model('disc_2', data=model_input_disc, chain = 4, iter=30000, seed=128, warmup=5000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))
+
+model_cont_2 <- load_model('cont_2', data=model_input_cont, chain = 4, iter=30000, seed=128, warmup=10000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))

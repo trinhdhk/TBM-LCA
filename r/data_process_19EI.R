@@ -30,7 +30,8 @@ joindt <- plyr::join_all(
 
 joindt <- joindt[-1:-35][RANDO=='YES']
 maindt <- joindt[, .(
-    age = 2019 - YOB,
+    age = lubridate::year(as.Date(ENROLL)) - YOB,
+    sex = as.numeric(SEX == 'M'),
     hiv_stat = HIV == 'POS',
     clin_illness_day = as.numeric(ILLNESSDAY),
     clin_symptoms = ISWEIGHT == 'C49488' | ISNSWEAT == 'C49488' | ISCOUGH == 'C49488',

@@ -29,6 +29,9 @@ get_nearest <- function(x, deltaDate){
 }
 
 # Load model
-load_model <- function(id){
-  source(paste0('r/model/model_',id,'.R'))
+load_model <- function(id, data, chain=getOption('mc.cores'),..., save_file = file.path('outputs', paste0('results_',id,'.RDS'))){
+  model <- stan_model(file.path('stan', paste0('model_', id, '.stan')))
+  result <- sampling(model, data=data, chain=chain, ...)
+  if (length(save_file)) saveRDS(result, file=save_file)
+  result
 }

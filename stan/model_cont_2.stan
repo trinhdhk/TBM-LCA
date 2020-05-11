@@ -5,8 +5,7 @@ data {
  int<lower = 0, upper = 1> Y_Mgit[N];
  int<lower = 0, upper = 1> Y_Xpert[N];
  int<lower = 0, upper = 1> Y_Img[N];
- // real Y_lnLymGlu[N];
- real<lower=0> Y_lympho[N];
+ real Y_lnLymGlu[N];
  matrix[N, nX] X; //Covariates
 }
 
@@ -24,10 +23,8 @@ parameters {
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
   ordered[2] z_Img;
-  // ordered[2] mu_lnLymGlu;
-  // real<lower=0> sigma_lnLymGlu[2];
-  ordered[2] mu_lympho;
-  real<lower=0> sigma_lympho[2];
+  ordered[2] mu_lnLymGlu;
+  real<lower=0> sigma_lnLymGlu[2];
 }
 
 // transformed parameters{
@@ -87,17 +84,15 @@ model {
   p_Img = Phi(z_Img);
   
   //Same prior of sens and spcs for two classes
-  // mu_lnLymGlu ~ normal(0,1);
-  // sigma_lnLymGlu ~ normal(0,1);  
-  mu_lympho ~ normal(0,1);
-  sigma_lympho ~ normal(0,1);
+  mu_lnLymGlu ~ normal(0,1);
+  sigma_lnLymGlu ~ normal(0,1);
   z_Img ~ normal(0, 1);
   
   
   for (n in 1:N){
     real x = 0;
     target += log_mix(theta[n],
-    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,1]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,1]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,1]) + bernoulli_lpmf(Y_Img[n] | p_Img[1]) + lognormal_lpdf(Y_lympho[n] | mu_lympho[1], sigma_lympho[1]),// normal_lpdf(Y_lnLymGlu[n] | mu_lnLymGlu[1], sigma_lnLymGlu[1]), //+ normal_lpdf(Y_protein[n] | mu_protein[1], sigma_protein[1]),// - normal_lccdf(0 | mu_protein[1], sigma_protein[1]), //normal_lpdf(lnY_lympho[n] | mu_lympho[1], 1), //+ normal_lpdf(Y_lnLymGlu[n]|mu_lnLymGlu[1], 5),
-    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,2]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,2]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,2]) + bernoulli_lpmf(Y_Img[n] | p_Img[2]) + lognormal_lpdf(Y_lympho[n] | mu_lympho[1], sigma_lympho[1]));// normal_lpdf(Y_lnLymGlu[n] | mu_lnLymGlu[2], sigma_lnLymGlu[2])); //+ normal_lpdf(Y_protein[n] | mu_protein[2], sigma_protein[2]));// - normal_lccdf(0 | mu_protein[2], sigma_protein[2]));//normal_lpdf(lnY_lympho[n] | mu_lympho[2], 1)); //+normal_lpdf(Y_lnLymGlu[n]|mu_lnLymGlu[2], 5));
+    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,2]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,2]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,2]) + bernoulli_lpmf(Y_Img[n] | p_Img[2]) + lognormal_lpdf(Y_lnLymGlu[n] | mu_lnLymGlu[2], sigma_lnLymGlu[2]), //+ normal_lpdf(Y_protein[n] | mu_protein[2], sigma_protein[2]));// - normal_lccdf(0 | mu_protein[2], sigma_protein[2]));//normal_lpdf(lnY_lympho[n] | mu_lympho[2], 1)); //+normal_lpdf(Y_lnLymGlu[n]|mu_lnLymGlu[2], 5));
+    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,1]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,1]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,1]) + bernoulli_lpmf(Y_Img[n] | p_Img[1]) + lognormal_lpdf(Y_lnLymGlu[n] | mu_lnLymGlu[1], sigma_lnLymGlu[1])); //+ normal_lpdf(Y_protein[n] | mu_protein[1], sigma_protein[1]),// - normal_lccdf(0 | mu_protein[1], sigma_protein[1]), //normal_lpdf(lnY_lympho[n] | mu_lympho[1], 1), //+ normal_lpdf(Y_lnLymGlu[n]|mu_lnLymGlu[1], 5),
   }
 }

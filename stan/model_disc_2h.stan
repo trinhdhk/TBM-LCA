@@ -13,7 +13,9 @@ parameters {
   // For probit regression
   real a0; //intercept
   vector[nX] a; //slope
-  vector[N] RE; //random effects
+  //RE = z_RE + b_HIV * X[1]; with X[,1] = HIV_stat
+  real b_HIV; //adjustment of z_RE with HIV;
+  vector[N] z_RE; //random effects without HIV; 
   
   //Probability of each vars
   ordered[2] z_Smear; 
@@ -26,6 +28,9 @@ parameters {
 model {
   //Prevalence of TBM
   real theta[N] = to_array_1d(Phi(a0 + X*a));
+  
+  //Random effects
+  vector[N] RE;
   
   // z of each test positivitiy with random effect
   matrix[N,2] z_Smear_RE; 
@@ -45,7 +50,8 @@ model {
   a ~ normal(0,1);
   
   //Random effects covariates
-  RE ~ normal(0,1);
+  z_RE ~ normal(0,1);
+  RE = z_RE + b_HIV*X[,1]; //imply that for non-HIV: RE~N(0,1), for HIV: RE~N(b_HIV, 1); 
   
    //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7);
@@ -59,9 +65,9 @@ model {
   
   //Same prior of sens and spcs for two classes
   z_CSF ~ normal(0,1);
-  z_Img ~ normal(0,1);
+  z_Img ~ normal(0, 1);
   
-  // Add random effects
+  //Add random effects
   z_Smear_RE = rep_matrix(z_Smear', N);
   z_Mgit_RE = rep_matrix(z_Mgit', N);
   z_Xpert_RE = rep_matrix(z_Xpert', N);
@@ -72,19 +78,18 @@ model {
   z_Xpert_RE[,2] += RE;
   z_CSF_RE[,2] += RE;
   
-  
   // Phi to convert to the probabilities of tests returning +
   p_Smear = Phi(z_Smear_RE);
   p_Mgit = Phi(z_Mgit_RE);
   p_Xpert = Phi(z_Xpert_RE);
-  p_CSF = Phi(z_CSF_RE);
   p_Img = Phi(z_Img);
+  p_CSF = Phi(z_CSF_RE);
   
   
   for (n in 1:N){
     real x = 0;
     target += log_mix(theta[n],
-    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,2]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,2]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,2]) + bernoulli_lpmf(Y_Img[n] | p_Img[2]) + bernoulli_lpmf(Y_CSF[n] | p_CSF[n,2]),
-    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,1]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,1]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,1]) + bernoulli_lpmf(Y_Img[n] | p_Img[1]) + bernoulli_lpmf(Y_CSF[n] | p_CSF[n,1]));
+    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,2]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,2]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,2]) + bernoulli_lpmf(Y_Img[n] | p_Img[2]) + bernoulli_lpmf(Y_CSF[n] | p_CSF[2]),
+    bernoulli_lpmf(Y_Xpert[n] | p_Xpert[n,1]) + bernoulli_lpmf(Y_Mgit[n] | p_Mgit[n,1]) + bernoulli_lpmf(Y_Smear[n] | p_Smear[n,1]) + bernoulli_lpmf(Y_Img[n] | p_Img[1]) + bernoulli_lpmf(Y_CSF[n] | p_CSF[1]));
   }
 }

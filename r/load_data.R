@@ -39,8 +39,16 @@ maindtcomplete <- na.omit(maindt, cols = c('age', 'sex', 'bmi', 'csf_smear', 'cs
                                            'hiv_stat','clin_illness_day', 'clin_symptoms', 'clin_gcs', 
                                            'clin_nerve_palsy', 'clin_motor_palsy', 'csf_clear', 'csf_protein',
                                            'xray_miliary_tb', 'xray_pul_tb'))
-X <- maindtcomplete %$% as.matrix(cbind(hiv_stat, age, sex, bmi, clin_illness_day, #remove contact_tb due to many "unknown"s
-                                        clin_nerve_palsy, clin_motor_palsy, csf_lympho, glucose_ratio, csf_protein,
+X <- maindtcomplete %$% as.matrix(cbind(hiv_stat, 
+                                        age, 
+                                        sex, 
+                                        bmi, 
+                                        clin_illness_day, #remove contact_tb due to many "unknown"s
+                                        clin_nerve_palsy,
+                                        clin_motor_palsy,
+                                        csf_lympho,
+                                        glucose_ratio,
+                                        csf_protein,
                                         xray_pul_tb))
 
 model_input_cont <- maindtcomplete %$% 
@@ -62,6 +70,6 @@ model_input_disc <- maindtcomplete %$%
     Y_Mgit = as.integer(csf_mgit),
     Y_Xpert = as.integer(csf_xpert),
     Y_Img = as.integer(xray_miliary_tb),
-    Y_LymGluRatio = csf_lym_pct > .5 & (glucose_ratio<.5|csf_glucose<2.2),
+    Y_CSF = csf_lym_pct>.5 & (glucose_ratio<.5|csf_glucose<2.2) & csf_protein>1,
     X = X
   )

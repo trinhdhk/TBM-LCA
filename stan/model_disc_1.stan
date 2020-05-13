@@ -32,14 +32,14 @@ model {
   real theta[N] = to_array_1d(Phi(a0 + X*a));
   
  //Specificity of each test
- z_Xpert[1] ~ normal(inv_Phi(.005), .7^2);
- z_Mgit[1] ~ normal(-3.023, 2.378);
- z_Smear[1] ~ normal(-3.023, 2.378);
+ z_Xpert[1] ~ normal(inv_Phi(.005), .7);
+ z_Mgit[1] ~ normal(-3.023, sqrt(2.378));
+ z_Smear[1] ~ normal(-3.023, sqrt(2.378));
 
 // Other class
- z_Xpert[2] ~ normal(inv_Phi(.593), .5^2);
- z_Mgit[2] ~ normal(inv_Phi(.665), .5^2);
- z_Smear[2] ~ normal(inv_Phi(.786), .5^2);
+ z_Xpert[2] ~ normal(inv_Phi(.593), .25);
+ z_Mgit[2] ~ normal(inv_Phi(.665), .1);
+ z_Smear[2] ~ normal(inv_Phi(.786), .1);
  
  //Same prior for two classes
  z_Img ~ normal(0, 1);

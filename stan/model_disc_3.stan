@@ -14,6 +14,7 @@ parameters {
   real a0; //intercept
   vector[nX] a; //slope
   vector[N] RE; //random effects
+  real<lower=0> b_RE; //coef of random effect
   
   //Probability of each vars
   ordered[2] z_Smear; 
@@ -46,6 +47,7 @@ model {
   
   //Random effects covariates
   RE ~ normal(0,1);
+  b_RE ~ uniform(0,5);
   
    //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7);
@@ -67,10 +69,10 @@ model {
   z_Xpert_RE = rep_matrix(z_Xpert', N);
   z_CSF_RE = rep_matrix(z_CSF', N);
   
-  z_Smear_RE[,2] += RE;
-  z_Mgit_RE[,2] += RE;
-  z_Xpert_RE[,2] += RE;
-  z_CSF_RE[,2] += RE;
+  z_Smear_RE[,2] += b_RE*RE;
+  z_Mgit_RE[,2] += b_RE*RE;
+  z_Xpert_RE[,2] += b_RE*RE;
+  z_CSF_RE[,2] += b_RE*RE;
   
   
   // Phi to convert to the probabilities of tests returning +

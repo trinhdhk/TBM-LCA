@@ -18,12 +18,29 @@ source('r/load_data.R')
 
 # Load model
 ## model 1: without random effect
-model_cont_1 <- load_model('cont_1', data=model_input_cont, chain = 5, iter=30000, seed=128, warmup=5000, 
+model_disc_1 <- load_model('disc_1', data=model_input_disc, chain = 4, iter=30000, seed=1208, warmup=5000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))
+
+model_disc_1b <- load_model('disc_1b', data=model_input_disc, chain = 4, iter=30000, seed=1208, warmup=5000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))
+
+model_cont_1 <- load_model('cont_1', data=model_input_cont, chain = 4, iter=40000, seed=1208, warmup=10000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))
+
+model_cont_1b <- load_model('cont_1b', data=model_input_cont, chain = 4, iter=40000, seed=1208, warmup=10000, 
                            control = list(max_treedepth = 18, adapt_delta=.99))
 ## model 2: with random effect ~ normal(0,5)
 
-model_disc_2 <- load_model('disc_2', data=model_input_disc, chain = 4, iter=30000, seed=128, warmup=5000, 
+model_disc_2 <- load_model('disc_2', data=model_input_disc, chain = 4, iter=40000, seed=1208, warmup=10000, 
                            control = list(max_treedepth = 18, adapt_delta=.99))
 
-model_cont_2 <- load_model('cont_2', data=model_input_cont, chain = 4, iter=30000, seed=128, warmup=10000, 
+model_disc_2h <- load_model('disc_2h', data=model_input_disc, chain = 4, iter=40000, seed=1208, warmup=10000, 
                            control = list(max_treedepth = 18, adapt_delta=.99))
+
+model_cont_2 <- load_model('cont_2', data=model_input_cont, chain = 4, iter=60000, seed=128, warmup=30000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99))
+
+## model 3: with random effect ~ normal(0,s)
+model_cont_3 <- load_model('cont_3', data=model_input_cont, chain = 4, iter=40000, seed=1208, warmup=10000, 
+                           control = list(max_treedepth = 18, adapt_delta=.99)) #diverged
+

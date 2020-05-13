@@ -1,12 +1,12 @@
 data {
- int<lower = 1> N; //Number of patient
- int<lower = 1> nX;
- int<lower = 0, upper = 1> Y_Smear[N];
- int<lower = 0, upper = 1> Y_Mgit[N];
- int<lower = 0, upper = 1> Y_Xpert[N];
- int<lower = 0, upper = 1> Y_Img[N];
- real Y_lnLymGlu[N];
- matrix[N, nX] X; //Covariates
+  int<lower = 1> N; //Number of patient
+  int<lower = 1> nX;
+  int<lower = 0, upper = 1> Y_Smear[N];
+  int<lower = 0, upper = 1> Y_Mgit[N];
+  int<lower = 0, upper = 1> Y_Xpert[N];
+  int<lower = 0, upper = 1> Y_Img[N];
+  real Y_lnLymGlu[N];
+  matrix[N, nX] X; //Covariates
 }
 
 parameters {
@@ -14,9 +14,8 @@ parameters {
   real a0; //intercept
   vector[nX] a; //slope
   // random effect = sd_RE * z_RE ~ normal(0, sd_RE) where z_RE ~ normal(0,1) - diverged so set sigma as 1
-  // real<lower=0> sd_RE; //sd of random effects
-  // vector[N] z_RE; //scale of random effects
-  vector[N] RE; //random effects
+  real<lower=0> sigma_RE; //sd of random effects
+  vector[N] z_RE; //scale of random effects
   
   //Probability of each vars
   ordered[2] z_Smear; 
@@ -28,16 +27,16 @@ parameters {
 }
 
 // transformed parameters{
-//   
-// }
+  //   
+    // }
 
 model {
   //Prevalence of TBM
   real theta[N] = to_array_1d(Phi(a0 + X*a));
   
   //Random effects
-  // vector[N] RE;
-
+  vector[N] RE;
+  
   // z of each test positivitiy with random effect
   matrix[N,2] z_Smear_RE; 
   matrix[N,2] z_Mgit_RE; 
@@ -54,20 +53,19 @@ model {
   a ~ normal(0,1);
   
   //Random effects covariates
-  // sd_RE ~ uniform(0,1);
-  // z_RE ~ normal(0,1);
-  // RE = sd_RE * z_RE;
-  RE ~ normal(0,1);
+  sigma_RE ~ uniform(0,1);
+  z_RE ~ normal(0,1);
+  RE = sigma_RE * z_RE;
   
   //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7);
-  z_Mgit[1] ~ normal(-3.023, 1.542);//2.378
-  z_Smear[1] ~ normal(-3.023, 1.542);
+  z_Mgit[1] ~ normal(-3.023, sqrt(2.378));//2.378
+  z_Smear[1] ~ normal(-3.023, sqrt(2.378));
   
   //Sensitivity of each test
-  z_Xpert[2] ~ normal(inv_Phi(.593), .117);
-  z_Mgit[2] ~ normal(inv_Phi(.665), .217);
-  z_Smear[2] ~ normal(inv_Phi(.786), .405);
+  z_Xpert[2] ~ normal(inv_Phi(.593), .25);
+  z_Mgit[2] ~ normal(inv_Phi(.665), .1);
+  z_Smear[2] ~ normal(inv_Phi(.786), .1);
   
   z_Smear_RE = rep_matrix(z_Smear', N);
   z_Mgit_RE = rep_matrix(z_Mgit', N);

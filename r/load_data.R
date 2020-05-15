@@ -51,6 +51,18 @@ X <- maindtcomplete %$% as.matrix(cbind(hiv_stat,
                                         csf_protein,
                                         xray_pul_tb))
 
+X_full <- maindt %$% as.matrix(cbind(hiv_stat, 
+                                     age, 
+                                     sex, 
+                                     bmi, 
+                                     clin_illness_day, #remove contact_tb due to many "unknown"s
+                                     clin_nerve_palsy,
+                                     clin_motor_palsy,
+                                     csf_lympho,
+                                     glucose_ratio,
+                                     csf_protein,
+                                     xray_pul_tb))
+
 model_input_cont <- maindtcomplete %$% 
   list(
     N = nrow(maindtcomplete), nX = ncol(X),
@@ -69,7 +81,22 @@ model_input_disc <- maindtcomplete %$%
     Y_Smear = as.integer(csf_smear),
     Y_Mgit = as.integer(csf_mgit),
     Y_Xpert = as.integer(csf_xpert),
-    Y_Img = as.integer(xray_miliary_tb),
-    Y_CSF = csf_lym_pct>.5 & (glucose_ratio<.5|csf_glucose<2.2) & csf_protein>1,
+    # Y_Img = as.integer(xray_miliary_tb),
+    Y_CSF = (csf_wbc>10&csf_wbc<500) & (csf_lym_pct>.5) & (glucose_ratio<.5|csf_glucose<2.2) & (csf_protein>1),
     X = X
+  )
+
+model_input_fiml <- maindt %$%
+  list(
+    N = nrow(maindt), nX = ncol(X), 
+    # N_Smear = length(na.omit(csf_smear)), N_Mgit = length(na.omit(csf_mgit)),
+    # N_Xpert = length(na.omit(csf_xpert)), N_Img = length(na.omit(img_score)),
+    # N_Xray = length(na.omit(xray_miliary_tb)), N_CSF = length(na.omit(xray_miliary_tb)),
+    Y_Smear = as.integer(tidyr::replace_na(csf_smear, 0)), obs_Smear = (!is.na(csf_smear)), 
+    Y_Mgit = as.integer(tidyr::replace_na(csf_mgit, 0)), obs_Mgit = (!is.na(csf_mgit)),
+    Y_Xpert = as.integer(tidyr::replace_na(csf_xpert, 0)), obs_Xpert = (!is.na(csf_xpert)),
+    Y_Img = as.integer(tidyr::replace_na(img_score, 0)), obs_Img = (!is.na(img_score)),
+    Y_Xray = as.integer(tidyr::replace_na(xray_miliary_tb, 0)), obs_Xray = (!is.na(xray_miliary_tb)),
+    Y_CSF = tidyr::replace_na(csf_lym_pct>.5 & (glucose_ratio<.5|csf_glucose<2.2) & csf_protein>1, 0), obs_CSF = (!is.na(csf_lym_pct+glucose_ratio+csf_glucose+csf_protein)),
+    X = tidyr::replace_na(X_full, 0), obs_X = !apply(X_full, c(1,2), is.na)
   )

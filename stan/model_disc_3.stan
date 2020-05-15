@@ -51,7 +51,7 @@ model {
   
    //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7);
-  z_Mgit[1] ~ normal(-3.023, 1.542);//2.378
+  z_Mgit[1] ~ normal(-3.023, .890);//2.378
   z_Smear[1] ~ normal(-3.023, 1.542);
   
   //Sensitivity of each test

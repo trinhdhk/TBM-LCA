@@ -34,7 +34,7 @@ model_cont_1b <- load_model('cont_1b', data=model_input_cont, chain = 4, iter=40
 model_disc_2 <- load_model('disc_2', data=model_input_disc, chain = 4, iter=40000, seed=1208, warmup=10000, 
                            control = list(max_treedepth = 18, adapt_delta=.99))
 
-model_disc_2h <- load_model('disc_2h', data=model_input_disc, chain = 4, iter=40000, seed=1208, warmup=10000, 
+model_disc_2h <- load_model('disc_2h', data=model_input_disc, chain = 4, iter=50000, seed=1208, warmup=20000, 
                            control = list(max_treedepth = 18, adapt_delta=.99))
 
 model_cont_2 <- load_model('cont_2', data=model_input_cont, chain = 4, iter=60000, seed=128, warmup=30000, 

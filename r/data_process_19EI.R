@@ -13,13 +13,14 @@ addinfo <- fread(file.path(data.folder,'19EI_ADDINFO.csv'))
 joindt <- plyr::join_all(
     list(
         inex[, .(USUBJID, YOB, SEX, ENROLL)],
-        base[, .(USUBJID, ISCONTUBER, ILLNESSDAY, 
-            ISREDUCED, ISWEIGHT, ISNSWEAT, ISCOUGH, NONE,
+        base[, .(USUBJID, ISHIV, ISCHRONIC, ISDIABETE, ISFEVER, ISCONTUBER, ILLNESSDAY, 
+            ISREDUCED, ISWEIGHT, ISNSWEAT, ISCOUGH, NONE, ISHEADACHE, ISLOCALSEIZURE, ISGENNERALSEIZURE, 
+            ISPSYCHOSIS, ISLANGCHANGE, ISMOVEMENT,
             HEMIPLEGIA, PARAPLEGIA, TETRAPLEGIA, 
             GENCONVUL, LOCALCONVUL, 
-            GLASCOW)],
-        baselp[, .(USUBJID, APP_A, WHITECELL, LYMPER,
-            PROTEIN, CSFGLU, BLDGLU, ZN, TBNAAT, RANDO, NAATSPEC, 
+            GLASCOW, GCSE, GCSM, GCSV)],
+        baselp[, .(USUBJID, LUMBARDATE, APP_A, REDCELL, WHITECELL, NEUPER, LYMPER, EOSPER,
+            PROTEIN, CSFGLU, BLDGLU, CSFLAC, ZN, TBNAAT, RANDO, NAATSPEC, 
             MYCORESULT, LUNGPOS, REP_NAAT, REP_RES, GRAM, BACCUL)],
         imag[, .(USUBJID, PTB, MTB, MRIRESULT, CTRESULT)],
         addinfo[, .(USUBJID, HIV)]
@@ -28,23 +29,45 @@ joindt <- plyr::join_all(
     type='left'
 )
 
-joindt <- joindt[-1:-35][RANDO=='YES']
-maindt <- joindt[, .(
-    age = lubridate::year(as.Date(ENROLL)) - YOB,
+library(dplyr)
+joindt <- mutate(joindt,
+                 across(c(ISCHRONIC, ISFEVER,
+                          ISWEIGHT, ISNSWEAT, ISCOUGH, ISCONTUBER, HEMIPLEGIA, PARAPLEGIA, TETRAPLEGIA, ISREDUCED),
+                        function(x) {fcase(x == 'C49488', TRUE,
+                                           x == 'N', FALSE
+                                           )}))
+
+
+# joindt <- joindt[RANDO=='YES']
+joindt[,`:=`(
+    age = if_else(is.na(ENROLL),
+                  lubridate::year(lubridate::mdy_hm(joindt$LUMBARDATE)),
+                  lubridate::year(lubridate::dmy(joindt$ENROLL))) - YOB,
     sex = as.numeric(SEX == 'M'),
-    hiv_stat = HIV == 'POS',
+    hiv_stat = dplyr::case_when(
+        HIV %in% c('POS', 'UNCERTAIN') ~ TRUE,
+        HIV %in% 'NEG' ~ FALSE,
+        (HIV %in% c('', 'NOT DONE', 'UNKNOWN') | is.na(HIV)) & ISHIV == 'C49488' ~ TRUE,
+        (HIV %in% c('', 'NOT DONE', 'UNKNOWN') | is.na(HIV)) & ISHIV == 'N' ~ FALSE,
+    ),
     clin_illness_day = as.numeric(ILLNESSDAY),
-    clin_symptoms = ISWEIGHT == 'C49488' | ISNSWEAT == 'C49488' | ISCOUGH == 'C49488',
-    clin_contact_tb = ISCONTUBER == 'C49488',
-    clin_motor_palsy = HEMIPLEGIA == 'C49488' | PARAPLEGIA == 'C49488' | TETRAPLEGIA == 'C49488',
+    clin_symptoms = ISWEIGHT | ISNSWEAT | ISCOUGH,
+    clin_contact_tb = ISCONTUBER,
+    clin_motor_palsy = HEMIPLEGIA | PARAPLEGIA | TETRAPLEGIA,
+    # clin_symptoms = ISWEIGHT == 'C49488' | ISNSWEAT == 'C49488' | ISCOUGH == 'C49488',
+    # clin_contact_tb = ISCONTUBER == 'C49488',
+    # clin_motor_palsy = HEMIPLEGIA == 'C49488' | PARAPLEGIA == 'C49488' | TETRAPLEGIA == 'C49488',
     clin_nerve_palsy = !NONE,
-    clin_gcs = ifelse(is.na(GLASCOW), ifelse(ISREDUCED!='C49488',15,NA), as.numeric(GLASCOW)),
+    # clin_gcs = ifelse(is.na(GLASCOW), ifelse(ISREDUCED!='C49488',15,NA), as.numeric(GLASCOW)),
+    clin_gcs = ifelse(is.na(GLASCOW), ifelse(!ISREDUCED,15,NA), as.numeric(GLASCOW)),
     csf_clear = APP_A == 'CLEAR',
+    csf_rbc = as.numeric(REDCELL),
     csf_wbc = as.numeric(WHITECELL),
-    csf_lym_pct = as.numeric(LYMPER)/100,
-    csf_lympho = LYMPER/100*WHITECELL,
+    csf_lym_pct = ifelse(is.na(LYMPER), WHITECELL/WHITECELL, LYMPER/100),
+    csf_lympho = ifelse(is.na(LYMPER), WHITECELL, LYMPER/100*WHITECELL),
     csf_protein = PROTEIN,
     csf_glucose = CSFGLU,
+    csf_lactate = CSFLAC,
     glucose_ratio = CSFGLU/BLDGLU,
     img_hydro = MRIRESULT=='Hydrocephalus',
     img_basal = MRIRESULT == 'Basal meningeal enhancement',
@@ -63,5 +86,10 @@ maindt <- joindt[, .(
     tube_score = 2*xray_pul_tb+4*xray_miliary_tb
 )][, crude_total_score := rowSums(.SD[, .(clin_score, csf_score, img_score, tube_score)], na.rm=T)]
 
+joindt <- joindt[USUBJID!='003-335'&!is.na(RANDO)]
+
+summarise_all(joindt, ~is.na(.x) %>% sum) %>% t -> ms
+
+maindt <- joindt[!is.na(WHITECELL), csf_rbc := ifelse(is.na(csf_rbc), 0, csf_rbc)]
 saveRDS(maindt, file='data/cleaned/data_19EI.RDS')
 

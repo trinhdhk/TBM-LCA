@@ -1,18 +1,18 @@
-library(rstan)
+# library(rstan)
 library(bayesplot)
 library(future)
-Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
-rstan_options(auto_write = TRUE)
+# Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
+rstan::rstan_options(auto_write = TRUE)
 
 data_19EI_complete = readRDS('data/impute_19EI.RDS')[1:126]
 
-model <- rstan::stan_model('stan/model_disc_3h3a_19EI.stan')
-model <- rstan::stan_model('stan/model_disc_4_19EI.stan')
-model <- rstan::stan_model('stan/model_5_19EI.stan')
+model <- rstan::stan_model('stan/model_1.stan')
+model <- rstan::stan_model('stan/model_2.stan')
+model <- rstan::stan_model('stan/model_3.stan')
+model <- rstan::stan_model('stan/model_4.stan')
 
 plan(multisession(workers = 19, gc=TRUE))
 fits <- vector("list", length(data_19EI_complete))
-# warn=c()
 for (i in seq_along(data_19EI_complete)){
   fits[[i]] <- future::future({
     options(mc.cores = 1)
@@ -53,8 +53,8 @@ for (i in seq_along(data_19EI_complete)){
     
     rstan::sampling(model, 
                     data=model_input_disc, chain = 1,
-                    iter=37000, seed=2906+i, warmup=25000,
-                    control = list(max_treedepth = 18, adapt_delta=.72),
+                    iter=40000, seed=2906+i, warmup=25000,
+                    control = list(max_treedepth = 18, adapt_delta=.7),
                     save_warmup = FALSE,
                     include=FALSE, 
                     pars = c("z_Smear_RE", "z_Mgit_RE", "z_Xpert_RE", "bac_load", "theta")) 
@@ -88,6 +88,7 @@ loos <- vector("list", length(data_19EI_complete))
 for (i in seq_along(data_19EI_complete)){
   . <- fits_val[[i]]
   loos[[i]] <- future(qloo(.))
+  rm(.)
 }
 
 loos <- lapply(loos, value)

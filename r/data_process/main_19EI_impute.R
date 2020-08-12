@@ -26,7 +26,7 @@ pred.mat[17:19,c(1,12:13,17:19, 21:23)] <- 1
 pred.mat[17:19,1] <- 1
 pred.mat[, 3:5] <- 1
 
-data_19EI_imp <- mice::parlmice(data_19EI, n.core = 18, maxit=100, m=126, n.imp.core = 7, predictorMatrix = pred.mat, defaultMethod = c("pmm", "logreg", "polyreg", "polr"))
+data_19EI_imp <- mice::parlmice(data_19EI, n.core = 18, maxit=100, m=126, n.imp.core = 7, predictorMatrix = pred.mat, defaultMethod = c("pmm", "pmm", "polyreg", "polr"))
 data_19EI_complete <- lapply(seq_len(data_19EI_imp$m), mice::complete, data = data_19EI_imp)
 data_19EI_complete <- lapply(data_19EI_complete, function(dt)
   dplyr::mutate(dt,clin_symptoms = ISNSWEAT|ISCOUGH|ISWEIGHT, clin_motor_palsy = HEMIPLEGIA|PARAPLEGIA|TETRAPLEGIA))

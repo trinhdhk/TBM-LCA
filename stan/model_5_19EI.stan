@@ -6,7 +6,7 @@ data {
   int<lower = 0, upper = 1> Y_Xpert[N];
   matrix[N, nX] X; //Covariates
 }
-
+ 
 parameters {
   // For logit regression
   real a0; //intercept

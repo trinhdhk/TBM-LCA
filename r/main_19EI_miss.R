@@ -1,80 +1,45 @@
-rm(list = ls())
-library(data.table)
-library(magrittr)
 library(rstan)
 library(bayesplot)
 library(future)
-# options(mc.cores = 18)
 Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
 rstan_options(auto_write = TRUE)
-source('r/fn_def.R')
 
-data_19EI <- readRDS('data/cleaned/data_19EI.RDS')
-# data_19EI$age <-2020+data_19EI$age 
-data_19EI <- na.omit(data_19EI, cols = c('csf_smear', 'csf_mgit', 'csf_xpert'))
-data_19EI <- data_19EI[, c('hiv_stat', 'age', 'csf_smear', 'csf_mgit', 'csf_xpert',
-                           'clin_illness_day', 'clin_gcs', 
-                           'clin_nerve_palsy',
-                           # 'clin_motor_palsy', 
-                           'csf_clear', 'csf_protein', 'csf_lympho', 'glucose_ratio', 'csf_lactate',
-                           'xray_miliary_tb', 'xray_pul_tb', 'ISDIABETE', 'BLDGLU', 'ISNSWEAT', 'ISCOUGH', 'ISWEIGHT',
-                           'HEMIPLEGIA', 'PARAPLEGIA', 'TETRAPLEGIA'), with=F]
-miss <- dplyr::summarise_all(data_19EI, ~sum(is.na(.x)))
+data_19EI_complete = readRDS('data/impute_19EI.RDS')[1:126]
 
-data_19EI[, `:=`(log_illness_day = log2(clin_illness_day), clin_illness_day=NULL,
-                 log_lympho = log2(csf_lympho+1),csf_lympho=NULL,
-                 log_protein = log2(csf_protein),csf_protein=NULL,
-                 log_lactate = log2(csf_lactate),csf_lactate=NULL)]
-
-pred.mat <- mice::make.predictorMatrix(data_19EI)
-pred.mat[3:5,] <- 0
-pred.mat[14:19,] <- 0
-pred.mat[14:16,14:16] <- 1
-pred.mat[14:16,1] <- 1
-pred.mat[17:19,] <- 0
-pred.mat[17:19,c(1,12:13,17:19)] <- 1
-pred.mat[17:19,1] <- 1
-pred.mat[, 3:5] <- 1
-data_19EI_imp <- mice::parlmice(data_19EI, n.core = 18, maxit=50, m=132, n.imp.core = 8, predictorMatrix = pred.mat, defaultMethod = c("pmm", "logreg", "polyreg", "polr"))
-data_19EI_complete <- lapply(seq_len(data_19EI_imp$m), mice::complete, data = data_19EI_imp)
-data_19EI_complete <- lapply(data_19EI_complete, function(dt)
-  dplyr::mutate(dt,clin_symptoms = ISNSWEAT|ISCOUGH|ISWEIGHT, clin_motor_palsy = HEMIPLEGIA|PARAPLEGIA|TETRAPLEGIA))
 model <- rstan::stan_model('stan/model_disc_3h3a_19EI.stan')
-plan(multisession(workers = 18, gc=TRUE))
+model <- rstan::stan_model('stan/model_disc_4_19EI.stan')
+model <- rstan::stan_model('stan/model_5_19EI.stan')
 
-# model <- cmdstanr::cmdstan_model('stan/model_disc_3h3a_19EI.stan')
-
-fits <- vector("list", 132) #length(data_19EI_complete))
+plan(multisession(workers = 19, gc=TRUE))
+fits <- vector("list", length(data_19EI_complete))
 # warn=c()
-for (i in 1:132){#seq_along(data_19EI_complete)
+for (i in seq_along(data_19EI_complete)){
   fits[[i]] <- future::future({
     options(mc.cores = 1)
-    library(magrittr)
-    library(rstan)
-    # Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
-    # dir.create(file.path('outputs', Sys.Date()))
+    Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
+    rstan_options(auto_write = TRUE)
     dat <- data_19EI_complete[[i]]
     
     X <- dat %$% as.matrix(cbind(
-      hiv_stat,
-      (age-mean(age))/10, 
-      clin_symptoms,
+      hiv_stat,                             #1
+      (age-mean(age))/10,                   #2
+      clin_symptoms,                        #3
       # log2(clin_illness_day), 
-      log_illness_day,
-      clin_nerve_palsy,
-      clin_motor_palsy,
-      ISDIABETE,
-      clin_gcs,
-      glucose_ratio,
-      BLDGLU,
+      log_illness_day,                      #4
+      clin_nerve_palsy,                     #5
+      clin_motor_palsy,                     #6
+      ISDIABETE,                            #7
+      clin_gcs,                             #8
+      glucose_ratio,                        #9
+      BLDGLU,                               #10
       # log2(csf_lympho+1),
       # log2(csf_protein),
       # log2(csf_lactate),
-      log_lympho,
-      log_protein,
-      log_lactate,
-      xray_pul_tb,
-      xray_miliary_tb
+      log_lympho,                           #11
+      log_protein,                          #12
+      log_lactate,                          #13
+      xray_pul_tb,                          #14
+      xray_miliary_tb                       #15
     ))
     
     model_input_disc <- dat %$%
@@ -86,18 +51,14 @@ for (i in 1:132){#seq_along(data_19EI_complete)
         X = X
       )
     
-    # res <- model$sample(data=model_input_disc, chains = 3, seed = 2906, iter_warmup = 20000,
-    #                     iter_sampling = 15000, max_treedepth = 18, adapt_delta=.8, output_dir = file.path('outputs', Sys.Date()))
-    # cmdstanr::read_cmdstan_csv(res$output_files(), variables = c('a0', 'a', 'b_HIV', 'b_age', 'b_mil', 'b',
-    #                                                              'z_Smear', 'z_Mgit', 'z_Xpert', 'RE', 'log_lik'))
-    sampling(model, 
-             data=model_input_disc, chain = 1,
-             iter=21000, seed=2906+i, warmup=15000, 
-             control = list(max_treedepth = 18, adapt_delta=.75),
-             # sample_file = paste0('outputs/',Sys.Date(),'/model_',i), 
-             include=FALSE, 
-             pars = c("z_Smear_RE", "z_Mgit_RE", "z_Xpert_RE", "bac_load", "theta")) 
-  })
+    rstan::sampling(model, 
+                    data=model_input_disc, chain = 1,
+                    iter=37000, seed=2906+i, warmup=25000,
+                    control = list(max_treedepth = 18, adapt_delta=.72),
+                    save_warmup = FALSE,
+                    include=FALSE, 
+                    pars = c("z_Smear_RE", "z_Mgit_RE", "z_Xpert_RE", "bac_load", "theta")) 
+  }, packages = c('magrittr', 'rstan'))
   
   cat('Fitting imputated data', i, '\n')
 }
@@ -108,10 +69,43 @@ bayesplot::mcmc_intervals(fits_comb, pars = dplyr::vars(starts_with('a')))
 saveRDS(fits_comb, 'outputs/fitimpute2.rds')
 
 log_lik_ <- loo::extract_log_lik(fits_comb, merge_chains = FALSE)
-r_eff_ <- loo::relative_eff(exp(log_lik_), cores = 8)
-loo_3h3a <- loo::loo(log_lik_, r_eff = r_eff_, moment_match = TRUE, cores=2)
+r_eff_ <- loo::relative_eff(exp(log_lik_))
+loo_3h3a <- loo::loo(log_lik_, r_eff = r_eff_)
 
 log_lik_ <- loo::extract_log_lik(mm, merge_chains = FALSE)
 r_eff_ <- loo::relative_eff(exp(log_lik_), cores = 18)
 loo_3h3a <- loo::loo(log_lik_, r_eff = r_eff_, moment_match = TRUE, cores=18)
 
+qloo <- function(fit){
+  log_lik_ <- loo::extract_log_lik(fit, merge_chains = FALSE)
+  r_eff_ <- loo::relative_eff(exp(log_lik_))
+  loo_3h3a <- loo::loo(log_lik_, r_eff = r_eff_)
+  loo_3h3a
+}
+
+plan(multisession(workers = 19, gc=TRUE))
+loos <- vector("list", length(data_19EI_complete))
+for (i in seq_along(data_19EI_complete)){
+  . <- fits_val[[i]]
+  loos[[i]] <- future(qloo(.))
+}
+
+loos <- lapply(loos, value)
+elpds <- sapply(loos, function(l) exp(l$pointwise[,'elpd_loo']))
+mean_elpds <- log(apply(elpds, 1, mean))
+
+ps <- sapply(loos, function(l) exp(l$pointwise[,'p_loo']))
+mean_ps <- log(apply(ps, 1, mean))
+
+ll <- vector("list", length(data_19EI_complete))
+for (i in seq_along(data_19EI_complete)){
+  . <- fits_val[[i]]
+  ll[[i]] <- future(loo::extract_log_lik(., merge_chains = FALSE))
+} 
+ll <- lapply(ll, value)
+ll <- lapply(ll, exp)
+# ll2 <- lapply(ll, abind::adrop, drop=2)
+sumll <- Reduce(`+`, ll)
+avgll <- log(sumll/133)
+avgreff <- loo::relative_eff(avgll)
+avgloo <- loo::loo(avgll, r_eff = avgreff)

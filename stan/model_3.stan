@@ -14,7 +14,6 @@ parameters {
   // real<lower=0> b_RE; //RE slope
   real b_HIV; //adjustment of RE with HIV X[,1]
   real b_age; //adjustment of RE with age X[,2];
-  // real b_mil; //adjustment of RE with age X[,nX];
   real<lower=0> b[3];
   
   //Probability of each vars
@@ -36,7 +35,7 @@ transformed parameters{
   
   //Bacterial load
   vector[N] bac_load;
-  bac_load = RE + b_HIV*X[,1] + b_age*X[,2]; //+ b_mil*X[,nX];
+  bac_load = RE + b_HIV*X[,1] + b_age*X[,2]; 
   
   //Add random effects
   z_Smear_RE = rep_matrix(z_Smear' , N);
@@ -52,22 +51,32 @@ model {
   
   //Probs of each test become positive
   // Priors of covariates
-  a0 ~ student_t(5,0,10);
-  a ~ student_t(5,0,2.5);
+  a0       ~ student_t(5, 0  ,10  );
+  a[1]     ~ student_t(5, 0  , 2.5);
+  a[2]     ~ student_t(5, 0  , 2.5);
+  a[3]     ~ student_t(5, 2  , 1  );
+  a[4]     ~ student_t(5, 1.7, 1  );
+  a[5]     ~ student_t(5, 1  , 1  );
+  a[6]     ~ student_t(5, 1  , 1  );
+  a[7]     ~ student_t(5, 0  , 2.5);
+  a[8]     ~ student_t(5, 1  , 2.5);
+  a[9]     ~ student_t(5,-1  , 2.5);
+  a[10]    ~ student_t(5,-1  , 2.5);
+  a[11:13] ~ student_t(5, 0  , 2.5);
+  a[14]    ~ student_t(5, 2  , 1  );
+  a[15]    ~ student_t(5, 4  , 1  );
+  
   
   //Random effects covariates
-  RE ~ normal(0,1);
-  // b_RE ~ cauchy(0,2.5);
+  RE    ~ normal(0,1);
   b_age ~ student_t(5,0,2.5);
   b_HIV ~ student_t(5,0,2.5);
-  // b_mil ~ normal(0,1);
-  // b ~ cauchy(0,2.5);
-  b ~ student_t(5,0,1);
+  b     ~ student_t(5,0,1);
   
   //1-Specificity of each test
-  z_Xpert[1] ~ normal(inv_Phi(.005), .7);
-  z_Mgit[1] ~ normal(-3.023, .89);//2.378
-  z_Smear[1] ~ normal(-3.023, .89);
+  z_Xpert[1] ~ normal(inv_Phi(.005), .7  );
+  z_Mgit[1]  ~ normal(-3.023       , .89 );
+  z_Smear[1] ~ normal(-3.023       , .89 );
   
   //Sensitivity of each test
   z_Xpert[2] ~ normal(inv_Phi(.593), .117);

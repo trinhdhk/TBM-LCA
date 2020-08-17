@@ -58,25 +58,25 @@ model {
   a[4]     ~ student_t(5, 1.7, 1  );
   a[5]     ~ student_t(5, 1  , 1  );
   a[6]     ~ student_t(5, 1  , 1  );
-  a[7]     ~ student_t(5, 0  , 2.5);
-  a[8]     ~ student_t(5, 1  , 2.5);
+  a[7]     ~ student_t(5, 1  , 2.5);
+  a[8]     ~ student_t(5,-1  , 2.5);
   a[9]     ~ student_t(5,-1  , 2.5);
-  a[10]    ~ student_t(5,-1  , 2.5);
-  a[11:13] ~ student_t(5, 0  , 2.5);
-  a[14]    ~ student_t(5, 2  , 1  );
-  a[15]    ~ student_t(5, 4  , 1  );
+  a[10:12] ~ student_t(5, 0  , 2.5);
+  a[13]    ~ student_t(5, 2  , 1  );
+  a[14]    ~ student_t(5, 4  , 1  );
+  // a[15]     ~ student_t(5, 0  , 2.5);
   
   
   //Random effects covariates
-  RE    ~ normal(0,1);
+  RE    ~ normal(     0,1  );
   b_age ~ student_t(5,0,2.5);
   b_HIV ~ student_t(5,0,2.5);
-  b     ~ student_t(5,0,1);
+  b     ~ student_t(5,0,1  );
   
   //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7  );
-  z_Mgit[1]  ~ normal(-3.023       , .89 );
-  z_Smear[1] ~ normal(-3.023       , .89 );
+  z_Mgit[1]  ~ normal(inv_Phi(.001), .89 );
+  z_Smear[1] ~ normal(inv_Phi(.001), .89 );
   
   //Sensitivity of each test
   z_Xpert[2] ~ normal(inv_Phi(.593), .117);

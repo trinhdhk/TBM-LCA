@@ -4,10 +4,12 @@ library(future)
 # Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
 rstan::rstan_options(auto_write = TRUE)
 
-data_19EI_complete = readRDS('data/impute_19EI.RDS')[1:126]
+data_19EI_complete = readRDS('data/impute_19EI.RDS')
 
+model <- rstan::stan_model('stan/model_0.stan')
 model <- rstan::stan_model('stan/model_1.stan')
 model <- rstan::stan_model('stan/model_2.stan')
+model <- rstan::stan_model('stan/model_2.2.stan')
 model <- rstan::stan_model('stan/model_3.stan')
 model <- rstan::stan_model('stan/model_4.stan')
 
@@ -28,18 +30,18 @@ for (i in seq_along(data_19EI_complete)){
       log_illness_day,                      #4
       clin_nerve_palsy,                     #5
       clin_motor_palsy,                     #6
-      ISDIABETE,                            #7
-      clin_gcs,                             #8
-      glucose_ratio,                        #9
-      BLDGLU,                               #10
+      clin_gcs,                             #7
+      glucose_ratio,                        #8
+      BLDGLU,                               #9
       # log2(csf_lympho+1),
       # log2(csf_protein),
       # log2(csf_lactate),
-      log_lympho,                           #11
-      log_protein,                          #12
-      log_lactate,                          #13
-      xray_pul_tb,                          #14
-      xray_miliary_tb                       #15
+      log_lympho,                           #10
+      log_protein,                          #11
+      log_lactate,                          #12
+      xray_pul_tb,                          #13
+      xray_miliary_tb                       #14
+      # ISDIABETE                            #15
     ))
     
     model_input_disc <- dat %$%
@@ -53,7 +55,8 @@ for (i in seq_along(data_19EI_complete)){
     
     rstan::sampling(model, 
                     data=model_input_disc, chain = 1,
-                    iter=40000, seed=2906+i, warmup=25000,
+                    # iter=40000, seed=2906+i, warmup=25000, #model1
+                    iter=30000, seed=2906+i, warmup=15000,
                     control = list(max_treedepth = 18, adapt_delta=.7),
                     save_warmup = FALSE,
                     include=FALSE, 
@@ -84,8 +87,8 @@ qloo <- function(fit){
 }
 
 plan(multisession(workers = 19, gc=TRUE))
-loos <- vector("list", length(data_19EI_complete))
-for (i in seq_along(data_19EI_complete)){
+loos <- vector("list", length(fits_val))
+for (i in seq_along(fits_val)){
   . <- fits_val[[i]]
   loos[[i]] <- future(qloo(.))
   rm(.)

@@ -71,9 +71,9 @@ model {
   b     ~ student_t(5, 0, 1  );
   
   //1-Specificity of each test
-  z_Xpert[1] ~ normal(inv_Phi(.005), .7  );
-  z_Mgit[1]  ~ normal(-3.023       , .89 );
-  z_Smear[1] ~ normal(-3.023       , .89 );
+  z_Xpert[1] ~ normal(inv_Phi(.005),1.318);
+  z_Mgit[1]  ~ normal(inv_Phi(.001),1.577);
+  z_Smear[1] ~ normal(inv_Phi(.001),1.577);
   
   //Sensitivity of each test
   z_Xpert[2] ~ normal(inv_Phi(.593), .117);

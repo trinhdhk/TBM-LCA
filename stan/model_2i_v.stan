@@ -1,4 +1,57 @@
 functions {
+  int[] equal_vec(vector x, real y){
+    int eq[num_elements(x)];
+    for (i in 1:num_elements(x)){
+      eq[i] = x[i] == y ? 1 : 0;
+    }
+    
+    return eq;
+  }
+  
+  int[] greater_vect(vector x, real y){
+    int gr[num_elements(x)];
+    for (i in 1:num_elements(x)){
+      gr[i] = x[i] >= y ? 1 : 0;
+    }
+    
+    return gr;
+  }
+  
+  int[] lesser_vect(vector x, real y){
+    int ls[num_elements(x)];
+    for (i in 1:num_elements(x)){
+      ls[i] = x[i] <= y ? 1 : 0;
+    }
+    
+    return ls;
+  }
+  
+  int[] which(vector x, real threshold){
+    int x_int[num_elements(x)] = greater_vect(x, threshold);
+    int w[sum(x_int)];
+    int k=1;
+    for (i in 1:num_elements(x)){
+      if (x_int[i] == 1){
+        w[k] = i;
+        k += 1;
+      } 
+    }
+    return w;
+  }
+  
+  int[] anti_which(vector x, real threshold){
+    int x_int[num_elements(x)] = greater_vect(x, threshold);
+    int w[sum(x_int)];
+    int k=1;
+    for (i in 1:num_elements(x)){
+      if (x_int[i] == 0){
+        w[k] = i;
+        k += 1;
+      } 
+    }
+    return w;
+  }
+  
   int sum2d(int[,] a) {
     int s = 0;
     for (i in 1:size(a))
@@ -177,15 +230,6 @@ functions {
       prod_probs .*= probs_pattern[,i];
     }
    
-    // if (sum(prod_probs) != 1) {
-    //   print(Xd_imp);
-    //   print(obs_Xd_imp);
-    //   print(obs_pattern);
-    //   print(probs_pattern);
-    //   print(prod_probs);
-    //   reject("Parametrisation Error!");
-    // }
-    // val = {prod_probs, pat};
     return {prod_probs, pat};
   }
 }
@@ -217,6 +261,9 @@ transformed data {
   
   // Var declarations ..........................................................
   int nX = nXc + nXd;
+  int i_obs_HIV = which(to_vector(obs_Xd[,1]), 1);
+  int i_miss_HIV = anti_which(to_vector(obs_Xd[,1]), 1);
+  int i_obs_all = which(to_vector(sum_2d(obs_Xd[, 1:3])), 3);
   
   // Clinical symptoms Td[1:3] ------------------------------------------------
   int Td_cs[N,3] = Td[,1:3];
@@ -244,8 +291,6 @@ transformed data {
   int<lower=0> N_neg_mp;
   int<lower=1,upper=N> n_neg_mp[sum2d(obs_mp) - size(n_pos_mp)];
   int<lower=1,upper=3> d_neg_mp[size(n_neg_mp)];
-
-
 
   // Var assigments.............................................................
   N_pos_cs = size(n_pos_cs);
@@ -301,6 +346,7 @@ transformed data {
     }
   }
   // ---------------------------------------------------------------------------
+  
 }
  
 parameters {
@@ -439,49 +485,30 @@ model {
   // - HIV
   real p_HIV = Phi(HIV_a0);
   HIV_a0 ~ student_t(5, 0, 1);
-  for (n in 1:N) {
-    if (obs_Xd[n,1] == 1){
-      Xd[n,1] ~ bernoulli(p_HIV);
-    }
-  }
+  to_vector(Xd[i_obs_HIV, 1]) ~ bernoulli(p_HIV);
   
   // - Clinical symptoms
   L_Omega_cs ~ lkj_corr_cholesky(4);
   cs_a0 ~ student_t(5, 0, 2.5);
   cs_a ~ student_t(5, 0, 2.5);
   
-  // {
-  //   for (n in 1:N) {
-  //     if (obs_Xd[n,1] == 1){
-  //       z_cs[n] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
-  //     } else {
-  //       target += log_mix(p_HIV,
-  //       multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs),
-  //       multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs));
-  //     }
-  //   }
-  // }
-  
   // - Motor palsy
   L_Omega_mp ~ lkj_corr_cholesky(4);
   mp_a0 ~ student_t(5, 0, 1);
   mp_a ~ student_t(5, 0, 2.5);
-  // {
-  //   // vector[3] mp_a_x[N];
-  //   for (n in 1:N){
-  //     if (obs_Xd[n,1] == 1){
-  //       z_mp[n] ~ multi_normal_cholesky(mp_a0 + mp_a * Xd[n,1], L_Omega_mp);
-  //       z_cs[n] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
-  //     } else {
-  //       target += log_mix(p_HIV,
-  //                         multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs),
-  //                         multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs));
-  //       target += log_mix(p_HIV,
-  //                         multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp),
-  //                         multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp));
-  //     }
-  //   }
-  // }
+  
+  z_mp[i_obs_HIV] ~ multi_normal_cholesky(mp_a0 + mp_a * Xd[n,1], L_Omega_mp);
+  z_cs[i_obs_HIV] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
+  
+  for (n in i_miss_HIV){
+    target += log_mix(p_HIV,
+                      multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs),
+                      multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs));
+    target += log_mix(p_HIV,
+                      multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp),
+                      multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp));
+  }
+   
   // - Age
   mu_age ~ student_t(5, 0, 1);
   sigma_age ~ normal(0, 2.5);
@@ -495,11 +522,11 @@ model {
     // GCSV
   gcsv_a0 ~ student_t(5, 0, 1);
   gcsv_a  ~ student_t(5, 0, 2.5);
-  gcsv_sigma ~ normal(0, 1);
+  gcsv_sigma ~ normal(0, 1)
+  
   {
-    real gcsv_x[N];
-    for (n in 1:N)
-      gcsv_x[n] = gcsv_a0 + dot_product(gcsv_a,(to_vector(Tc[n, 1:2])));
+    vector[N] gcsv_x;
+    gcsv_x = gcsv_a0 + dot_product(gcsv_a,to_vector(Tc[,1:2]));
     GCSV_imp ~ normal(gcsv_x, gcsv_sigma);
   }
   
@@ -509,29 +536,23 @@ model {
   L_Omega_glu ~ lkj_corr_cholesky(4);
   glu_a0 ~ student_t(5, 0, 1);
   to_vector(glu_a) ~ student_t(5, 0, 2.5);
+  // Other csf lab values
+  L_Omega_csf ~ lkj_corr_cholesky(4);
+  csf_a0 ~  student_t(5, 0, 1);
   
   {
     vector[2] glu_a_x[N];
     vector[2] glu_imp[N];
+    vector[4] csf_imp[N];
     for (n in 1:N){
       glu_imp[n] = [Xc_imp[n,3], Xc_imp[n,4]]';
       glu_a_x[n] = glu_a0 + glu_a[,1]*Xc_imp[n,1] + glu_a[,2]*Td[n,7];
+      csf_imp[n] = [Xc_imp[n,4], Xc_imp[n,5], Xc_imp[n,6], Xc_imp[n,7]]';
     }
       
       glu_imp ~ multi_normal_cholesky(glu_a_x, L_Omega_glu);
+      csf_imp ~ multi_normal_cholesky(csf_a0, L_Omega_csf);
   }
-  
-  // Other csf lab values
-  L_Omega_csf ~ lkj_corr_cholesky(4);
-  csf_a0 ~  student_t(5, 0, 1);
-  {
-    vector[4] csf_imp[N];
-    for (n in 1:N) {
-      csf_imp[n] = [Xc_imp[n,4], Xc_imp[n,5], Xc_imp[n,6], Xc_imp[n,7]]';
-    } 
-    csf_imp ~ multi_normal_cholesky(csf_a0, L_Omega_csf);
-  }
-  
   
   // --------------------------------------------------------------------------
   
@@ -569,20 +590,10 @@ model {
   z_Mgit[2]  ~ normal(inv_Phi(.665), .217);
   z_Smear[2] ~ normal(inv_Phi(.786), .405);
   
+  
+  
   for (n in 1:N){
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
-    
-    if (obs_Xd[n,1] == 1){
-        z_mp[n] ~ multi_normal_cholesky(mp_a0 + mp_a * Xd[n,1], L_Omega_mp);
-        z_cs[n] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
-      } else {
-        target += log_mix(p_HIV,
-                          multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs),
-                          multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs));
-        target += log_mix(p_HIV,
-                          multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp),
-                          multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp));
-      }
     
     if (N_Xd_miss){
       int N_pattern = int_power(2, N_Xd_miss);
@@ -618,7 +629,8 @@ model {
           vector[2] z_Mgit_RE  = z_Mgit [2] + b[2]*bac_load;
           vector[2] z_Xpert_RE = z_Xpert[2] + b[3]*bac_load;
           
-          log_liks[i] = prob_theta*log_mix(theta, log_sum_exp(
+          log_liks[i] = prob_theta*log_mix(theta, 
+                                           log_sum_exp(
                                              prob_Y[1] * (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
                                              prob_Y[2] * (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
                                            ),

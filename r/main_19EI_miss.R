@@ -24,24 +24,20 @@ for (i in seq_along(data_19EI_complete)){
     
     X <- dat %$% as.matrix(cbind(
       hiv_stat,                             #1
-      (age-mean(age))/10,                   #2
-      clin_symptoms,                        #3
-      # log2(clin_illness_day), 
-      log_illness_day,                      #4
-      clin_nerve_palsy,                     #5
-      clin_motor_palsy,                     #6
-      clin_gcs,                             #7
-      glucose_ratio,                        #8
-      BLDGLU,                               #9
-      # log2(csf_lympho+1),
-      # log2(csf_protein),
-      # log2(csf_lactate),
-      log_lympho,                           #10
-      log_protein,                          #11
-      log_lactate,                          #12
-      xray_pul_tb,                          #13
-      xray_miliary_tb                       #14
-      # ISDIABETE                            #15
+      clin_symptoms,                        #2
+      clin_motor_palsy,                     #3
+      clin_nerve_palsy,                     #4
+      xray_pul_tb,                          #5
+      xray_miliary_tb                       #6
+      (age-mean(age))/10,                   #7
+      log_illness_day,                      #8
+      clin_gcs,                             #9
+      log2(glucose_ratio),                  #10
+      log2(BLDGLU),                         #11
+      log_lympho,                           #12
+      log_protein,                          #13
+      log_lactate,                          #14
+      # ISDIABETE                           #15
     ))
     
     model_input_disc <- dat %$%

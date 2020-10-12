@@ -2,7 +2,7 @@ functions {
   int sum2d(int[,] a) {
     int s = 0;
     for (i in 1:size(a))
-      s += sum(a[i]);
+    s += sum(a[i]);
     return s;
   }
   
@@ -11,7 +11,7 @@ functions {
     if (size(a) != size(b)) reject("Size a and b must match!");
     for (i in 1:size(a)){
       for (j in 1:size(a[i]))
-        s += (b[i,j] == 1) ? a[i,j] : 0;
+      s += (b[i,j] == 1) ? a[i,j] : 0;
     }
     return s;
   }
@@ -21,6 +21,31 @@ functions {
     matrix[size(x), num_elements(x[1])] M;
     for (i in 1:size(x)) M[i,] = x[i]'; 
     return M;
+  }
+  
+  //Calculate the sum of size of each vector in an array of vector
+  int sum_size(vector[] x){
+    int s = 0;
+    int N = size(x);
+    for (n in 1:N){
+      s = s + num_elements(x[n]);
+    }
+    return s;
+  }
+  
+  //Concat vectors into one
+  vector concat(vector[] x){
+    int N = size(x);
+    int S = sum_size(x);
+    vector[S] y;
+    int i = 1;
+    
+    for (n in 1:N){
+      y[i:(i+num_elements(x[n])-1)] = x[n];
+      i += num_elements(x[n]);
+    }
+    
+    return y;
   }
   
   //Rep vectors into one vector
@@ -53,7 +78,7 @@ functions {
     if (size(obs)!=N||size(z)!=N) reject("Size mismatched!");
     
     for (n in 1:N)
-      imp[n] = obs[n] ? raw[n] : Phi(z[n]);
+    imp[n] = obs[n] ? raw[n] : Phi(z[n]);
     
     return imp;
   }
@@ -109,7 +134,7 @@ functions {
     int k = 1;
     
     if (size(obs)!=size(raw) || size(obs[1])!=size(raw[1]))
-      reject("Size mismatched!");
+    reject("Size mismatched!");
     
     for (i in 1:dims(raw)[1]){
       for (j in 1:dims(raw)[2]){
@@ -121,6 +146,26 @@ functions {
       }
     }
     return imp;
+  }
+  
+  // This function for rng logit with awarenss of observervation
+  vector discrete_rng(vector imputed_1d, int[] obs){
+    int N = num_elements(imputed_1d);
+    vector[N] val;
+    if (size(obs) != N) reject("Size mismatched!");
+    
+    for (n in 1:N) val[n] = obs[n] ? imputed_1d[n] : bernoulli_rng(imputed_1d[n]);
+    
+    return val;
+  }
+  
+  matrix discrete_2d_rng(matrix imputed_2d, int[,] obs){
+    int M = dims(imputed_2d)[2];
+    int N = dims(imputed_2d)[1];
+    matrix[N, M] val;
+    if (dims(obs)[1] != N || dims(obs)[2] != M) reject("Size mismatched!");
+    for (m in 1:M) val[, m] = discrete_rng(imputed_2d[,m], obs[, m]);
+    return val;
   }
   
   // This function do the power operator but return int rather than real
@@ -157,7 +202,7 @@ functions {
       vector[int_power(2, j+1)] V;
       if (obs_Xd_imp[i] == 0){
         V = append_row(rep_vector(0, int_power(2, j)), rep_vector(1, int_power(2, j)));
-        obs_pattern[,i] = rep_vectors(V, T/int_power(2, j+1));
+        obs_pattern[,i] = rep_vectors(V, T / int_power(2, j+1));
         j += 1;
       } else {
         obs_pattern[,i] = rep_vector(Xd_imp[i], T);
@@ -176,7 +221,7 @@ functions {
       pat += a_pattern[,i];
       log_probs += log(probs_pattern[,i]);
     }
-   
+    
     return {log_probs, pat};
   }
 }
@@ -186,8 +231,28 @@ data {
   int<lower=1> nXc; //Number of continuous X
   int<lower=1> nXd; //Number of discrete X
   int<lower=1> nTd; //Number of disc. aux covariates for imputation model
-  int<lower=1> nTc; //Number of cont. aux covariates for imputation model
   
+  int<lower=0, upper=1> Y_Smear0[N];
+  int<lower=0, upper=1> Y_Mgit0[N];
+  int<lower=0, upper=1> Y_Xpert0[N];
+  
+  real Xc0[N, nXc]; //Continuous covariates
+  int  Xd0[N, nXd]; //Discrete covariates
+  int  Td0[N, nTd]; //Auxillary covariates - discrete
+  
+  //Matrices of observation
+  int<lower=0, upper=1> obs_Xc0[N, nXc]; 
+  int<lower=0, upper=1> obs_Xd0[N, nXd];
+  int<lower=0, upper=1> obs_Td0[N, nTd]; 
+  
+  //Bootstraps
+  int<lower=0, upper=1> resample;
+}
+
+transformed data {
+  simplex[N] uniform = rep_vector(1.0 / N, N);
+  int<lower = 1, upper = N> boot_idxs[N];
+ 
   int<lower=0, upper=1> Y_Smear[N];
   int<lower=0, upper=1> Y_Mgit[N];
   int<lower=0, upper=1> Y_Xpert[N];
@@ -195,19 +260,16 @@ data {
   real Xc[N, nXc]; //Continuous covariates
   int  Xd[N, nXd]; //Discrete covariates
   int  Td[N, nTd]; //Auxillary covariates - discrete
-  real Tc[N, nTc]; //Auxillary covariates - cont
   
   //Matrices of observation
   int<lower=0, upper=1> obs_Xc[N, nXc]; 
   int<lower=0, upper=1> obs_Xd[N, nXd];
   int<lower=0, upper=1> obs_Td[N, nTd]; 
-  int<lower=0, upper=1> obs_Tc[N, nTc]; 
-}
-
-transformed data {
+  
   
   // Var declarations ..........................................................
   int nX = nXc + nXd;
+
   
   // Clinical symptoms Td[1:3] ------------------------------------------------
   int Td_cs[N,3] = Td[,1:3];
@@ -236,9 +298,26 @@ transformed data {
   int<lower=1,upper=N> n_neg_mp[sum2d(obs_mp) - size(n_pos_mp)];
   int<lower=1,upper=3> d_neg_mp[size(n_neg_mp)];
 
+  // For csf mvNormal regression
+  // This is a bug in RStan when using custom functions in parameters.
+  int obs_csf_glu = sum2d(obs_Xc[,3:4]);
+  int obs_csf_other = sum2d(obs_Xc[,5:7]);
 
 
   // Var assigments.............................................................
+   for (n in 1:N)
+    boot_idxs[n] = resample ? categorical_rng(uniform) : n;
+    
+  Y_Smear = Y_Smear0[boot_idxs];
+  Y_Mgit = Y_Mgit0[boot_idxs];
+  Y_Xpert = Y_Xpert0[boot_idxs];
+  Xc = Xc0[boot_idxs,:];
+  Xd = Xd0[boot_idxs,:];
+  Td = Td0[boot_idxs,:];
+  obs_Xc = obs_Xc0[boot_idxs,:];
+  obs_Xd = obs_Xd0[boot_idxs,:];
+  obs_Td = obs_Td0[boot_idxs,:];
+  
   N_pos_cs = size(n_pos_cs);
   N_neg_cs = size(n_neg_cs);
   N_miss_cs = size(n_miss_cs);
@@ -328,31 +407,25 @@ parameters {
   real<lower=0> sigma_id;
   real id_imp[N - sum(obs_Xc[,2])];
   
-  // Impute gcs Xc[3]
-  // Use auxillary gcs components: Tc[1:3] GCSE, GCSM, GCSV
-  // GCSV is missing.
-  real<lower=0> gcsv_a0;
-  vector[2] gcsv_a;
-  real<lower=0> gcsv_sigma;
-  real<lower=0, upper=4> gcsv_imp[N - sum(obs_Tc[,3])];
   
   // Impute {log2(bldglu) and [log2(csfglu)} and log_lympho, log_protein, log_lactate]
-  // csfglu stays in both groups as to form a link
-  vector[2] glu_a0;
-  matrix[2,2] glu_a; //two covs are "diabete" and "age"
-  vector[4] csf_a0; // no covs for the other 4
-  cholesky_factor_corr[2] L_Omega_glu;
-  cholesky_factor_corr[4] L_Omega_csf;
-  real csf_glu_imp[(N*5) - sum2d(obs_Xc[,4:8])];
-  
+  // Impute (sqrt(bldglu), sqrt(csfglu), log_lympho, log_protein, log_lactate) as mvNormal
+  vector[5] csf_a0;
+  vector[2] glu_a_diabete;
+  cholesky_factor_corr[5] L_Omega_csf;
+  real<lower=0> bld_csf_glu_imp[(N*2) - obs_csf_glu];
+  real csf_other_imp[(N*3) - obs_csf_other];
   
   //----------------------------------------------------------------------------
   
   // For logit regression ------------------------------------------------------
   real a0; //intercept
-  vector[nX] a; //slope
+  // vector[nX + 1] a; //slope
+  vector<lower=0>[3] a_pos; //1,2, #5, 6, #8
+  // vector<upper=0>[2] a_neg;
+  vector[nX + 1 - 3] a_;
   real b_HIV; //adjustment of RE with HIV X[,1]
-  real<lower=0> b[3];
+  real<lower=0> b_RE;
   
   //Probability of each vars
   ordered[2] z_Smear; 
@@ -363,10 +436,11 @@ parameters {
 }
 
 transformed parameters{
+  vector[nX + 1] a = concat({a_pos[1:2], a_[1:3], a_pos[3:3], a_[4:(nX+1-3)]});
   // Create an fully imputed X matrix
   matrix[N, nXd - 3] Xd_compl; 
   matrix[N, 3] Xd_imp; //fully imputed discrete X
-  matrix[N, nXc] Xc_imp; //fully imputed cont X
+  matrix[N, nXc + 1] Xc_imp; //fully imputed cont X
   
   // Imputation models ---------------------------------------------------------
   // - Clinical symptoms
@@ -374,9 +448,6 @@ transformed parameters{
   
   // - Motor palsy
   vector[3] z_mp[N];
-  
-  // - GCSV
-  vector<lower=0, upper=5>[N] GCSV_imp;
   
   // - HIV
   Xd_imp[,1] = to_vector(impute_discrete_1d(Xd[,1], obs_Xd[,1], rep_array(Phi(HIV_a0), N)));
@@ -407,199 +478,190 @@ transformed parameters{
   // - Illness day
   Xc_imp[,2] = impute_cont_1d(Xc[,2], obs_Xc[,2], id_imp);
   
-  // - GCSV
-  GCSV_imp = impute_cont_1d(Tc[,3], obs_Tc[,3], gcsv_imp);
-  Xc_imp[,3] = impute_cont_1d(Xc[,3], obs_Xc[,3], 
-                         to_array_1d(to_vector(Tc[,1]) + to_vector(Tc[,2]) + to_vector(GCSV_imp)));
-  
   // - Blood glucose, CSF glucose, lymphocyte, protein, lactate
   // blood glucose, csf_glucose, csf lymphocytes count, protein, and lactate
   // logbldglu: Xc[4], logcsfglu: Xc[5], loglym: Xc[6], logprotein: Xc[7], loglac: Xc[8]
   // real CSF[N,5] = Xc[,4:8]; //raw BLDGLU, CSFGLU, LYMPH, PROTEIN, LACTATE
   // int obs_csf[N,5] = obs_Xc[,4:8];
-  Xc_imp[,4:8] = impute_cont_2d(Xc[,4:8], obs_Xc[,4:8], csf_glu_imp);
+  Xc_imp[,3:7] = impute_cont_2d(Xc[,3:7], obs_Xc[,3:7], append_array(bld_csf_glu_imp, csf_other_imp));
+  Xc_imp[,8] = Xc_imp[,4] ./ Xc_imp[,3];
+  
   
   // Other vars
-  Xd_compl = to_matrix(Xd[,4:6]); 
+  Xd_compl = to_matrix(Xd[,4:nXd]); 
 }
 
 model {
-  matrix[N, nX - 3] X_compl = append_col(Xd_compl, Xc_imp);
+  matrix[N, nX - 3 + 1] X_compl = append_col(Xd_compl, Xc_imp);
   
   // Imputation ---------------------------------------------------------------
   // - HIV
   real p_HIV = Phi(HIV_a0);
-  HIV_a0 ~ student_t(5, 0, 2.5);
+  HIV_a0 ~ student_t(5, 0, 1);
   
   // - Clinical symptoms
   L_Omega_cs ~ lkj_corr_cholesky(4);
-  cs_a0 ~ student_t(5, 0, 2.5);
-  cs_a ~ student_t(5, 0, 2.5);
+  cs_a0 ~ student_t(5, 0, 1);
+  cs_a ~ student_t(5, 0, 1);
   
   
   // - Motor palsy
   L_Omega_mp ~ lkj_corr_cholesky(4);
-  mp_a0 ~ student_t(5, 0, 2.5);
-  mp_a ~ student_t(5, 0, 2.5);
+  mp_a0 ~ student_t(5, 0, 1);
+  mp_a ~ student_t(5, 0, 1);
 
   // - Age
-  mu_age ~ student_t(5, 0, 2.5);
+  mu_age ~ student_t(5, 0, 1);
   sigma_age ~ normal(0, 1);
   Xc_imp[,1] ~ normal(mu_age, sigma_age);
   
   // - Illness day
-  mu_id ~ student_t(5, 0, 2.5);
+  mu_id ~ student_t(5, 0, 1);
   sigma_id ~ normal(0, 1);
   Xc_imp[,2] ~ normal(mu_id, sigma_id);
   
-    // GCSV
-  gcsv_a0 ~ student_t(5, 0, 2.5);
-  gcsv_a  ~ student_t(5, 0, 2.5);
-  gcsv_sigma ~ normal(0, 1);
-  
   // - Blood glucose and glucose ratio
-  // Td[7] is diabetes status
-  // Xc_imp[1] is imputed age
-  L_Omega_glu ~ lkj_corr_cholesky(4);
-  glu_a0 ~ student_t(5, 0, 2.5);
-  to_vector(glu_a) ~ student_t(5, 0, 2.5);
-  // Other csf lab values
+  to_vector(glu_a_diabete) ~ student_t(5, 0, 1);
   L_Omega_csf ~ lkj_corr_cholesky(4);
-  csf_a0 ~  student_t(5, 0, 2.5);
+  csf_a0 ~  student_t(5, 0, 1);
+  
   
   {
-    vector[2] glu_a_x[N];
-    vector[2] glu_imp[N];
-    vector[4] csf_imp[N];
-    real gcsv_x[N];
+    vector[5] csf_a_x[N];
+    vector[5] csf_imp[N];
     for (n in 1:N){
-      glu_imp[n] = [Xc_imp[n,4], Xc_imp[n,5]]';
-      glu_a_x[n] = glu_a0 + glu_a[,1]*Xc_imp[n,1] + glu_a[,2]*Td[n,7];
-      csf_imp[n] = [Xc_imp[n,5], Xc_imp[n,6], Xc_imp[n,7], Xc_imp[n,8]]';
-      gcsv_x[n] = gcsv_a0 + dot_product(gcsv_a,(to_vector(Tc[n, 1:2])));
+      csf_imp[n] = Xc_imp[n,3:7]';
+      csf_a_x[n, 1:2] = csf_a0[1:2] + glu_a_diabete * Td[n, 7];
+      csf_a_x[n, 3:5] = csf_a0[3:5];
     }
-      glu_imp ~ multi_normal_cholesky(glu_a_x, L_Omega_glu);
-      csf_imp ~ multi_normal_cholesky(csf_a0, L_Omega_csf);
-      GCSV_imp ~ normal(gcsv_x, gcsv_sigma);
+    csf_imp ~ multi_normal_cholesky(csf_a_x, L_Omega_csf);
   }
-  
-  // --------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------
   
   //Probs of each test become positive
-  // Priors of covariates
-  a0       ~ student_t(5, 0  ,10  );
+// Priors of covariates
+a0       ~ student_t(5, 0  , 2.5);
+a        ~ student_t(5, 0  , 2.5);
+
+//Random effects covariates
+RE    ~    normal(   0, 1);
+b_RE  ~ student_t(5, 0, 1);
+b_HIV ~ student_t(5, 0, 1);
+// b     ~ student_t(5, 0, 1);
+
+//1-Specificity of each test
+z_Xpert[1] ~ normal(logit(.005), 1.59);
+z_Mgit[1]  ~ normal(logit(.001),  .7 ); //.82
+z_Smear[1] ~ normal(logit(.001),  .7 );
+
+//Sensitivity of each test
+z_Xpert[2] ~ normal(0, .6);
+z_Mgit[2]  ~ normal(0, .6);
+z_Smear[2] ~ normal(0, .6);
+
+for (n in 1:N){
+  int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
+
+  if (obs_Xd[n,1] == 1){
+    Xd[n,1] ~ bernoulli(p_HIV);
+    z_mp[n] ~ multi_normal_cholesky(mp_a0 + mp_a * Xd[n,1], L_Omega_mp);
+    z_cs[n] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
+  } else {
+  if (is_nan(
+    multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs) +
+    multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs) +
+    multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp) +
+    multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp)))
+    target += not_a_number();
+    else {
+  target += log_mix(p_HIV,
+                    multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs),
+                    multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs));
+  target += log_mix(p_HIV,
+                    multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp),
+                    multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp));
+  }
+  }
   
-  // Discrete var
-  a[1]     ~ student_t(5, 0  , 2.5);
-  a[2]     ~ student_t(5, 2  , 1  );
-  a[3]     ~ student_t(5, 1  , 1  );
-  a[4]     ~ student_t(5, 1  , 1  );
-  a[5]     ~ student_t(5, 2  , 1  );
-  a[6]     ~ student_t(5, 4  , 1  );
-  
-  // Cont var
-  a[7]     ~ student_t(5, 0  , 2.5);
-  a[8]     ~ student_t(5, 1.7, 1  );
-  a[9]     ~ student_t(5, 0  , 2.5);
-  a[10]    ~ student_t(5,-1  , 1  );
-  a[11]    ~ student_t(5,-1  , 1  );
-  a[12:14] ~ student_t(5, 0  , 2.5);
-  
-  //Random effects covariates
-  RE    ~    normal(   0, 1  );
-  b_HIV ~ student_t(5, 0, 2.5);
-  b     ~ student_t(5, 0, 1  );
-  
-  //1-Specificity of each test
-  z_Xpert[1] ~ normal(inv_Phi(.005), .7  );
-  z_Mgit[1]  ~ normal(-3.023       , .89 );
-  z_Smear[1] ~ normal(-3.023       , .89 );
-  
-  //Sensitivity of each test
-  z_Xpert[2] ~ normal(inv_Phi(.593), .117);
-  z_Mgit[2]  ~ normal(inv_Phi(.665), .217);
-  z_Smear[2] ~ normal(inv_Phi(.786), .405);
-  
-  for (n in 1:N){
-    int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
+  if (N_Xd_miss){
+    int N_pattern = int_power(2, N_Xd_miss);
+    vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,], obs_Xd[n, 1:3], a[1:3]);
+    vector[N_pattern] log_liks;
+    pat_thetas[2] += a0 + dot_product(a[4:15], X_compl[n]);
     
-    if (obs_Xd[n,1] == 1){
-      Xd[n,1] ~ bernoulli(p_HIV);
-      z_mp[n] ~ multi_normal_cholesky(mp_a0 + mp_a * Xd[n,1], L_Omega_mp);
-      z_cs[n] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
+    //check if HIV is missing
+    if (obs_Xd[n,1]){
+      for (i in 1:N_pattern){
+        real logprob_theta = pat_thetas[1][i];
+        real theta = inv_logit(pat_thetas[2][i]);
+        
+        real bac_load = b_HIV * Xd_imp[n,1];
+        real z_Smear_RE = z_Smear[2] + bac_load + b_RE * RE[n];
+        real z_Mgit_RE  = z_Mgit [2] + bac_load + b_RE * RE[n];
+        real z_Xpert_RE = z_Xpert[2] + bac_load + b_RE * RE[n];
+        
+        log_liks[i] = logprob_theta + log_mix(theta, 
+                                              bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
+                                              bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+      }
     } else {
-      if (is_nan(
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs) + 
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs) + 
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp) + 
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp)))
-        target += not_a_number();
-        else {
-          target += log_mix(p_HIV,
-                            multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a, L_Omega_cs),
-                            multi_normal_cholesky_lpdf(z_cs[n] | cs_a0, L_Omega_cs));
-          target += log_mix(p_HIV,
-                            multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a, L_Omega_mp),
-                            multi_normal_cholesky_lpdf(z_mp[n] | mp_a0, L_Omega_mp));
-        }
-    }
-    
-    if (N_Xd_miss){
-      int N_pattern = int_power(2, N_Xd_miss);
-      vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,], obs_Xd[n, 1:3], a[1:3]);
-      vector[N_pattern] log_liks;
-      pat_thetas[2] += a0 + dot_product(a[4:nX], X_compl[n]);
-      
-      //check if HIV is missing
-      if (obs_Xd[n,1]){
-        for (i in 1:N_pattern){
-          real logprob_theta = pat_thetas[1][i];
-          real theta = inv_logit(pat_thetas[2][i]);
-          
-          real bac_load = RE[n] + b_HIV * Xd_imp[n,1];
-          real z_Smear_RE = z_Smear[2] + b[1]*bac_load;
-          real z_Mgit_RE  = z_Mgit [2] + b[2]*bac_load;
-          real z_Xpert_RE = z_Xpert[2] + b[3]*bac_load;
-          
-          log_liks[i] = logprob_theta + log_mix(theta, 
-                                                bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
-                                                bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
-        }
-      } else {
-        for (i in 1:N_pattern){
-          real logprob_theta = pat_thetas[1][i];
-          real theta = inv_logit(pat_thetas[2][i]);
-          
-          vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [b_HIV]');
-          vector[2] logprob_Y = pat_bac_load[1];
-          vector[2] bac_load = pat_bac_load[2] + RE[n];
-          
-          vector[2] z_Smear_RE = z_Smear[2] + b[1]*bac_load;
-          vector[2] z_Mgit_RE  = z_Mgit [2] + b[2]*bac_load;
-          vector[2] z_Xpert_RE = z_Xpert[2] + b[3]*bac_load;
-          
-          log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
-                                                logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
-                                                logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
-                                                ),
-                                                bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+      for (i in 1:N_pattern){
+        real logprob_theta = pat_thetas[1][i];
+        real theta = inv_logit(pat_thetas[2][i]);
+        // real theta = (i % 2 == 1) ? inv_logit(pat_thetas[2][i]) : inv_logit(pat_thetas[2][i]);
+        
+        vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [b_HIV]');
+        vector[2] logprob_Y = pat_bac_load[1];
+        vector[2] bac_load = pat_bac_load[2];
+        
+        vector[2] z_Smear_RE = z_Smear[2] + bac_load + b_RE * RE[n];
+        vector[2] z_Mgit_RE  = z_Mgit [2] + bac_load + b_RE * RE[n];
+        vector[2] z_Xpert_RE = z_Xpert[2] + bac_load + b_RE * RE[n];
+        
+        log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
+                                              logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
+                                              logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
+                                              ),
+                                              bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
         }
       } 
       
       target += log_sum_exp(log_liks);
     } else {
       // The normal way
-      row_vector[nX] X = append_col(Xd_imp[n,], X_compl[n,]);
+      row_vector[nX + 1] X = append_col(Xd_imp[n,], X_compl[n,]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
-      real bac_load = RE[n] + b_HIV*Xd_imp[n, 1];
-      real z_Smear_RE = z_Smear[2] + b[1]*bac_load;
-      real z_Mgit_RE  = z_Mgit [2] + b[2]*bac_load;
-      real z_Xpert_RE = z_Xpert[2] + b[3]*bac_load;
+      real bac_load = b_HIV*Xd_imp[n, 1];
+      real z_Smear_RE = z_Smear[2] + bac_load + b_RE * RE[n];
+      real z_Mgit_RE  = z_Mgit [2] + bac_load + b_RE * RE[n];
+      real z_Xpert_RE = z_Xpert[2] + bac_load + b_RE * RE[n];
       
       target += log_mix(theta, 
                         bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
                         bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+    }
+  }
+}
+
+generated quantities{
+  vector<lower=0, upper=1>[N] theta;
+  int <lower=0, upper=1> C[N];
+  vector[N] log_lik;
+  
+  matrix<lower=0, upper=1>[N, 3] Xd_rng = discrete_2d_rng(Xd_imp, obs_Xd[,1:3]);
+  matrix[N, nX + 1] X = append_col(append_col(Xd_rng, Xd_compl), Xc_imp);
+  
+  theta = inv_logit(a0 + X*a[1:15]); 
+  C = bernoulli_rng(theta);
+  
+  for (n in 1:N){
+    if (C[n]){
+      log_lik[n] = bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]);
+    } else {
+      real bac_load = b_HIV * X[n,1] + b_RE * RE[n];
+      log_lik[n] = bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[2] + bac_load) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[2] + bac_load) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[2] + bac_load);
     }
   }
 }

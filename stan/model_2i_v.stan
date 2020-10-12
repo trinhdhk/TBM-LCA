@@ -1,12 +1,12 @@
 functions {
-  int[] equal_vec(vector x, real y){
-    int eq[num_elements(x)];
-    for (i in 1:num_elements(x)){
-      eq[i] = x[i] == y ? 1 : 0;
-    }
-    
-    return eq;
-  }
+  // int[] equal_vec(vector x, real y){
+  //   int eq[num_elements(x)];
+  //   for (i in 1:num_elements(x)){
+  //     eq[i] = x[i] == y ? 1 : 0;
+  //   }
+  //   
+  //   return eq;
+  // }
   
   int[] greater_vect(vector x, real y){
     int gr[num_elements(x)];
@@ -17,14 +17,14 @@ functions {
     return gr;
   }
   
-  int[] lesser_vect(vector x, real y){
-    int ls[num_elements(x)];
-    for (i in 1:num_elements(x)){
-      ls[i] = x[i] <= y ? 1 : 0;
-    }
-    
-    return ls;
-  }
+  // int[] lesser_vect(vector x, real y){
+  //   int ls[num_elements(x)];
+  //   for (i in 1:num_elements(x)){
+  //     ls[i] = x[i] <= y ? 1 : 0;
+  //   }
+  //   
+  //   return ls;
+  // }
   
   int[] which(vector x, real threshold){
     int x_int[num_elements(x)] = greater_vect(x, threshold);
@@ -261,9 +261,9 @@ transformed data {
   
   // Var declarations ..........................................................
   int nX = nXc + nXd;
-  int i_obs_HIV = which(to_vector(obs_Xd[,1]), 1);
-  int i_miss_HIV = anti_which(to_vector(obs_Xd[,1]), 1);
-  int i_obs_all = which(to_vector(sum_2d(obs_Xd[, 1:3])), 3);
+  int i_obs_HIV[sum(obs_Xd[,1])] = which(to_vector(obs_Xd[,1]), 1);
+  int i_miss_HIV[N-sum(obs_Xd[,1])] = anti_which(to_vector(obs_Xd[,1]), 1);
+  int i_obs_all[N*3-sum(to_array_1d(obs_Xd[,1:3]))] = which([sum(obs_Xd[, 1]), sum(obs_Xd[,2]), sum(obs_Xd[,3])]', 3);
   
   // Clinical symptoms Td[1:3] ------------------------------------------------
   int Td_cs[N,3] = Td[,1:3];
@@ -485,7 +485,7 @@ model {
   // - HIV
   real p_HIV = Phi(HIV_a0);
   HIV_a0 ~ student_t(5, 0, 1);
-  to_vector(Xd[i_obs_HIV, 1]) ~ bernoulli(p_HIV);
+  Xd[i_obs_HIV, 1] ~ bernoulli(p_HIV);
   
   // - Clinical symptoms
   L_Omega_cs ~ lkj_corr_cholesky(4);
@@ -497,8 +497,19 @@ model {
   mp_a0 ~ student_t(5, 0, 1);
   mp_a ~ student_t(5, 0, 2.5);
   
-  z_mp[i_obs_HIV] ~ multi_normal_cholesky(mp_a0 + mp_a * Xd[n,1], L_Omega_mp);
-  z_cs[i_obs_HIV] ~ multi_normal_cholesky(cs_a0 + cs_a * Xd[n,1], L_Omega_cs);
+  {
+    vector[3] mp_a_x[size(i_obs_HIV)];
+    vector[3] cs_a_x[size(i_obs_HIV)];
+    int k = 1;
+    for (n in i_obs_HIV){
+      mp_a_x[k] = mp_a0 + mp_a * Xd[n,1];
+      cs_a_x[k] = cs_a0 + cs_a * Xd[n,1];
+      k += 1;
+    }
+    z_mp[i_obs_HIV] ~ multi_normal_cholesky(mp_a_x, L_Omega_mp);
+    z_cs[i_obs_HIV] ~ multi_normal_cholesky(cs_a_x, L_Omega_cs);
+  }
+  
   
   for (n in i_miss_HIV){
     target += log_mix(p_HIV,
@@ -522,11 +533,11 @@ model {
     // GCSV
   gcsv_a0 ~ student_t(5, 0, 1);
   gcsv_a  ~ student_t(5, 0, 2.5);
-  gcsv_sigma ~ normal(0, 1)
+  gcsv_sigma ~ normal(0, 1);
   
   {
     vector[N] gcsv_x;
-    gcsv_x = gcsv_a0 + dot_product(gcsv_a,to_vector(Tc[,1:2]));
+    gcsv_x = gcsv_a0 + to_matrix(Tc[,1:2])*gcsv_a;
     GCSV_imp ~ normal(gcsv_x, gcsv_sigma);
   }
   

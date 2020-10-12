@@ -52,14 +52,14 @@ model {
   b     ~ student_t(5, 0, 1  );
   
   //1-Specificity of each test
-  z_Xpert[1] ~ normal(inv_Phi(.005), .7  );
-  z_Mgit[1]  ~ normal(-3.023       , .89 );
-  z_Smear[1] ~ normal(-3.023       , .89 );
+  z_Xpert[1] ~ normal(logit(.005),  .951);
+  z_Mgit[1]  ~ normal(logit(.0001),2.02 );
+  z_Smear[1] ~ normal(logit(.0001),2.02 );
   
   //Sensitivity of each test
-  z_Xpert[2] ~ normal(inv_Phi(.593), .117);
-  z_Mgit[2]  ~ normal(inv_Phi(.665), .217);
-  z_Smear[2] ~ normal(inv_Phi(.786), .405);
+  z_Xpert[2] ~ normal(logit(.593),  .158);
+  z_Mgit[2]  ~ normal(logit(.665),  .171);
+  z_Smear[2] ~ normal(logit(.786),  .521);
   
   for (n in 1:N){
     target += log_mix(theta,

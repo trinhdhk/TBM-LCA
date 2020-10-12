@@ -350,7 +350,7 @@ parameters {
   
   // For logit regression ------------------------------------------------------
   real a0; //intercept
-  vector[nX] a; //slope
+  vector[nX + 2] a; //slope
   real b_HIV; //adjustment of RE with HIV X[,1]
   real<lower=0> b[3];
   
@@ -366,7 +366,7 @@ transformed parameters{
   // Create an fully imputed X matrix
   matrix[N, nXd - 3] Xd_compl; 
   matrix[N, 3] Xd_imp; //fully imputed discrete X
-  matrix[N, nXc] Xc_imp; //fully imputed cont X
+  matrix[N, nXc + 1] Xc_imp; //fully imputed cont X
   
   // Imputation models ---------------------------------------------------------
   // - Clinical symptoms
@@ -417,14 +417,15 @@ transformed parameters{
   // logbldglu: Xc[4], logcsfglu: Xc[5], loglym: Xc[6], logprotein: Xc[7], loglac: Xc[8]
   // real CSF[N,5] = Xc[,4:8]; //raw BLDGLU, CSFGLU, LYMPH, PROTEIN, LACTATE
   // int obs_csf[N,5] = obs_Xc[,4:8];
-  Xc_imp[,4:8] = impute_cont_2d(Xc[,4:8], obs_Xc[,4:8], csf_glu_imp);
+  Xc_imp[,{4,5,7,8,9}] = impute_cont_2d(Xc[,4:8], obs_Xc[,4:8], csf_glu_imp);
+  Xc_imp[,6] = Xc_imp[,5].*Xc_imp[,4];
   
   // Other vars
   Xd_compl = to_matrix(Xd[,4:6]); 
 }
 
 model {
-  matrix[N, nX - 3] X_compl = append_col(Xd_compl, Xc_imp);
+  matrix[N, nX + 1 - 3] X_compl = append_col(Xd_compl, Xc_imp);
   
   // Imputation ---------------------------------------------------------------
   // - HIV
@@ -503,7 +504,9 @@ model {
   a[9]     ~ student_t(5, 0  , 2.5);
   a[10]    ~ student_t(5,-1  , 1  );
   a[11]    ~ student_t(5,-1  , 1  );
-  a[12:14] ~ student_t(5, 0  , 2.5);
+  a[12]    ~ student_t(5,-1  , 1  );
+  a[13:15] ~ student_t(5, 0  , 2.5);
+  a[16]    ~ student_t(5, 0  , 2.5);
   
   //Random effects covariates
   RE    ~    normal(   0, 1  );
@@ -512,8 +515,8 @@ model {
   
   //1-Specificity of each test
   z_Xpert[1] ~ normal(inv_Phi(.005), .7  );
-  z_Mgit[1]  ~ normal(-3.023       , .89 );
-  z_Smear[1] ~ normal(-3.023       , .89 );
+  z_Mgit[1]  ~ normal(-10       ,   4.23 );
+  z_Smear[1] ~ normal(-10       ,4.23 );
   
   //Sensitivity of each test
   z_Xpert[2] ~ normal(inv_Phi(.593), .117);
@@ -548,10 +551,10 @@ model {
       int N_pattern = int_power(2, N_Xd_miss);
       vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,], obs_Xd[n, 1:3], a[1:3]);
       vector[N_pattern] log_liks;
-      pat_thetas[2] += a0 + dot_product(a[4:nX], X_compl[n]);
       
       //check if HIV is missing
       if (obs_Xd[n,1]){
+        pat_thetas[2] += a0 + dot_product(a[4:15], X_compl[n,]) + a[16]*Xd_imp[n,1]*X_compl[n,10];
         for (i in 1:N_pattern){
           real logprob_theta = pat_thetas[1][i];
           real theta = inv_logit(pat_thetas[2][i]);
@@ -566,9 +569,11 @@ model {
                                                 bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
         }
       } else {
+        // The conditioning is for stopping the programme from complaining
+        pat_thetas[2] += a0 + dot_product(a[4:15], X_compl[n,]);
         for (i in 1:N_pattern){
           real logprob_theta = pat_thetas[1][i];
-          real theta = inv_logit(pat_thetas[2][i]);
+          real theta;
           
           vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [b_HIV]');
           vector[2] logprob_Y = pat_bac_load[1];
@@ -578,10 +583,12 @@ model {
           vector[2] z_Mgit_RE  = z_Mgit [2] + b[2]*bac_load;
           vector[2] z_Xpert_RE = z_Xpert[2] + b[3]*bac_load;
           
+          if ((i % 2) == 0) theta = inv_logit(pat_thetas[2][i] + a[16]*X_compl[n,10]);
+          else theta = inv_logit(pat_thetas[2][i]);
+          
           log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
-                                                logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
-                                                logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
-                                                ),
+                                                  logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
+                                                  logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))),
                                                 bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
         }
       } 
@@ -590,7 +597,7 @@ model {
     } else {
       // The normal way
       row_vector[nX] X = append_col(Xd_imp[n,], X_compl[n,]);
-      real theta = inv_logit(a0 + dot_product(a, X));
+      real theta = inv_logit(a0 + dot_product(a[1:15], X) + a[16]*X[1]*X[13]);
       
       real bac_load = RE[n] + b_HIV*Xd_imp[n, 1];
       real z_Smear_RE = z_Smear[2] + b[1]*bac_load;

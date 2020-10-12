@@ -350,7 +350,7 @@ parameters {
   
   // For logit regression ------------------------------------------------------
   real a0; //intercept
-  vector[nX] a; //slope
+  vector[nX + 1] a; //slope
   real b_HIV; //adjustment of RE with HIV X[,1]
   real<lower=0> b[3];
   
@@ -366,7 +366,7 @@ transformed parameters{
   // Create an fully imputed X matrix
   matrix[N, nXd - 3] Xd_compl; 
   matrix[N, 3] Xd_imp; //fully imputed discrete X
-  matrix[N, nXc] Xc_imp; //fully imputed cont X
+  matrix[N, nXc + 1] Xc_imp; //fully imputed cont X
   
   // Imputation models ---------------------------------------------------------
   // - Clinical symptoms
@@ -417,14 +417,15 @@ transformed parameters{
   // logbldglu: Xc[4], logcsfglu: Xc[5], loglym: Xc[6], logprotein: Xc[7], loglac: Xc[8]
   // real CSF[N,5] = Xc[,4:8]; //raw BLDGLU, CSFGLU, LYMPH, PROTEIN, LACTATE
   // int obs_csf[N,5] = obs_Xc[,4:8];
-  Xc_imp[,4:8] = impute_cont_2d(Xc[,4:8], obs_Xc[,4:8], csf_glu_imp);
+  Xc_imp[,{4,5,7,8,9}] = impute_cont_2d(Xc[,4:8], obs_Xc[,4:8], csf_glu_imp);
+  Xc_imp[,6] = Xc_imp[,5]./Xc_imp[,4];
   
   // Other vars
   Xd_compl = to_matrix(Xd[,4:6]); 
 }
 
 model {
-  matrix[N, nX - 3] X_compl = append_col(Xd_compl, Xc_imp);
+  matrix[N, nX - 3 + 1] X_compl = append_col(Xd_compl, Xc_imp);
   
   // Imputation ---------------------------------------------------------------
   // - HIV
@@ -503,7 +504,8 @@ model {
   a[9]     ~ student_t(5, 0  , 2.5);
   a[10]    ~ student_t(5,-1  , 1  );
   a[11]    ~ student_t(5,-1  , 1  );
-  a[12:14] ~ student_t(5, 0  , 2.5);
+  a[12]    ~ student_t(5,-1  , 1  );
+  a[13:15] ~ student_t(5, 0  , 2.5);
   
   //Random effects covariates
   RE    ~    normal(   0, 1  );
@@ -548,7 +550,7 @@ model {
       int N_pattern = int_power(2, N_Xd_miss);
       vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,], obs_Xd[n, 1:3], a[1:3]);
       vector[N_pattern] log_liks;
-      pat_thetas[2] += a0 + dot_product(a[4:nX], X_compl[n]);
+      pat_thetas[2] += a0 + dot_product(a[4:(nX+1)], X_compl[n]);
       
       //check if HIV is missing
       if (obs_Xd[n,1]){

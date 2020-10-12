@@ -45,9 +45,9 @@ Xd <- data_19EI %$% cbind(
 Xc <- data_19EI %$% cbind(
   (age-mean(age, na.rm=TRUE))/10,       #1    #7
   log2(clin_illness_day),               #2    #8
-  clin_gcs,                             #3    #9
-  log2(glucose_ratio),                  #4    #10
-  log2(BLDGLU),                         #5    #11 
+  15-clin_gcs,                          #3    #9
+  log2(BLDGLU),                         #4    #10 
+  log2(csf_glucose),                    #5    #11
   log2(csf_lympho+1),                   #6    #12
   log2(csf_protein),                    #7    #13
   log2(csf_lactate)                     #8    #14
@@ -102,16 +102,26 @@ model_input <-
     obs_Tc = obs_Tc,
     obs_Td = obs_Td
   )
-
-model_2i <- rstan::stan_model("stan/model_2i.stan")
+Sys.setenv(STAN_NUM_THREADS = 4)
+model_2is <- rstan::stan_model("stan/model_2i.stan")
 model_2i <- cmdstanr::cmdstan_model('stan/model_2i.stan', dir = 'stan', cpp_options = list(stan_threads = TRUE))
-model_2i <- cmdstanr::cmdstan_model('stan/model_2i.stan', dir = 'stan')
-res_2i   <- model_2i$sample(data = model_input, seed = 2906, output_dir = 'outputs',
-                            chains = 4, parallel_chains = 4, threads_per_chain = 4, 
-                            iter_sampling = 20000, iter_warmup = 20000, 
-                            # show_messages = FALSE,
+# model_2i <- cmdstanr::cmdstan_model('stan/model_2i.stan', dir = 'stan')
+res_2i   <- model_2i$sample(data = model_input, seed = 29061993, output_dir = 'outputs',
+                            chains = 3, parallel_chains = 3, threads_per_chain = 4,
+                            iter_sampling = 10000, iter_warmup = 15000,
+                            show_messages = FALSE,
                             adapt_delta = .8, max_treedepth = 18)
-
-for (i in names(model_input)) assign(i, model_input[[i]])
-rstan::stan_rdump(names(model_input), file='in.R')
-model_2i$save_hpp_file(dir='stan')
+draw2i = res_2i$draws()
+draw_2i = res_2i$draws(c("a0", "a", "b_HIV", "b", "z_Smear", "z_Mgit", "z_Xpert"))
+bayesplot::mcmc_intervals(draw_2i, pars=vars(dplyr::starts_with("a")))
+# 
+# model_2iv <- cmdstanr::cmdstan_model('stan/model_2i_v.stan', dir = 'stan', cpp_options = list(stan_threads = TRUE))
+# res_2iv   <- model_2iv$sample(data = model_input, seed = 1208, output_dir = 'outputs',
+#                             chains = 3, parallel_chains = 3, threads_per_chain = 4, 
+#                             iter_sampling = 15000, iter_warmup = 15000, 
+#                             # show_messages = FALSE,
+#                             adapt_delta = .8, max_treedepth = 18)
+# 
+# for (i in names(model_input)) assign(i, model_input[[i]])
+# rstan::stan_rdump(names(model_input), file='in.R')
+# model_2i$save_hpp_file(dir='stan')

@@ -8,3 +8,4 @@ doc
 stan/*.rds
 *.cpp
 outputs/
+stan/bin/

@@ -228,6 +228,7 @@ model {
   // - CSF lab tests
   to_vector(glu_a) ~ student_t(nu, 0, 1);
   L_Omega_csf ~ lkj_corr_cholesky(4);
+  L_sigma_csf ~ student_t(nu, 0, 1);
   csf_a0 ~  student_t(nu, 0, 1);
   
   {

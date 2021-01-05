@@ -1,4 +1,27 @@
-// Summing over an int array
+  // Penrose Moore pseudoinverse via QR decomposition
+  matrix pseudo_inverse(matrix A){
+    int N = rows(A);
+    int M = cols(A);
+    matrix[M, N] invA;
+    matrix[N, M] Q = qr_thin_Q(A);
+    matrix[M, M] R = qr_thin_R(A);
+    invA = R \ Q';
+    return invA;
+  }
+  
+  //center a vector[]
+  vector[] center(vector[] X){
+    int N = size(X);
+    int M = num_elements(X[1]);
+    vector[M] Xc[N];
+    for (n in 1:N) {
+      real m = mean(X[n]);
+      Xc[n] = X[n] - m;
+    }    
+    return Xc;
+  }
+  
+  // Summing over an int array
   int sum2d(int[,] a) {
     int s = 0;
     for (i in 1:size(a))
@@ -15,6 +38,51 @@
       s += (b[i,j] == 1) ? a[i,j] : 0;
     }
     return s;
+  }
+  
+  //Mimick the any function in R
+  int[] any(int[,] X){
+    int N = dims(X)[1];
+    int M = dims(X)[2];
+    int S[N];
+    
+    for (n in 1:N){
+      if (min(X[n]) < 0 || max(X[n]) > 1) {
+        reject("X must be of type binary!");
+        print("Min X: ", min(X[n]));
+        print("Max X: ", max(X[n]));
+      }
+      S[n] = sum(X[n]) > 0 ? 1 : 0;      
+    }
+    return S;
+  }
+  
+  // Mimick the which function in R
+  // not stands for !v;
+  int[] which(int[] v){
+    int W[sum(v)];
+    int w = 1;
+    if ((min(v) < 0) || (max(v) > 1)) reject("v must be of type binary!");
+    for (i in 1:size(v)){
+      if (v[i] == 1) {
+        W[w] = i;
+        w += 1;
+      }
+    }
+    return W;
+  }
+  
+  int[] which_not(int[] v){
+    int W[size(v) - sum(v)];
+    int w = 1;
+    if ((min(v) < 0) || (max(v) > 1)) reject("v must be of type binary!");
+    for (i in 1:size(v)){
+      if (v[i] == 0) {
+        W[w] = i;
+        w += 1;
+      }
+    }
+    return W;
   }
   
    //Append all vector in an array to a matrix
@@ -143,7 +211,7 @@
     
     if (size(obs)!=N||size(z)!=N) reject("Size mismatched!");
     
-    for (n in 1:N) imp[n] = obs[n] ? raw[n] : Phi(z[n]);
+    for (n in 1:N) imp[n] = (obs[n] == 1) ? raw[n] : Phi(z[n]);
     
     return imp;
   }
@@ -208,14 +276,17 @@
   // obs is the vector of observation for raw
   // rep is the impute value for missing values
   vector[] impute_cont_2d(real[,] raw, int[,] obs, real[] rep){
-    vector[dims(raw)[2]] imp[dims(raw)[1]];
+    int N = dims(raw)[1];
+    int M = dims(raw)[2];
+    vector[M] imp[N];
     int k = 1;
     
-    if (size(obs)!=dims(raw)[1] || size(obs[1])!=dims(raw)[2]) reject("Size mismatched!");
+    if (M <= 0) reject("M must be > 0");
+    if (dims(obs)[1]!=N || dims(obs)[2]!=M) reject("Size mismatched!");
     
-    for (i in 1:dims(raw)[1]){
-      for (j in 1:dims(raw)[2]){
-        if (obs[i,j]) imp[i,j] = raw[i,j];
+    for (i in 1:N){
+      for (j in 1:M){
+        if (obs[i,j] == 1) imp[i,j] = raw[i,j];
         else {
           imp[i,j] = rep[k];
           k += 1;
@@ -231,7 +302,12 @@
     vector[N] val;
     if (size(obs) != N) reject("Size mismatched!");
     
-    for (n in 1:N) val[n] = obs[n] ? imputed_1d[n] : bernoulli_rng(imputed_1d[n]);
+    for (n in 1:N) {
+      while(is_nan(val[n])){
+        val[n] = (obs[n] == 1) ? imputed_1d[n] : bernoulli_rng(imputed_1d[n]);
+        if (is_nan(val[n])) print(imputed_1d[n]);
+      }
+    }
     
     return val;
   }
@@ -244,4 +320,137 @@
     if (dims(obs)[1] != N || dims(obs)[2] != M) reject("Size mismatched!");
     for (m in 1:M) val[:, m] = binary_rng(imputed_2d[,m], obs[, m]);
     return val;
+  }
+  
+  // Rng a partially missing value from multinormal distribution
+  /**
+  X: an array of vector to impute
+  obs_X: matrix of the same size with X, 1 for observed, 0 for missing
+  Mu: vector of mean of X
+  L: cholesky decomposition of X
+  **/
+  vector[] multi_normal_cholesky_partial_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix L){
+    int N = dims(X)[1]; //all observation
+    int M = dims(X)[2]; //all value
+    matrix[M, M] S = tcrossprod(L); // reconstruct the cov matrix from cholesky
+    vector[M] new_X[N]; //fully imputed X 
+    
+    if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
+    if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");
+    if (dims(L)[1] != M || dims(L)[2] != M) reject("Number of elements in L mismatched!");
+    if (num_elements(Mu[1]) != M) reject("Number of elements in Mu mismatched!");
+    
+    for (n in 1:N){
+      // vector[M] X_n = X[n];
+      int obs[M] = obs_X[n];
+      new_X[n] = to_vector(X[n]);
+      
+      if (sum(obs)<M && sum(obs)>0) { //any missing
+        /**
+        We assume the missing value in the vector is x,
+        and observed values in the vector is y.
+        x will follow a conditional (multivariate) normal distribution 
+        Normal(E_x, S_x), in which:
+        E_x = Mu_x + S * inverse(Syy) * (y - Mu_y);
+        S_x = Sxx - S * inverse(Syy) * S';
+        Since normal_lpdf receives sigma aka sqrt(S_x) in which S_x is a scalar,
+        we will have to divide into 2 conditions: 
+        x is a scalar and x is a vector.
+        The same applies with y.
+        **/
+        int N_obs  = sum(obs);
+        int N_miss = M - N_obs;
+        
+        int id_obs[N_obs]          = which(obs);
+        matrix[N_obs, N_obs] Syy   = S[id_obs, id_obs]; 
+        vector[N_obs] Mu_y         = Mu[n,id_obs];
+        vector[N_obs] y            = to_vector(X[n,id_obs]);
+        
+        int id_miss[N_miss]        = which_not(obs);
+        matrix[N_miss, N_miss] Sxx = S[id_miss, id_miss];
+        vector[N_miss] Mu_x        = Mu[n,id_miss];
+        
+        matrix[N_miss, N_obs] Sxy  = S[id_miss, id_obs];
+        
+        if (N_miss == 1){
+          real x[1]         = normal_rng(Mu_x + Sxy*(inverse(Syy)*(y - Mu_y)),
+                                         sqrt(Sxx - Sxy*(inverse(Syy)*(Sxy')))[1,1]); //[1,1] otherwise will be recognised as matrices
+          new_X[n, id_miss] = to_vector(x);
+        } else {
+          vector[N_miss] x  = multi_normal_rng(Mu_x + Sxy*(inverse(Syy)*(y - Mu_y)),
+                                              Sxx - Sxy*(inverse(Syy)*(Sxy')));
+          new_X[n, id_miss] = x;                                              
+        }
+      } else if (sum(obs) == 0){ //Nothing is observed then normal rng is performed
+        vector[M] Mu_x = Mu[n];
+        new_X[n] = multi_normal_cholesky_rng(Mu_x, L);
+      }
+    }
+    
+    return new_X;
+  }
+  
+  /**
+  Rng the multi probit outcome.
+  Because the multi probit 1993 technique only put the constraints on the SUR
+  The idea is to rng the observed basing on the constraints
+  And use that rng to sampling the missing using the multi_normal_cholesky_partial_rng
+  ** Due to the limitation in Stan, X must be constraint before go into the function.
+  **/
+  int[,] multi_probit_partial_rng(int[,] X, int[,] obs_X, vector[] Mu, matrix L){
+    int N = dims(X)[1];
+    int M = dims(X)[2];
+    
+    int sign_X[N,M];
+    vector[M] rng_X[N];
+    int result[N,M];
+    
+    if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
+    if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");
+    if (dims(L)[1] != M || dims(L)[2] != M) reject("Number of elements in L mismatched!");
+    if (num_elements(Mu[1]) != M) reject("Number of elements in Mu mismatched!");
+    
+    for (n in 1:N)
+      for (m in 1:M){
+        sign_X[n,m] = (obs_X[n,m]==0) ? 0 : ((X[n,m]==1) ? 1 : -1);
+      }
+    
+    for (n in 1:N){
+      result[n, which(obs_X[n,:])] = X[n,which(obs_X[n,:])];
+      if (sum(obs_X[n]) < M){
+        int x[M] = sign_X[n,:];
+        int sign_agree = 0;
+        int iter = 1;
+        while (sign_agree == 0 && iter < 100000){
+          int m = 1;
+          rng_X[n] = multi_normal_cholesky_rng(Mu[n], L);
+          sign_agree = 1;
+          while (sign_agree == 1 && m <= M){
+            if (rng_X[n, m]*x[m] < 0) sign_agree = 0;
+            m += 1;
+          }
+          iter += 1;
+        }
+        
+        for (k in which_not(obs_X[n,:])){
+          result[n, k] = bernoulli_rng(Phi(rng_X[n,k]));
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  // Function for half normal rng
+  real[] half_normal_rng(real[] mu, real sigma) {
+    int  N = size(mu);
+    real p_0[N];
+    real u[N];
+    real y[N];
+    for (n in 1:N){
+      p_0[n] = normal_cdf(0, mu[n], sigma);
+      u[n] = uniform_rng(p_0[n], 1);
+      y[n] = mu[n] + sigma * Phi(u[n]);
+    } 
+    return y;
   }

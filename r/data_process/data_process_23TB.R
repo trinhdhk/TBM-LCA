@@ -1,6 +1,6 @@
 # Data processing for 23TB data
 # Author: trinhdhk
-# Ver 0.1.2004
+# Ver 0.1.2101
 
 library(data.table)
 diag  <- haven::read_sas("data/raw/SASvad/tbmdiagnosis.sas7bdat")
@@ -20,17 +20,18 @@ setDT(neuro)
 setDT(scr)
 setDT(bl)
 
-hist[, `:=`(clin_symptoms=(WeightLoss=='Yes')%in%T|(NightSweats=='Yes')%in%T,
+hist[, `:=`(clin_symptoms=(WeightLoss=='Yes')|(NightSweats=='Yes'),
             clin_contact_tb=IsContact=='Yes')]
 
 neuro[, clin_nerve_palsy := CranialPalsy=='Yes']
 
-bl[, clin_motor_palsy := (Paraplegia=='Yes')%in%T|(Hemiplegia=='Yes')%in%T|(Tetraplegia=='Yes')%in%T]
+bl[, clin_motor_palsy := (Paraplegia=='Yes')|(Hemiplegia=='Yes')|(Tetraplegia=='Yes')]
 
 assay[, `:=`(
-  xray_miliary_tb=(MiliaryTB==1)%in%T, 
-  xray_pul_tb=(TypicalPulTB==1)%in%T|(SuspectedPulTB==1)%in%T,
-  csf_lympho=whitecells_bl*lym_bl/100, csf_protein=protein_bl,
+  xray_miliary_tb=(MiliaryTB==1), 
+  xray_pul_tb=(TypicalPulTB==1)|(SuspectedPulTB==1),
+  csf_lympho=whitecells_bl*lym_bl/100, 
+  csf_protein=protein_bl,
   csf_clear=Appearance_bl=='Clear',
   glucose_ratio=csfglu_ratio_bl,
   img_hydro=hydrocephalus_bl,

@@ -83,7 +83,7 @@ m2gkf_input <-
     obs_Td_all = obs_Td,
     obs_Tc_all = obs_Tc
   )
-m2cgkf_inputs <- pbmcapply::pbmclapply(seq_len(K), mc.cores=10, function(k) modifyList(m2cgkf_input, list(keptin=foldkept[[k]])))
+m2cgkf_inputs <- pbmcapply::pbmclapply(seq_len(K), mc.cores=10, function(k) modifyList(m2ckf_input, list(keptin=foldkept[[k]])))
 
 ss_sampler <- rstan::stan_model("stan/m2cg_kf.stan")
 ss <- stan_kfold(sampler = ss_sampler,
@@ -104,14 +104,14 @@ p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = T
 library(ggplot2); library(patchwork)
 
 span = .8
-calib_curve(p_summary$p_Smear$mean,m2cgkf_input$Y_Smear_all, "Smear", span=span) + ylim(0, 1) + 
-  calib_curve(p_summary$p_Mgit$mean,m2cgkf_input$Y_Mgit_all, "Mgit", span=span) + ylim(0, 1) +
-  calib_curve(p_summary$p_Xpert$mean,m2cgkf_input$Y_Xpert_all, "Xpert", span=span) + ylim(0, 1)
+calib_curve(p_summary$p_Smear$mean,m2ckf_input$Y_Smear_all, "Smear", span=span) + ylim(0, 1) + 
+  calib_curve(p_summary$p_Mgit$mean,m2ckf_input$Y_Mgit_all, "Mgit", span=span) + ylim(0, 1) +
+  calib_curve(p_summary$p_Xpert$mean,m2ckf_input$Y_Xpert_all, "Xpert", span=span) + ylim(0, 1)
 
-ggplot(mapping=aes(x=p_summary$p_Mgit$mean, y=as.numeric(m2cgkf_input$Y_Mgit_all))) + 
-  stat_smooth(method="glm", formula=y~splines::ns(x,3)) + 
+ggplot(mapping=aes(x=p_summary$p_Mgit$mean, y=as.numeric(m2ckf_input$Y_Mgit_all))) + 
+  stat_smooth(method="glm", formula=y~splines::ns(x,1)) + 
   geom_line(aes(y=p_summary$p_Mgit$mean))
 
-ggplot(mapping=aes(x=p_summary$p_Xpert$mean, y=as.numeric(m2cgkf_input$Y_Xpert_all))) + 
-  stat_smooth(method="glm", formula=y~splines::ns(x,3)) + 
+ggplot(mapping=aes(x=p_summary$p_Xpert$mean, y=as.numeric(m2ckf_input$Y_Xpert_all))) + 
+  stat_smooth(method="glm", formula=y~splines::ns(x,1)) + 
   geom_line(aes(y=p_summary$p_Xpert$mean))

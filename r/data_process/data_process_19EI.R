@@ -41,6 +41,7 @@ joindt <- mutate(joindt,
                         function(x) {fcase(x == 'C49488', TRUE,
                                            x == 'N', FALSE
                                            )}))
+joindt <- joindt[-(1:35),] # remove since they are A MESS!!!!!
 
 
 # joindt <- joindt[RANDO=='YES']

@@ -28,55 +28,53 @@ data {
   int<lower=0, upper=1> keptin[N_all];
 }
 
-transformed data {
-  int timestamp = 2104141046; //this is just a time stamp to force Stan to recompile the code and not used.
+transformed data{
+  int timestamp = 41961735; 
+  //this is just a time stamp to force Stan to recompile the code and not used.  
   
   // * Global variables -------------------------------------------------------
-  int nX = nXc + nXd; // Total number of covariates  
+  int nX = nXc + nXd; // Total number of covariates 
 
-#include ./includes/cross_validation/transform_data.stan
-#include ./includes/impute_model/transform_data.stan
+#include includes/cross_validation/transform_data_Y.stan
+#include includes/cross_validation/transform_data_X.stan
+#include includes/impute_model/transform_data.stan
 }
-
-parameters{
-  // Parameters of the imputation model ---------------------------------------
+ 
+parameters {
+    // Parameters of the imputation model ---------------------------------------
 #include /includes/impute_model/parameters.stan
   
-  // --------------------------------------------------------------------------
   // Parameters of the logistics regression -----------------------------------
-  // real<lower=3> nu;
-  
   real a0; //intercept
   real<lower=0> a_pos; // assuming HIV must have positive effect. 
   vector[nX + 1 - 1] a_; // Extra 1 is for sqrt(glu_ratio) = sqrt(csf_glu)/sqrt(bld_glu)
   real b_HIV; //adjustment of RE with HIV Xd[,1]
-  // real<lower=0> b_RE;
   vector<lower=0>[3] b_RE;
   vector[N] RE; //base random effect;
-  //Probability of each vars
+  
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
-  
 }
+
 
 transformed parameters {
   vector[nX + 1] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
 #include ./includes/impute_model/transform_parameters.stan
 }
 
+
 model {
   int nu = 5;
-  // Imputation model ---------------------------------------------------------
-#include /includes/impute_model/variables_declaration.stan 
-#include /includes/impute_model/impute_priors.main_part.stan 
-
+   // Imputation model ---------------------------------------------------------
+#include includes/impute_model/variables_declaration.stan 
+#include includes/impute_model/impute_priors.main_part.stan 
+  
+  
   // Main model ---------------------------------------------------------------
-  // nu ~ gamma(2, .1);
-  
-  //Probs of each test become positive
-#include ./includes/main_priors.stan
-  
+#include includes/main_prior/m0.stan
+#include includes/main_prior/m.stan
+
   for (n in 1:N){
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
 #include /includes/impute_model/impute_priors.loop_part.stan
@@ -142,13 +140,13 @@ model {
   }
 }
 
-generated quantities{
+generated quantities {
   vector[N_all] log_lik;
   vector[N_all] p_Smear;
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[N_all] theta;
-  
+
   {
     matrix[N_all, nX + 1] X;
 #include /includes/impute_model/generate_X_CV.stan

@@ -30,11 +30,14 @@ repeated_kfold <- function(K = 10, N_rep = 4, N_obs, data, seed = 123, cores = 1
   list(keptin=keptin, holdout=holdout, inputs = inputs)
 }
 
+
+#vb_kfold <- 
+
 #functions slightly modified from: https://github.com/stan-dev/stancon_talks/blob/master/2017/Contributed-Talks/07_nicenboim/kfold.Rmd
 
 #function to parrallelize all computations
 #need at least two chains !!!
-stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, backend = c("cmdstanr", "rstan"), chains, cores, seed,...){
+stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_dir = NULL, backend = c("cmdstanr", "rstan"), chains, cores, seed, pars, merge = TRUE,...){
   # library(pbmcapply)
   backend <- match.arg(backend)
   badRhat <- 1.1 # don't know why we need this?
@@ -57,32 +60,55 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, backend
   wd <- getwd()
   progressr::with_progress({
     p <- progressr::progressor(steps = n_fold*chains)
-    
+    #sflist <- vector("list", length(n_fold*chains))
     sflist <- furrr::future_map(seq_len(n_fold*chains), function(i){
+    # for (i in seq_len(n_fold*chains))
+      # sflist[[i]] <- future::future({
       setwd(wd)
       k <- ceiling(i / chains)
-      if (backend == "rstan")
-        sf <- rstan::sampling(model, data = list_of_datas[[k]], chains=1, seed = seed+i, 
-                             chain_id = i, ...)
+      if (backend == "rstan"){
+        if (length(sample_dir)){
+          sample_file <- file.path(sample_dir, paste0("data_", k, "_chain_", chains-(k*chains-i), ".csv"))
+          sf <- rstan::sampling(model, data = list_of_datas[[k]], chains=1, seed = seed, 
+                                chain_id = i, sample_file = sample_file, pars = pars,...)
+        } else 
+          
+          sf <- rstan::sampling(model, data = list_of_datas[[k]], chains=1, seed = seed, 
+                                chain_id = i, pars = pars, ...)
+      }
+        
       else {
         m <- model$clone()
-        s <- m$sample(data = list_of_datas[[k]],
-                      chains = 1, seed = seed + i, chain_ids = i,...)
-        sf <- rstan::read_stan_csv(s$output_files())
+        sf <- m$sample(data = list_of_datas[[k]],
+                      chains = 1, seed = seed + i, chain_ids = i,
+                      output_dir = sample_dir,...)
       }
       p()
       sf
-    })
+      # }, seed=T, gc=T)
+    }, .options = furrr::furrr_options(seed=TRUE))
   })
+  # sflist = lapply(sflist, future::value)
   
   # Then merge the K * chains to create K stanfits:
-  stanfit <- list()
-  for(k in 1:n_fold){
-    inchains <- (chains*k - (chains - 1)):(chains*k)
-    #  Merge `chains` of each fold
-    stanfit[[k]] <- rstan::sflist2stanfit(sflist[inchains])
-  }  
-  return(stanfit) 
+  if (!merge) return(sflist) 
+  if (backend=="rstan"){
+    # browser()
+    stanfit <- list()
+    for(k in 1:n_fold){
+      inchains <- (chains*k - (chains - 1)):(chains*k)
+      #  Merge `chains` of each fold
+      stanfit[[k]] <- rstan::sflist2stanfit(sflist[inchains])
+    }  
+    return(stanfit) 
+  }
+  
+  else{
+    stanfit <- cmdstanr::read_cmdstan_csv(list.files(output_dir, ".csv$", full.names = TRUE),
+                                          variables = pars)
+    
+    stanfit
+  }
 }
 
 #extract log-likelihoods of held-out data
@@ -122,6 +148,8 @@ extract_log_lik_K <- function(list_of_stanfits, list_of_holdout, ...){
                log_lik_heldout_n
              })
     )
+  
+  attr(log_lik_heldout, "K") <- K
   return(log_lik_heldout)
 }
 
@@ -143,6 +171,7 @@ kfold <- function(log_lik_heldout)  {
     pointwise = structure(pointwise, dimnames = list(NULL, "elpd_kfold")),
     estimates = structure(cbind(elpd_kfold, se_elpd_kfold), dimnames = list('elpd_kfold', c("Estimate", "SE")))
   )
+  attr(out, "K") <- attr(log_lik_heldout, "K")
   class(out) <- c("kfold", "loo")
   return(out)
 }
@@ -152,30 +181,34 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,
   Nrep = sum(simplify2array(list_of_holdouts)[1,])
   holdout <- as.numeric(holdout)
   stopifnot(length(list_of_stanfits) == K)
+  D = if (holdout) 1 else (K/Nrep - 1)
   par_extract_list <- lapply(list_of_stanfits,FUN = rstan::extract, pars=pars, ...)
   extract_pars <- names(par_extract_list[[1]])
   # browser()
   extract_holdout <- lapply(extract_pars, function(p) {
-    extract_holdout_par <- array(NA, dim = c(dim(par_extract_list[[1]][[p]])[1] * Nrep, dim(par_extract_list[[1]][[p]])[-1]))
+    extract_holdout_par <- array(NA, dim = c(dim(par_extract_list[[1]][[p]])[1] * Nrep * D, dim(par_extract_list[[1]][[p]])[-1]))
     # browser()
     for (n in seq_len(Nrep)){
       for (k in seq_len(K2 <- K/Nrep)){
-        # print((n-1)*K2+k)
-        k_par <- par_extract_list[[(n-1)*K2+k]][[p]] 
         holdout_k <- list_of_holdouts[[(n-1)*K2+k]]
-        par_dims <- dim(k_par)
-        # browser()
-        if (length(par_dims) >= 2 && par_dims[min(length(par_dims),2)] == length(holdout_k)) {
-          commas <- paste(rep(',', length(par_dims)-2), collapse = " ")
+        for (d in seq_len(D)){
+          # print((n-1)*K2+k)
+          k_par <- par_extract_list[[(n-1)*K2+k]][[p]] 
+          #browser()
+          par_dims <- dim(k_par)
           # browser()
-          call_string <- glue::glue('extract_holdout_par[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n),
+          if (length(par_dims) >= 2 && par_dims[min(length(par_dims),2)] == length(holdout_k)) {
+            commas <- paste(rep(',', length(par_dims)-2), collapse = " ")
+            # browser()
+            call_string <- glue::glue('extract_holdout_par[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n),
                                     holdout_k=={holdout} {commas}] <- k_par[,holdout_k=={holdout} {commas}]')
-          eval(parse(text=call_string))
-        } else {
-          commas <- paste(rep(',', length(par_dims)-1), collapse = " ")
-          call_string <-- glue::glue('extract_holdout_par[[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n) {commas}] <- 
+            eval(parse(text=call_string))
+          } else {
+            commas <- paste(rep(',', length(par_dims)-1), collapse = " ")
+            call_string <-- glue::glue('extract_holdout_par[[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n) {commas}] <- 
                                       k_par[{commas}]')
-          eval(parse(text=call_string))
+            eval(parse(text=call_string))
+          }
         }
       }
     }

@@ -1,18 +1,12 @@
 {
   // Imputation model --------------------------------------------------------
-  matrix[N_all, 3] Xd_imp; //fully imputed discrete X
-  vector[nXc + 1] Xc_imp[N_all]; //fully imputed cont X
+  matrix[N_all, 7] Xd_imp; //fully imputed discrete X
+  vector[nXc2 + 1] Xc_imp[N_all]; //fully imputed cont X
   real age_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),1])];
   real id_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),2])];
   
-  //TODO fix HIV
-  {
-    vector[N_all] z_HIV = HIV_a0 + to_matrix(Tc_all[:,4:5]) * HIV_a;
-    Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], to_array_1d(z_HIV)), obs_Xd_all[:,1]);
-  }
-  //Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], rep_array(HIV_a0, N_all)), obs_Xd_all[:,1]); //HIV
   
-  //Age & illness day
+  Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], rep_array(HIV_a0, N_all)), obs_Xd_all[:,1]); //HIV
   {
     int j =1; int k= 1;
     for (n in which_not(keptin)){
@@ -32,7 +26,6 @@
   Xc_imp[which(keptin),1] = impute_cont_1d(Xc[:, 1], obs_Xc[:, 1], age_imp);
   Xc_imp[which(keptin),2] = impute_cont_1d(Xc[:, 2], obs_Xc[:, 2], id_imp);
   
-  // Clinical symptoms
   {
     int Td_cs_valid[N_valid,3] = Td_all[which_not(keptin),1:3];
     int obs_cs_valid[N_valid,3] = obs_Td_all[which_not(keptin),1:3];
@@ -44,11 +37,13 @@
       j += 1;
     }
     CS_imp_valid = multi_probit_partial_rng(Td_cs_valid, obs_cs_valid, Mu_cs, L_Omega_cs);
-    Xd_imp[which(keptin),2] = binary_rng(impute_binary_cmb(Xd[:,2], obs_Xd[:,2], to_array_2d(append_all(z_cs)), obs_cs), obs_Xd[:,2]); //Clinical Symptoms
-    Xd_imp[which_not(keptin),2] = to_vector(any(CS_imp_valid));
+    Xd_imp[which(keptin),2] = binary_rng(impute_binary(Td[:,1], obs_cs[:,1],z_cs[:,1]), obs_cs[:,1]); //Clinical Symptoms
+    Xd_imp[which(keptin),3] = binary_rng(impute_binary(Td[:,2], obs_cs[:,2],z_cs[:,2]), obs_cs[:,2]); //Clinical Symptoms
+    Xd_imp[which(keptin),4] = binary_rng(impute_binary(Td[:,3], obs_cs[:,3],z_cs[:,3]), obs_cs[:,3]); //Clinical Symptoms
+    Xd_imp[which_not(keptin),2:4] = to_matrix(CS_imp_valid);
   }
   
-  // Motor palsy
+  
   {
     int Td_mp_valid[N_valid,3] = Td_all[which_not(keptin),4:6];
     int obs_mp_valid[N_valid,3] = obs_Td_all[which_not(keptin),4:6];
@@ -60,44 +55,26 @@
       j += 1;
     }
     mp_imp_valid = multi_probit_partial_rng(Td_mp_valid, obs_mp_valid, Mu_mp, L_Omega_mp);
-    Xd_imp[which(keptin),3] = binary_rng(impute_binary_cmb(Xd[:,3], obs_Xd[:,3], to_array_2d(append_all(z_mp)), obs_mp), obs_Xd[:,3]); //Motor palsy
-    Xd_imp[which_not(keptin),3] = to_vector(any(mp_imp_valid));
+    Xd_imp[which(keptin),5] = binary_rng(impute_binary(Td[:,4], obs_mp[:,1],z_mp[:,1]), obs_mp[:,1]); //Clinical Symptoms
+    Xd_imp[which(keptin),6] = binary_rng(impute_binary(Td[:,5], obs_mp[:,2],z_mp[:,2]), obs_mp[:,2]); //Clinical Symptoms
+    Xd_imp[which(keptin),7] = binary_rng(impute_binary(Td[:,6], obs_mp[:,3],z_mp[:,3]), obs_mp[:,3]); //Clinical Symptoms
+    Xd_imp[which_not(keptin),5:7] = to_matrix(mp_imp_valid);
   }
   
-  // CSF lab
   {
     vector[5] csf_mu_valid[N_valid];
     int j = 1;
-    //int k = 0; //counter for the rng trial
     for (n in which_not(keptin)){
       csf_mu_valid[j, 1:2] = csf_a0[1:2] + glu_a*Td_all[n, 7];
       csf_mu_valid[j, 3:5] = csf_a0[3:5];
       j += 1;
     }
-    
     Xc_imp[which_not(keptin),3:7] = multi_normal_cholesky_partial_rng(Xc_all[which_not(keptin),3:7], obs_Xc_all[which_not(keptin),3:7], csf_mu_valid, L_Omega_csf);
-    
     Xc_imp[which(keptin),3:7] = impute_cont_2d(Xc[:,3:7], obs_Xc[:,3:7], append_array(append_array(bld_glu_imp, csf_glu_imp), csf_other_imp));
   }
   
   Xc_imp[:,8] = to_array_1d(to_vector(Xc_imp[:,4]) ./ to_vector(Xc_imp[:,3])); //Glucose ratio
   
-  //GCS
-  {
-    vector[3] GCS_imp[N_all];
-    vector[3] gcs_mu_valid[N_valid];
-    int j = 1;
-    for (n in which_not(keptin)){
-      gcs_mu_valid[j,:] = gcs_a0 + gcs_a*Xc_imp[n, 1];
-      j += 1;
-    }
-    //TODO: implement contraints for the rng
-    GCS_imp[which_not(keptin)] = multi_normal_cholesky_partial_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Omega_gcs);
-    GCS_imp[which(keptin)] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], append_array(append_array(gcse_imp, gcsm_imp), gcsv_imp));
-    Xc_imp[:,9] = to_array_1d(to_vector(GCS_imp[:,1]) + to_vector(GCS_imp[:,2]) + to_vector(GCS_imp[:,3]));
-  }
-  
-  /* old code gcs
   {
     real GCSV_imp_all[N_all]; // - GCSV
     real gcsv_imp_valid[N_miss_gscv_valid];
@@ -109,16 +86,19 @@
         j += 1;
       }
       
-      gcsv_imp_valid = to_array_1d(pos_normal_rng(gcsv_x_valid, gcsv_sigma));
+      gcsv_imp_valid = to_array_1d(half_normal_rng(gcsv_x_valid, gcsv_sigma));
     }
     
     GCSV_imp_all[which_not(keptin)] = impute_cont_1d(Tc_all[which_not(keptin),3], obs_Tc_all[which_not(keptin),3], gcsv_imp_valid); 
     GCSV_imp_all[which(keptin)] = impute_cont_1d(Tc[:,3], obs_Tc[:,3], gcsv_imp);
-    Xc_imp[:,9] = to_array_1d(log2(to_vector(Tc_all[:,1]) + to_vector(Tc_all[:,2]) + to_vector(GCSV_imp_all) + 1));
-  } */
+    
+    Xc_imp[:,9]  = to_array_1d(log2(to_vector(Tc_all[:,1]) + 1));
+    Xc_imp[:,10] = to_array_1d(log2(to_vector(Tc_all[:,2]) + 1));
+    Xc_imp[:,11] = to_array_1d(log2(to_vector(GCSV_imp_all) + 1));
+  }
   
   if (nXc > 8) // Other if exists
-  for (j in 9:nXc) Xc_imp[:, j + 1] = Xc_all[:, j];
+    for (j in 9:nXc) Xc_imp[:, j + 1 - 1 + nTc /*GCS*/] = Xc_all[:, j];
   
-  X = append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), append_all(Xc_imp));
+  X = append_col(append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), to_vector(Td_all[:, nTd])), append_all(Xc_imp));
 }

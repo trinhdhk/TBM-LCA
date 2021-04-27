@@ -29,16 +29,30 @@ demoinfo <- .tmp[,.(USUBJID, age, sex=SEX=='M')]
 
 # CLinical score
 clin <- base[, .(
+    ISDIABETES = DIABETES == "Y",
     clin_illness_day = max(HEADACHEDAY, IRRITABILITYDAY, VOMITDAY, FEVERDAY, NECKSTIFFDAY, SEIZURESDAY, NEURODAY, CONSCIOUSDAY, LETHARGYDAY, 0, na.rm=TRUE),
     clin_symptoms = COUGH=='Y'|WEIGHTLOSS=='Y'|NIGHTSWEATS=='Y',
-    clin_contact_tb = LIVELUNGTB=='Y',
-    clin_motor_palsy = HEMIPLEGIA=='Y'|PARAPLEGIA=='Y'|TETRAPLEGIA=='Y',
-    clin_nerve_palys = CNP=='Y',
+    clin_contact_tb = LIVELUNGTB=='Y' %in% TRUE,
+    ISCOUGH = fcase(COUGH == "Y", TRUE, COUGH == "N", FALSE, default = NA),
+    ISNSWEAT = fcase(NIGHTSWEATS == "Y", TRUE, NIGHTSWEATS == "N", FALSE, default = NA),
+    ISWEIGHT = fcase(WEIGHTLOSS == "Y", TRUE, WEIGHTLOSS == "N", FALSE, default = NA),
+    HEMIPLEGIA = fcase(HEMIPLEGIA == "Y", TRUE, 
+                       HEMIPLEGIA == "N", FALSE,
+                       default = NA),
+    PARAPLEGIA = fcase(PARAPLEGIA == "Y", TRUE, 
+                       PARAPLEGIA == "N", FALSE,
+                       default = NA),
+    TETRAPLEGIA = fcase(TETRAPLEGIA == "Y", TRUE, 
+                        TETRAPLEGIA == "N", FALSE,
+                        default = NA),
+    clin_nerve_palsy = CNP=='Y',
+    GCSE, GCSM, GCSV,
     clin_gcs = dplyr::case_when(
         !is.na(GCS) ~ as.numeric(GCS),
         ALTEREDCONSCIOUS != 'Y' ~ 15
     )
-), by=USUBJID][, 
+), by=USUBJID][,`:=`(clin_symptoms = ISCOUGH|ISNSWEAT|ISWEIGHT,
+                     clin_motor_palsy = HEMIPLEGIA|PARAPLEGIA|TETRAPLEGIA)][, 
     clin_score := min(6,sum(4*(clin_illness_day>5), 2*clin_symptoms, clin_contact_tb, clin_motor_palsy, (clin_gcs<15), na.rm=TRUE)),
     by=USUBJID]
 
@@ -47,8 +61,10 @@ csf <- basecsf[, .(
     csf_clear = APPEARANCE == '1',
     csf_wbc = CSFWBC,
     csf_lym_pct = CSFLYMLE/100,
+    csf_lympho = CSFLYMLE*CSFWBC/100,
     csf_protein = PROTEIN,
     csf_glucose = CSFGLUC,
+    csf_lactate = LACTATE,
     bld_glucose = PAIREDGLUC), by=USUBJID][,`:=`(
         glucose_ratio = csf_glucose/bld_glucose,
         csf_lympho = csf_lym_pct*csf_wbc)][,
@@ -65,10 +81,10 @@ tube <- merge(.tube, .other, all.x=TRUE, by='USUBJID')
 tube[, tube_score := min(4,sum(4*xray_miliary_tb,2*xray_pul_tb,4*tube3, na.rm=TRUE)),by=USUBJID]
 
 # Confirmation tests
-confirmed <- .basecsf[, .(
+confirmed <- basecsf[, .(
     csf_smear = any(ZNSMEAR=='1'),
-    csf_mgit = any(TBNAAT=='1'),
-    csf_xpert = any(MYCORESULT=='1')
+    csf_xpert = any(TBNAAT=='1'),
+    csf_mgit = any(MYCORESULT=='1')
 ), by=USUBJID]
 
 maindt <- purrr::reduce(list(demoinfo, clin, csf, tube, confirmed), merge, all.x=TRUE, by='USUBJID')

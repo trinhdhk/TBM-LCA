@@ -1,5 +1,5 @@
 functions{
-#include ./includes/functions.stan
+#include stan/includes/functions.stan
 }
 
 data {
@@ -23,19 +23,19 @@ data {
   int<lower=0, upper=1> obs_Xd_all[N_all, nXd];
   int<lower=0, upper=1> obs_Td_all[N_all, nTd]; 
   int<lower=0, upper=1> obs_Tc_all[N_all, nTc]; 
+  int<lower=0, upper=1> obs_Y_Xpert_all[N_all]; 
   
   // Hold-out for cross-validation
   int<lower=0, upper=1> keptin[N_all];
 }
 
 transformed data {
-  int timestamp = 2104141046; //this is just a time stamp to force Stan to recompile the code and not used.
-  
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates  
-
-#include ./includes/cross_validation/transform_data.stan
-#include ./includes/impute_model/transform_data.stan
+#include /includes/cross_validation/transform_data.stan
+  
+  int<lower=0, upper=1> obs_Y_Xpert[N] = obs_Y_Xpert_all[which(keptin)];
+#include /includes/impute_model/transform_data.stan
 }
 
 parameters{
@@ -45,7 +45,6 @@ parameters{
   // --------------------------------------------------------------------------
   // Parameters of the logistics regression -----------------------------------
   // real<lower=3> nu;
-  
   real a0; //intercept
   real<lower=0> a_pos; // assuming HIV must have positive effect. 
   vector[nX + 1 - 1] a_; // Extra 1 is for sqrt(glu_ratio) = sqrt(csf_glu)/sqrt(bld_glu)
@@ -57,12 +56,11 @@ parameters{
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
-  
 }
 
 transformed parameters {
   vector[nX + 1] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
-#include ./includes/impute_model/transform_parameters.stan
+#include /includes/impute_model/transform_parameters.stan
 }
 
 model {
@@ -75,13 +73,14 @@ model {
   // nu ~ gamma(2, .1);
   
   //Probs of each test become positive
-#include ./includes/main_priors.stan
+#include /includes/main_priors.stan
   
   for (n in 1:N){
+    
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
 #include /includes/impute_model/impute_priors.loop_part.stan
 
-    if (N_Xd_miss > 0){ //if there is some discrete variables missing
+    if (N_Xd_miss > 0){ //if there are some discrete variables missing
       int N_pattern = int_power(2, N_Xd_miss);
       vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,:], obs_Xd[n, 1:3], a[1:3]);
       vector[N_pattern] log_liks;
@@ -98,9 +97,15 @@ model {
           real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
           real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
           
-          log_liks[i] = logprob_theta + log_mix(theta, 
+          if (obs_Y_Xpert[n]){
+            log_liks[i] = logprob_theta + log_mix(theta, 
             bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
             bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+          } else {
+            log_liks[i] = logprob_theta + log_mix(theta, 
+            bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
+            bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+          }
         }
       } else {
         for (i in 1:N_pattern){
@@ -115,11 +120,19 @@ model {
           vector[2] z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
           vector[2] z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
           
-          log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
+          if (obs_Y_Xpert[n]){
+            log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
             logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
             logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
             ),
             bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+          } else {
+            log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
+            logprob_Y[1] + (bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
+            logprob_Y[2] + (bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
+            ),
+            bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+          }
         }
       }
       // Sum everything up
@@ -129,15 +142,20 @@ model {
       // The normal way
       row_vector[nX + 1] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
-      
       real bac_load   = b_HIV*Xd_imp[n, 1];
       real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
       real z_Mgit_RE  = z_Mgit [2] + b_RE[2]*(bac_load + RE[n]);
       real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
       
-      target += log_mix(theta, 
-      bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
-      bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+      if (obs_Y_Xpert[n]){
+        target += log_mix(theta, 
+        bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
+        bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+      } else {
+        target += log_mix(theta, 
+        bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
+        bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+      }
     }
   }
 }
@@ -166,10 +184,17 @@ generated quantities{
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert[2] + b_RE[3]*bac_load);
       
       for (n in 1:N_all){
-        log_lik[n] = log_mix(theta[n],
-        bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[2] + b_RE[3]*bac_load[n]) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[2] + b_RE[2]*bac_load[n]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[2] + b_RE[1]*bac_load[n]),
-        bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[1])
+        if (obs_Y_Xpert_all[n]){
+          log_lik[n] = log_mix(theta[n],
+          bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[2] + bac_load[n]) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[2] + bac_load[n]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[2] + bac_load[n]),
+          bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[1])
+          );
+        } else {
+          log_lik[n] = log_mix(theta[n],
+          bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[2] + bac_load[n]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[2] + bac_load[n]),
+          bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[1])
         );
+        }
       }
     }
   }

@@ -29,6 +29,10 @@ int obs_bld_glu = sum(obs_Xc[:,3]);
 int obs_csf_glu = sum(obs_Xc[:,4]);
 int obs_csf_other = sum2d(obs_Xc[:,5:7]);
 
+// * GCS Xc[:,8], Tc[:, 1:3]
+int obs_gcs = sum(obs_Xc[:,8]);
+int obs_gcs_compartment = sum2d(obs_Tc[:,1:3]);
+
 // * Var assignments --------------------------------------------------------
 N_pos_cs  = size(n_pos_cs);
 N_neg_cs  = size(n_neg_cs);

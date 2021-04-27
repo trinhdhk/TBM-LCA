@@ -166,6 +166,7 @@
     
     vector[T] pat = rep_vector(0, T);
     vector[T] log_probs = rep_vector(0, T);
+    vector[T] out[2];
     // vector[T] val[2];
     int j = 0;
     if (size(obs_Xd_imp) != N_Xd_imp) reject("Size mismatched!");
@@ -175,7 +176,7 @@
       
       if (obs_Xd_imp[i] == 0){
         V = append_row(rep_vector(0, int_power(2, j)), rep_vector(1, int_power(2, j)));
-        obs_pattern[:,i] = rep_vectors(V, T / int_power(2, j+1));
+        obs_pattern[:,i] = rep_vectors(V, T %/% int_power(2, j+1));
         j += 1;
       } else {
         obs_pattern[:,i] = rep_vector(Xd_imp[i], T);
@@ -199,7 +200,9 @@
       log_probs += log(probs_pattern[:,i]);
     }
     
-    return {log_probs, pat};
+    out[1] = log_probs;
+    out[2] = pat;
+    return(out);
   }
   
   // Imputation functions -----------------------------------------------------
@@ -441,8 +444,8 @@
     return result;
   }
   
-  // Function for half normal rng
-  real[] half_normal_rng(real[] mu, real sigma) {
+  // Function for truncated normal rng only accept pos value
+  real[] pos_normal_rng(real[] mu, real sigma) {
     int  N = size(mu);
     real p_0[N];
     real u[N];
@@ -454,3 +457,4 @@
     } 
     return y;
   }
+  

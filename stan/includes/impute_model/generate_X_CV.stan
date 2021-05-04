@@ -1,7 +1,7 @@
 {
   // Imputation model --------------------------------------------------------
   matrix[N_all, 3] Xd_imp; //fully imputed discrete X
-  vector[nXc + 1] Xc_imp[N_all]; //fully imputed cont X
+  vector[nXc] Xc_imp[N_all]; //fully imputed cont X
   real age_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),1])];
   real id_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),2])];
   
@@ -80,7 +80,7 @@
     Xc_imp[which(keptin),3:7] = impute_cont_2d(Xc[:,3:7], obs_Xc[:,3:7], append_array(append_array(bld_glu_imp, csf_glu_imp), csf_other_imp));
   }
   
-  Xc_imp[:,8] = to_array_1d(to_vector(Xc_imp[:,4]) ./ to_vector(Xc_imp[:,3])); //Glucose ratio
+  //Xc_imp[:,8] = to_array_1d(to_vector(Xc_imp[:,4]) ./ to_vector(Xc_imp[:,3])); //Glucose ratio
   
   //GCS
   {
@@ -94,7 +94,7 @@
     //TODO: implement contraints for the rng
     GCS_imp[which_not(keptin)] = multi_normal_cholesky_partial_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Omega_gcs);
     GCS_imp[which(keptin)] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], append_array(append_array(gcse_imp, gcsm_imp), gcsv_imp));
-    Xc_imp[:,9] = to_array_1d(to_vector(GCS_imp[:,1]) + to_vector(GCS_imp[:,2]) + to_vector(GCS_imp[:,3]));
+    Xc_imp[:,8] = to_array_1d(to_vector(GCS_imp[:,1]) + to_vector(GCS_imp[:,2]) + to_vector(GCS_imp[:,3]));
   }
   
   /* old code gcs
@@ -118,7 +118,7 @@
   } */
   
   if (nXc > 8) // Other if exists
-  for (j in 9:nXc) Xc_imp[:, j + 1] = Xc_all[:, j];
+  for (j in 9:nXc) Xc_imp[:, j] = Xc_all[:, j];
   
   X = append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), append_all(Xc_imp));
 }

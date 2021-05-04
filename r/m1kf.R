@@ -42,7 +42,7 @@ error = function(e) {
     )
   
   # Create the folds ----
-  m1_folds <- misc$repeated_kfold(m1_input, K = 10, N_rep = 2, N_obs = nrow(data_19EI), seed = 612)
+  m1_folds <- misc$repeated_kfold(m1_input, K = 10, N_rep = 2, N_obs = nrow(recipe$data_19EI), seed = 612)
   saveRDS(m1_folds, file = '.cache/folds/m1_folds.RDS')
   m1_folds
 })
@@ -65,7 +65,7 @@ m1_outputs <- misc$stan_kfold(sampler = m1_sampler,
                               control = list(adapt_delta=.75, max_treedepth=12), 
                               init_r = 1, seed=2693,
                               sample = m1_outdir,
-                              pars = c("a0", "a", "b_RE", "b_HIV",
+                              pars = c("a0", "a",
                                        "z_Smear", "z_Mgit", "z_Xpert",
                                        "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta"),
                               iter=3000, warmup=1500)

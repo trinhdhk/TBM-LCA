@@ -42,7 +42,7 @@ error = function(e) {
     )
   
   # Create the folds ----
-  m2_folds <- misc$repeated_kfold(m2_input, K = 10, N_rep = 2, N_obs = nrow(data_19EI), seed = 612)
+  m2_folds <- misc$repeated_kfold(m2_input, K = 10, N_rep = 4, N_obs = nrow(recipe$data_19EI), seed = 612)
   saveRDS(m2_folds, file = '.cache/folds/m2_folds.RDS')
   m2_folds
 })
@@ -60,7 +60,7 @@ m2_outputs <- misc$stan_kfold(sampler = m2_sampler,
                               list_of_datas=m2_inputs,
                               backend = "rstan",
                               chains=3, cores=19, 
-                              thin = 1, 
+                              thin = 2, 
                               merge = TRUE,
                               control = list(adapt_delta=.75, max_treedepth=12), 
                               init_r = 1, seed=2693,
@@ -68,6 +68,6 @@ m2_outputs <- misc$stan_kfold(sampler = m2_sampler,
                               pars = c("a0", "a", "b_RE", "b_HIV",
                                        "z_Smear", "z_Mgit", "z_Xpert",
                                        "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta"),
-                              iter=3000, warmup=1500)
-saveRDS(m2_outputs, "outputs/m2kf.RDS")
+                              iter=3000, warmup=2000)
 unlink(m2_outdir, recursive = TRUE)
+saveRDS(m2_outputs, "outputs/m2kf.RDS")

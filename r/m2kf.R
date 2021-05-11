@@ -42,7 +42,7 @@ error = function(e) {
     )
   
   # Create the folds ----
-  m2_folds <- misc$repeated_kfold(m2_input, K = 10, N_rep = 4, N_obs = nrow(recipe$data_19EI), seed = 612)
+  m2_folds <- misc$repeated_kfold(m2_input, K = 10, N_rep = 1, N_obs = nrow(recipe$data_19EI), seed = 612)
   saveRDS(m2_folds, file = '.cache/folds/m2_folds.RDS')
   m2_folds
 })
@@ -54,7 +54,13 @@ dir.create(m2_outdir, showWarnings = F)
 
 # Compile the sampler ----
 cat('Compile the sampler\n')
-m2_sampler <- rstan::stan_model("stan/m2kf.stan")
+m2_sampler <- tryCatch(
+  rstan::stan_model("stan/m2kf.stan"),
+  error = function(e) {
+    file.remove("stan/m2kf.rds")
+    rstan::stan_model("stan/m2kf.stan")
+  }
+)
 cat('Sampling\n')
 m2_outputs <- misc$stan_kfold(sampler = m2_sampler,
                               list_of_datas=m2_inputs,
@@ -68,6 +74,8 @@ m2_outputs <- misc$stan_kfold(sampler = m2_sampler,
                               pars = c("a0", "a", "b_RE", "b_HIV",
                                        "z_Smear", "z_Mgit", "z_Xpert",
                                        "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta"),
-                              iter=3000, warmup=2000)
+                              iter=5000, warmup=2000)
+cat('Clean up\n')
 unlink(m2_outdir, recursive = TRUE)
+cat('Save output\n')
 saveRDS(m2_outputs, "outputs/m2kf.RDS")

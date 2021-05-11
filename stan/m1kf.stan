@@ -29,7 +29,7 @@ data {
 }
 
 transformed data{
-  int timestamp = 41961735; 
+  int timestamp = 42861735; 
   //this is just a time stamp to force Stan to recompile the code and not used.  
   
   // * Global variables -------------------------------------------------------
@@ -47,7 +47,7 @@ parameters {
   // Parameters of the logistics regression -----------------------------------
   real a0; //intercept
   real<lower=0> a_pos; // assuming HIV must have positive effect. 
-  vector[nX + 1 - 1] a_; // Extra 1 is for sqrt(glu_ratio) = sqrt(csf_glu)/sqrt(bld_glu)
+  vector[nX - 1] a_; 
   
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
@@ -56,7 +56,7 @@ parameters {
 
 
 transformed parameters {
-  vector[nX + 1] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
+  vector[nX] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
 #include ./includes/impute_model/transform_parameters.stan
 }
 
@@ -70,7 +70,8 @@ model {
   
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
-#include includes/main_prior/m.stan
+#include includes/main_prior/mN.stan
+
 
   for (n in 1:N){
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
@@ -80,7 +81,7 @@ model {
       int N_pattern = int_power(2, N_Xd_miss);
       vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,:], obs_Xd[n, 1:3], a[1:3]);
       vector[N_pattern] log_liks;
-      pat_thetas[2] += a0 + dot_product(a[4:(nX + 1)], X_compl[n]);
+      pat_thetas[2] += a0 + dot_product(a[4:], X_compl[n]);
     
       for (i in 1:N_pattern){
         real logprob_theta = pat_thetas[1,i];
@@ -96,7 +97,7 @@ model {
       
     } else {
       // The normal way
-      row_vector[nX + 1] X = append_col(Xd_imp[n,:], X_compl[n,:]);
+      row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
       target += log_mix(theta, 
@@ -114,15 +115,15 @@ generated quantities {
   vector[N_all] theta;
 
   {
-    matrix[N_all, nX + 1] X;
+    matrix[N_all, nX] X;
 #include /includes/impute_model/generate_X_CV.stan
     
     theta = inv_logit(a0 + X*a);
     
     {
-      p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear[2]);
-      p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit[2]);
-      p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert[2]);
+      p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta * inv_logit(z_Smear[2]);
+      p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta * inv_logit(z_Mgit[2]);
+      p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta * inv_logit(z_Xpert[2]);
       
       for (n in 1:N_all){
         log_lik[n] = log_mix(theta[n],

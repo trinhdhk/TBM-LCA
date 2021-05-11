@@ -41,14 +41,3 @@ real bld_glu_imp[N - obs_bld_glu]; //lower = 1 for numerical stability
 real<lower=0> csf_glu_imp[N - obs_csf_glu]; 
 real csf_other_imp[(N*3) - obs_csf_other];
 
-// Impute gcs Xc[8]
-// Use auxillary gcs components: Tc[,1:3] GCSE, GCSM, GCSV
-// GCSV is missing.
-vector<lower=0>[3] gcs_a0;
-vector[3] gcs_a; //For age
-cholesky_factor_corr[3] L_Omega_gcs;
-vector<lower=0>[3] L_sigma_gcs;
-//Different ranges for different GCS compartment
-real<lower=0, upper=4> gcsv_imp[N - sum(obs_Tc[,3])]; 
-real<lower=0, upper=5> gcsm_imp[N - sum(obs_Tc[,2])];
-real<lower=0, upper=3> gcse_imp[N - sum(obs_Tc[,1])];

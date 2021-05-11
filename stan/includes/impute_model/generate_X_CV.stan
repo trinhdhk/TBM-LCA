@@ -80,45 +80,8 @@
     Xc_imp[which(keptin),3:7] = impute_cont_2d(Xc[:,3:7], obs_Xc[:,3:7], append_array(append_array(bld_glu_imp, csf_glu_imp), csf_other_imp));
   }
   
-  //Xc_imp[:,8] = to_array_1d(to_vector(Xc_imp[:,4]) ./ to_vector(Xc_imp[:,3])); //Glucose ratio
-  
-  //GCS
-  {
-    vector[3] GCS_imp[N_all];
-    vector[3] gcs_mu_valid[N_valid];
-    int j = 1;
-    for (n in which_not(keptin)){
-      gcs_mu_valid[j,:] = gcs_a0 + gcs_a*Xc_imp[n, 1];
-      j += 1;
-    }
-    //TODO: implement contraints for the rng
-    GCS_imp[which_not(keptin)] = multi_normal_cholesky_partial_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Omega_gcs);
-    GCS_imp[which(keptin)] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], append_array(append_array(gcse_imp, gcsm_imp), gcsv_imp));
-    Xc_imp[:,8] = to_array_1d(to_vector(GCS_imp[:,1]) + to_vector(GCS_imp[:,2]) + to_vector(GCS_imp[:,3]));
-  }
-  
-  /* old code gcs
-  {
-    real GCSV_imp_all[N_all]; // - GCSV
-    real gcsv_imp_valid[N_miss_gscv_valid];
-    if (N_miss_gscv_valid > 0){
-      real gcsv_x_valid[N_miss_gscv_valid];
-      int j = 1;
-      for (n in which_not(obs_Tc_all[which_not(keptin),3])){
-        gcsv_x_valid[j] = gcsv_a0 + dot_product(gcsv_a,(to_vector(Tc_all[n, 1:2])));
-        j += 1;
-      }
-      
-      gcsv_imp_valid = to_array_1d(pos_normal_rng(gcsv_x_valid, gcsv_sigma));
-    }
-    
-    GCSV_imp_all[which_not(keptin)] = impute_cont_1d(Tc_all[which_not(keptin),3], obs_Tc_all[which_not(keptin),3], gcsv_imp_valid); 
-    GCSV_imp_all[which(keptin)] = impute_cont_1d(Tc[:,3], obs_Tc[:,3], gcsv_imp);
-    Xc_imp[:,9] = to_array_1d(log2(to_vector(Tc_all[:,1]) + to_vector(Tc_all[:,2]) + to_vector(GCSV_imp_all) + 1));
-  } */
-  
-  if (nXc > 8) // Other if exists
-  for (j in 9:nXc) Xc_imp[:, j] = Xc_all[:, j];
+  if (nXc > 7) // Other if exists
+  for (j in 8:nXc) Xc_imp[:, j] = Xc_all[:, j];
   
   X = append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), append_all(Xc_imp));
 }

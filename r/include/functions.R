@@ -87,7 +87,7 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
       sf
       # }, seed=T, gc=T)
     }, .options = furrr::furrr_options(seed=TRUE))
-  })
+  }, enable = TRUE)
   # sflist = lapply(sflist, future::value)
   
   # Then merge the K * chains to create K stanfits:
@@ -228,7 +228,7 @@ calib_curve <- function(pred, obs, title = NULL, method="loess", se = TRUE, ...)
     # geom_ribbon(aes(ymin = lb, ymax=ub), alpha=.5, fill=grey(.6)) +
     geom_line(aes(y = pred)) +
     geom_point(aes(y = as.numeric(obs))) +
-    ylab("obs") +
+    ylab("Observed") + xlab("Predicted")+
     ggtitle(title)
 }
 

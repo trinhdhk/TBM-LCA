@@ -9,3 +9,7 @@ stan/*.rds
 *.cpp
 outputs/
 stan/bin/
+*.pdf
+*.png
+export/
+*.csf

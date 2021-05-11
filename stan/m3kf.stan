@@ -47,7 +47,7 @@ parameters {
   // Parameters of the logistics regression -----------------------------------
   real a0; //intercept
   real<lower=0> a_pos; // assuming HIV must have positive effect. 
-  vector[nX + 1 - 1] a_; // Extra 1 is for sqrt(glu_ratio) = sqrt(csf_glu)/sqrt(bld_glu)
+  vector[nX - 1] a_; // Extra 1 is for sqrt(glu_ratio) = sqrt(csf_glu)/sqrt(bld_glu)
   real b_HIV; //adjustment of RE with HIV Xd[,1]
   vector<lower=0>[3] b_RE;
   vector[N] RE; //base random effect;
@@ -59,7 +59,7 @@ parameters {
 
 
 transformed parameters {
-  vector[nX + 1] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
+  vector[nX] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
 #include ./includes/impute_model/transform_parameters.stan
 }
 
@@ -73,7 +73,8 @@ model {
   
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
-#include includes/main_prior/m.stan
+#include includes/main_prior/mN.stan
+#include includes/main_prior/m_RE.stan
 
   for (n in 1:N){
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
@@ -83,7 +84,7 @@ model {
       int N_pattern = int_power(2, N_Xd_miss);
       vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,:], obs_Xd[n, 1:3], a[1:3]);
       vector[N_pattern] log_liks;
-      pat_thetas[2] += a0 + dot_product(a[4:(nX + 1)], X_compl[n]);
+      pat_thetas[2] += a0 + dot_product(a[4:], X_compl[n]);
     
       //check if HIV is missing
       if (obs_Xd[n,1] == 1){
@@ -148,7 +149,7 @@ generated quantities {
   vector[N_all] theta;
 
   {
-    matrix[N_all, nX + 1] X;
+    matrix[N_all, nX] X;
 #include /includes/impute_model/generate_X_CV.stan
     
     theta = inv_logit(a0 + X*a);

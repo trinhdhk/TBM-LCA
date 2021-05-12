@@ -160,13 +160,16 @@ generated quantities {
       RE_all[which(keptin)] = RE;
       for (n in which_not(keptin)) RE_all[n] = normal_rng(0, 1);
       bac_load = b_HIV*X[:,1] + RE_all;
-      p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear[2] + b_RE[1]*bac_load);
-      p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit[2]  + b_RE[2]*bac_load);
-      p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert[2] + b_RE[3]*bac_load);
+      z_Smear_RE = z_Smear[2] + b_RE*bac_load;
+      z_Mgit_RE  = z_Mgit[2]  + b_RE*bac_load;
+      z_Xpert_RE = z_Xpert[2] + b_RE*bac_load;
+      p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
+      p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
+      p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);
       
       for (n in 1:N_all){
         log_lik[n] = log_mix(theta[n],
-        bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[2] + b_RE[3]*bac_load[n]) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[2] + b_RE[2]*bac_load[n]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[2] + b_RE[1]*bac_load[n]),
+        bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear_RE),
         bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[1])
         );
       }

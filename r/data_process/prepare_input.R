@@ -14,10 +14,15 @@ data_19EI[is.na(GCSV) & GLASCOW == 15, GCSV := 5]
 data_19EI[, clin_contact_tb := clin_contact_tb %in% TRUE]
 data_19EI <- data_19EI[!USUBJID %in% c("003-306","003-335", "003-102")] # death?
 ## Add some known test result from other sources and remove unknown one (for now)
-data_19EI <- data_19EI[!USUBJID %in% c("003-102",
-                                       '003-625', 
-                                       '003-407', '003-512')]
-
+data_19EI <- data_19EI[!USUBJID %in% c('003-407')]
+data_19EI[USUBJID == "003-038", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,1,1)] 
+data_19EI[USUBJID == "003-100", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,1,0)] 
+data_19EI[USUBJID == "003-132", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,0,0)] 
+data_19EI[USUBJID == "003-178", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,0,0)] 
+data_19EI[USUBJID == "003-512", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,1,0)] 
+data_19EI[USUBJID == "003-625", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,1,1)] #mgit is not done but get 1
+data_19EI[USUBJID == "003-551", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,1,1)]
+data_19EI[USUBJID == "003-557", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,0,0)]
 #impute age with mean age
 data_19EI[, age:=fifelse(is.na(age), mean(age, na.rm=TRUE), age)]
 

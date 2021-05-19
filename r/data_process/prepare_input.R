@@ -64,13 +64,13 @@ Xc <- data_19EI %$% cbind(
   age=log2(age+1),                      #1    #8 
   id=log2(clin_illness_day),            #2    #9
   glu=log2(BLDGLU),                     #3    #10 
-  csfglu=log2(1+csf_glucose),           #4    #11
-  csflym=log2(csf_lympho+1),            #5    #12   
-  csfpro=log2(csf_protein),             #6    #13   
-  csflac=log2(csf_lactate),             #7    #14   
+  csfglu=log10(1+csf_glucose),           #4    #11
+  csflym=log10(csf_lympho+1),            #5    #12   
+  csfpro=log10(csf_protein),             #6    #13   
+  csflac=log10(csf_lactate),             #7    #14   
   gcs=15-clin_gcs,                      #8    #15
-  csfeos=log2(csf_eos+1),               #9    #16
-  csfred=log2(REDCELL+1)                #10   #17
+  csfeos=log10(csf_eos+1),               #9    #16
+  csfred=log10(REDCELL+1)                #10   #17
 )
 
 Td <- data_19EI %$% cbind(

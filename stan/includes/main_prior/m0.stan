@@ -1,5 +1,5 @@
 // Priors of covariates
-a0       ~ student_t(nu, 0, 2.5);
+a0       ~ student_t(nu, 0, 5);
 
 //1-Specificity of each test
 z_Xpert[1] ~ normal(logit(.005), 1.59);

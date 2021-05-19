@@ -1,2 +1,4 @@
 // Priors for model != m0
-a        ~ student_t(nu, 0, 2.5);
+if (penalty_family == 0) a ~ student_t(nu, 0, SP);
+if (penalty_family == 1) a ~ double_exponential(0, SP);
+if (penalty_family == 2) a ~ normal(0, SP);

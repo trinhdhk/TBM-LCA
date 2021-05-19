@@ -1,28 +1,21 @@
 functions{
-#include ./includes/functions.stan
+#include includes/functions.stan
 }
 
 data {
   int<lower = 1> N_all; //Number of patient
-  int<lower=0, upper=1> Y_Smear_all[N_all];
-  int<lower=0, upper=1> Y_Mgit_all[N_all];
-  int<lower=0, upper=1> Y_Xpert_all[N_all];
-  
-  // Hold-out for cross-validation
-  int<lower=0, upper=1> keptin[N_all];
+
+#include includes/data/Y.stan
+#include includes/cross_validation/data.stan
 }
 
 transformed data{
-  int timestamp = 41461735; 
-  //this is just a time stamp to force Stan to recompile the code and not used.  
-  
   // * Global variables -------------------------------------------------------
 #include includes/cross_validation/transform_data_Y.stan
 }
  
 parameters {
   // Parameters of the logistics regression -----------------------------------
-  
   real a0; //intercept
   
   ordered[2] z_Smear; 
@@ -31,7 +24,7 @@ parameters {
 }
 
 model {
-  int nu = 5;
+  int nu = 4;
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
   

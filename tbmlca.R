@@ -4,9 +4,10 @@ library(argparser)
 library(magrittr, include.only = "%>%")
 misc <- new.env(hash = FALSE)
 source("r/include/functions.R", local = misc)
+rstan::rstan_options(javascript = FALSE, auto_write = TRUE)
 
 args <- 
-  arg_parser("Run TBM-LCA model") %>%
+  arg_parser(paste("TBM-LCA model runner - Written by Trinh Dong, build", Sys.Date())) %>%
   add_argument("model", help = "model to run") %>%
   # add_argument("--help", help = "print this help page and exit", short = "-h", flag = TRUE)
   add_argument("--input", help = "input Rdata file", 
@@ -16,17 +17,19 @@ args <-
   add_argument("--output-file", help = "output filename, default to auto-inference", short = "-f") %>%
   add_argument("--fold", help = "number of folds for cross-validation, ignored if not in a clean state and cache is available", default = 10, short = "-k") %>%
   add_argument("--rep", help = "number of repetitions of K-fold procedure, ignored if not in a clean state and cache is available", default = 4, short = "-r") %>%
-  add_argument("--seed", help = "random seed", default = 9802, short = "-s") %>%
-  add_argument("--clean-state", help = "ignore cache to run a clean state", flag = TRUE, short = "-c") %>% 
-  add_argument("--cache-dir", help = "cache directory, ignored if --no-cache flag is on", default = ".cache") %>%
-  add_argument("--no-cache", help = "disable caching and monitoring process, written to <cache-dir>/sampling/<model> ", flag = TRUE) %>% 
-  add_argument("--no-clear-cache", help = "disable clearing cache after running", flag = TRUE) %>%
-  add_argument("--chains", help = "number of chains per dataset", default = 3) %>%
-  add_argument("--cores", help = "number of cores", default = parallel::detectCores()-1) %>%
-  add_argument("--thin", help = "thining the chains", default = 1) %>%
-  add_argument("--iter", help = "number of iterations", default = 5000) %>%
-  add_argument("--warmup", help = "number of warm-up iterations", default = 2000) %>% 
-  add_argument("--init-r", help = "Stan init parameter", default = 1)
+  add_argument("--seed", help = "random seed", default = 9802, short = "-S") %>%
+  add_argument("--clean-state", help = "ignore cache to run a clean state", flag = TRUE) %>% 
+  add_argument("--cache-dir", help = "cache directory, ignored if --no-cache flag is on", default = ".cache", short = "-d") %>%
+  add_argument("--no-cache", help = "disable caching and monitoring process, written to <cache-dir>/sampling/<model> ", flag = TRUE, short = "-n") %>% 
+  add_argument("--no-clear-cache", help = "disable clearing cache after running", flag = TRUE, short = "-l") %>%
+  add_argument("--chains", help = "number of chains per dataset", default = 3, short = "-N") %>%
+  add_argument("--cores", help = "number of cores", default = parallel::detectCores()-1, short = "-C") %>%
+  add_argument("--thin", help = "thining the chains", default = 1, short = "-T") %>%
+  add_argument("--iter", help = "number of iterations", default = 5000, short = "-I") %>%
+  add_argument("--warmup", help = "number of warm-up iterations", default = 2000, short = "-W") %>% 
+  add_argument("--init-r", help = "Stan init parameter", default = 1, short = "-R") %>%
+  add_argument("--penalty-family", help = "Family for the regularised prior, either 't', 'normal', or 'laplace'", default = "t", short = "-F") %>%
+  add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed", default = 0, short = "-P")
 
 argparser <- parse_args(args)
 
@@ -50,7 +53,9 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL){
            obs_Xc_all = obs_Xc,
            obs_Xd_all = obs_Xd,
            obs_Td_all = obs_Td,
-           obs_Tc_all = obs_Tc
+           obs_Tc_all = obs_Tc,
+           penalty_family = penalty_family,
+           penalty_term = penalty_term
          )
     )
   
@@ -74,10 +79,18 @@ with(
     iter   <- as.integer(iter)
     warmup <- as.integer(warmup)
     init_r <- as.integer(init_r)
+    penalty_term <- as.integer(penalty_term)
+    penalty_family <- switch(penalty_family, 
+      "t" = 0,
+      "laplace" = 1,
+      "normal" = 2)
+    if (is.na(penalty_family)) stop("Invalid penalty family.")
     
     # Load the recipe
     recipe <- new.env()
     load(input, envir = recipe)
+    recipe$penalty_term = penalty_term
+    recipe$penalty_family = penalty_family
     
     # Create results env
     results <- new.env()
@@ -89,18 +102,20 @@ with(
     }
     
     # Load cache or create new folds
-    cache_file <-  if (!clean_state) file.path(cache_dir, "folds", paste0(model, ".RDS")) else NULL
+    cache_file <- file.path(cache_dir, "folds", paste0(model, ".RDS"))
     has_cache <- file.exists(cache_file)
     if (clean_state){
       if (has_cache) {
-        writeLines("Remove cache and create new folds")
+        writeLines(">> Remove cache and create new folds")
         file.remove(cache_file)
       }
       folds <- create_folds(recipe, fold, rep, seed, cache_file)
     } else{
-      if (has_cache) folds <- readRDS(cache_file)
-      else {
-        writeLines("No cache file found. Create new folds")
+      if (has_cache) {
+        writeLines(">> Cache file found. Use cache file.")
+        folds <- readRDS(cache_file)
+      } else {
+        writeLines(">> No cache file found. Create new folds")
         folds <- create_folds(recipe, fold, rep, seed, cache_file)
       }
     }
@@ -115,21 +130,23 @@ with(
       dir.create(outdir, showWarnings = F)
     } else outdir <- NULL
     
-    cat('Compile the sampler\n')
+    cat('>> Compile the sampler\n')
     if (is.na(sampler)) sampler <- file.path("stan", paste0(model, ".stan"))
     sampler <- tryCatch(
       rstan::stan_model(sampler),
       error = function(e) {
-        file.remove(sampler)
+        # Remove the cache file might fix the problem
+        file.remove(file.path("stan", paste0(model, ".rds")))
         rstan::stan_model(sampler)
       }
     )
     
-    writeLines("Sample")
+    writeLines(">> Sample")
     pars <- c("z_Smear", "z_Mgit", "z_Xpert",
               "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta")
-    if (model == "m1kf") pars <- c(pars, "a0", "a")
-    if (model == c("m2kf", "m3kf")) pars <- c(pars, "b_RE", "b_HIV")
+    if (model != "m0kf") pars <- c(pars, "a0", "a")
+    if (model %in% c("m2kf", "m3kf")) pars <- c(pars, "b_RE", "b_HIV")
+    if (model != "m0kf" && penalty_term == 0) pars <- c(pars, "sp")
     results$outputs <- misc$stan_kfold(sampler = sampler,
                                list_of_datas=inputs,
                                backend = "rstan",
@@ -144,13 +161,13 @@ with(
     
     # Clear cache
     if (!no_clear_cache){
-      writeLines("Clean up cache")
+      writeLines(">> Clean up cache")
       unlink(outdir, recursive = TRUE)
       file.remove(cache_file)
     } 
     
     # Save results
-    writeLines("Save results")
+    writeLines(">> Save results")
     results$folds  <- folds
     results$seed   <- seed
     results$fold <- fold

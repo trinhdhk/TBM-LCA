@@ -1,36 +1,19 @@
 functions{
-#include ./includes/functions.stan
+#include includes/functions.stan
 }
 
 data {
   int<lower=1> N_all;   //Number of patient
-  int<lower=1> nXc;     //Number of continuous X
-  int<lower=1> nXd;     //Number of discrete X
-  int<lower=1> nTd;     //Number of disc. aux covariates for imputation model
-  int<lower=1> nTc;     //Number of cont. aux covariates for imputation model
-  
-  int<lower=0, upper=1> Y_Smear_all[N_all];
-  int<lower=0, upper=1> Y_Mgit_all[N_all];
-  int<lower=0, upper=1> Y_Xpert_all[N_all];
-  
-  real Xc_all[N_all, nXc]; //Continuous covariates
-  int  Xd_all[N_all, nXd]; //Discrete covariates
-  int  Td_all[N_all, nTd]; //Auxillary covariates - discrete
-  real Tc_all[N_all, nTc]; //Auxillary covariates - continuous
-  
-  //Matrices of observation
-  int<lower=0, upper=1> obs_Xc_all[N_all, nXc]; 
-  int<lower=0, upper=1> obs_Xd_all[N_all, nXd];
-  int<lower=0, upper=1> obs_Td_all[N_all, nTd]; 
-  int<lower=0, upper=1> obs_Tc_all[N_all, nTc]; 
-  
-  // Hold-out for cross-validation
-  int<lower=0, upper=1> keptin[N_all];
+
+#include includes/data/X.stan
+#include includes/data/Y.stan
+#include includes/cross_validation/data.stan
+#include includes/data/penalty.stan
 }
 
 transformed data{
-  int timestamp = 42861735; 
-  //this is just a time stamp to force Stan to recompile the code and not used.  
+  // Penalty term adaptation
+  int adapt_penalty = penalty_term == 0 ? 1 : 0;
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
@@ -42,7 +25,7 @@ transformed data{
  
 parameters {
     // Parameters of the imputation model ---------------------------------------
-#include /includes/impute_model/parameters.stan
+#include includes/impute_model/parameters.stan
   
   // Parameters of the logistics regression -----------------------------------
   real a0; //intercept
@@ -52,17 +35,21 @@ parameters {
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
+  
+  //Penalty terms
+  real<lower=0> sp[adapt_penalty]; //sigma for the penalty
 }
 
 
 transformed parameters {
   vector[nX] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
-#include ./includes/impute_model/transform_parameters.stan
+#include includes/impute_model/transform_parameters.stan
 }
 
 
 model {
-  int nu = 5;
+  int nu = 4;
+  real SP = adapt_penalty == 1 ? sp[1] : penalty_term;
    // Imputation model ---------------------------------------------------------
 #include includes/impute_model/variables_declaration.stan 
 #include includes/impute_model/impute_priors.main_part.stan 
@@ -71,11 +58,11 @@ model {
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
 #include includes/main_prior/mN.stan
-
+#include includes/main_prior/penalty.stan
 
   for (n in 1:N){
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
-#include /includes/impute_model/impute_priors.loop_part.stan
+#include includes/impute_model/impute_priors.loop_part.stan
 
     if (N_Xd_miss > 0){ //if there is some discrete variables missing
       int N_pattern = int_power(2, N_Xd_miss);
@@ -116,7 +103,7 @@ generated quantities {
 
   {
     matrix[N_all, nX] X;
-#include /includes/impute_model/generate_X_CV.stan
+#include includes/impute_model/generate_X_CV.stan
     
     theta = inv_logit(a0 + X*a);
     

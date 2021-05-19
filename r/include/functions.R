@@ -56,8 +56,12 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
   }
   
   # First parallelize all chains:
-  future::plan(future::multisession, workers=cores)
+  future::plan(future::multisession, workers=cores, gc=TRUE)
   wd <- getwd()
+  #progressr::handlers(progressr::handler_pbcol(
+   # complete = function(s) crayon::bgRed(crayon::yellow(s)),
+   # incomplete = function(s) crayon::bgBlack(crayon::white(s))))
+  progressr::handlers(progressr::handler_progress)
   progressr::with_progress({
     p <- progressr::progressor(steps = n_fold*chains)
     #sflist <- vector("list", length(n_fold*chains))
@@ -80,7 +84,7 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
       else {
         m <- model$clone()
         sf <- m$sample(data = list_of_datas[[k]],
-                      chains = 1, seed = seed + i, chain_ids = i,
+                      chains = 1, seed = seed, chain_ids = i,
                       output_dir = sample_dir,...)
       }
       p()

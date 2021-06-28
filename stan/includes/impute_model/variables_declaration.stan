@@ -2,7 +2,7 @@ vector[N] z_HIV = HIV_a0 + to_matrix(Tc[:,4:5]) * HIV_a; //Populational Probabil
 vector[N] p_HIV = Phi(z_HIV);
 matrix[N, 3] Xd_imp; //fully imputed discrete X
 vector[nXc] Xc_imp[N]; //fully imputed cont X
-matrix[N, nX] X_compl;
+matrix[N, nX - 3] X_compl;
 
 Xd_imp[:,1] = impute_binary(Xd[:,1], obs_Xd[:,1], to_array_1d(z_HIV)); //HIV
 Xd_imp[:,2] = impute_binary_cmb(Xd[:,2], obs_Xd[:,2], to_array_2d(append_all(z_cs)), obs_cs); //Clinical Symptoms

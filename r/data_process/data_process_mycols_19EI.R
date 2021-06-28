@@ -16,15 +16,15 @@ myco19sumAdd = myco19add[,`:=`(
 )]
 
 myco19sum = myco19[, `:=`(
-  GeneXpert = fifelse(GeneXpert == "0" | GeneXpert ==  "NOT DONE", NA_character_, GeneXpert),
-  Xpert_Ultra = fifelse(Xpert_Ultra == "0" | Xpert_Ultra ==  "NOT DONE", NA_character_, Xpert_Ultra))][!USUBJID %in% myco19sumAdd$USUBJID, .(
+  GeneXpert = fifelse(GeneXpert != "0" & GeneXpert !=  "NOT DONE", GeneXpert, NA_character_),
+  Xpert_Ultra = fifelse(Xpert_Ultra != "0" & Xpert_Ultra !=  "NOT DONE", Xpert_Ultra, NA_character_))][!USUBJID %in% myco19sumAdd$USUBJID, .(
   USUBJID,
   DateSample = as.Date(DateSample),
   ZN = (ZielNeelsen == "Positive"),
   MycoResult = (MGITculture == "Positive"),
   XpertResult = fifelse(is.na(Xpert_Ultra), stringr::str_detect(GeneXpert, "MTB DETECTED"), stringr::str_detect(Xpert_Ultra, "MTB DETECTED")),
-  XpertLevel = tolower(fifelse(stringr::str_detect(GeneXpert, "MTB DETECTED"), gsub("MTB DETECTED ", "", GeneXpert), 
-                      fifelse(stringr::str_detect(Xpert_Ultra, "MTB DETECTED"), gsub("MTB DETECTED ", "", Xpert_Ultra), NA_character_)))
+  XpertLevel = tolower(fifelse(stringr::str_detect(GeneXpert, "MTB DETECTED") %in% TRUE, gsub("MTB DETECTED ", "", GeneXpert), 
+                      fifelse(stringr::str_detect(Xpert_Ultra, "MTB DETECTED") %in% TRUE, gsub("MTB DETECTED ", "", Xpert_Ultra), NA_character_)))
 )]
 
 myco19sum = rbind(myco19sum, myco19sumAdd)

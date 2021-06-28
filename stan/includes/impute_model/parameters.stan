@@ -37,7 +37,7 @@ vector[5] csf_a0;
 vector[2] glu_a; //For diabetes
 cholesky_factor_corr[5] L_Omega_csf;
 vector<lower=0>[5] L_sigma_csf;
-real bld_glu_imp[N - obs_bld_glu]; //lower = 1 for numerical stability
+real bld_glu_imp[N - obs_bld_glu];
 real<lower=0> csf_glu_imp[N - obs_csf_glu]; 
 real csf_other_imp[(N*3) - obs_csf_other];
 

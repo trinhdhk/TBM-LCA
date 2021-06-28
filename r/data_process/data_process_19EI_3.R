@@ -18,7 +18,7 @@ joindt <- plyr::join_all(
              HEMIPLEGIA, PARAPLEGIA, TETRAPLEGIA, 
              GENCONVUL, LOCALCONVUL, 
              GLASCOW, GCSE, GCSM, GCSV)],
-    data$BASE_LP[, .(USUBJID, LUMBARDATE, APP_A, GRAM, INDIAINK, 
+    data$BASE_LP[, .(USUBJID, LUMBARDATE, APP_A, GRAM, INDIAINK, CRYTO,
                      BACSPE, OTH, JEVIGM, DENGUEIMG, DENGUEPCR, JEVCSF, VIRO_OTH, NMDAR, #other diag
                CSF_VOL= fcase(#!is.na(as.numeric(TB_VOL)) & (TB_VOL != "" %in% T), as.numeric(TB_VOL),
                               !is.na(as.numeric(CSFVOLUME)) & (CSFVOLUME != "" %in% T), as.numeric(CSFVOLUME),
@@ -78,6 +78,7 @@ joindt[,`:=`(
   glucose_ratio = CSFGLU/BLDGLU,
   csf_gram = (GRAM=="POS")%in%TRUE,
   csf_ink = (INDIAINK=="POS")%in% TRUE,
+  csf_crypto = (CRYTO=="POS")%in%TRUE,
   # img_hydro = MRIRESULT=='Hydrocephalus',
   # img_basal = MRIRESULT == 'Basal meningeal enhancement',
   # img_tuber = MRIRESULT == 'Tuberculoma',

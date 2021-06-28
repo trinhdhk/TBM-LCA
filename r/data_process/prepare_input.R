@@ -15,17 +15,24 @@ data_19EI[, clin_contact_tb := clin_contact_tb %in% TRUE]
 data_19EI <- data_19EI[!USUBJID %in% c("003-306","003-335", "003-102")] # death?
 ## Add some known test result from other sources and remove unknown one (for now)
 data_19EI <- data_19EI[!USUBJID %in% c('003-407')]
-data_19EI[USUBJID == "003-038", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,1,1)] 
+data_19EI[USUBJID == "003-038", c("csf_smear", "csf_mgit", "csf_xpert", "XpertLevel") := list(1,1,1, "very low")] 
 data_19EI[USUBJID == "003-100", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,1,0)] 
 data_19EI[USUBJID == "003-132", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,0,0)] 
 data_19EI[USUBJID == "003-178", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,0,0)] 
 data_19EI[USUBJID == "003-512", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,1,0)] 
-data_19EI[USUBJID == "003-625", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,1,1)] #mgit is not done but get 1
-data_19EI[USUBJID == "003-551", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,1,1)]
+data_19EI[USUBJID == "003-625", c("csf_smear", "csf_mgit", "csf_xpert", "XpertLevel") := list(1,1,1, "very low")] #mgit is not done but get 1
+data_19EI[USUBJID == "003-551", c("csf_smear", "csf_mgit", "csf_xpert", "XpertLevel") := list(1,1,1, "very low")]
 data_19EI[USUBJID == "003-557", c("csf_smear", "csf_mgit", "csf_xpert") := list(1,0,0)]
-#impute age with mean age
-data_19EI[, age:=fifelse(is.na(age), mean(age, na.rm=TRUE), age)]
-
+#create dummy variable of XpertLevel
+data_19EI[, c("csf_bac_verylow", "csf_bac_low", "csf_bac_med") := 
+    #list((XpertLevel %in% c("very low", "low", "medium")) %in% TRUE, 
+     # (XpertLevel %in% c("low", "medium")) %in% TRUE,
+     # (XpertLevel %in% c("medium")) %in% TRUE)]
+    list((XpertLevel == "very low") %in% TRUE,
+      (XpertLevel == "low") %in% TRUE,
+      (XpertLevel == "medium") %in% TRUE)]
+#remove patient with age=0 bc outlier
+data_19EI = data_19EI[age!=0]
 #impute gcsv using: https://pubmed.ncbi.nlm.nih.gov/32898843/
 #if missing all, single imputation using mice
 data_19EI[, GCSV:=fifelse(is.na(GCSV), 
@@ -35,14 +42,24 @@ data_19EI[, GCSV:=fifelse(is.na(GCSV),
                                #GCSE+GCSM<=9, 4,  #NO
                                #GCSE+GCSM==10,5), #NO BECAUSE ISREDUCED==TRUE
                          GCSV)]
-mi_19EI <- mice::mice(data_19EI[,.(hiv_stat, GCSE, GCSM, GCSV)], m=1, maxit=500, seed = 219)
-impgcs_19EI <- mi_19EI$imp[c("GCSE", "GCSM", "GCSV")]
-impgcs_19EI <- lapply(impgcs_19EI, function(x) 
-  cbind(row = row.names(x), x)[row.names(x) %in% which(is.na(data_19EI$clin_gcs)),])
-impgcs_19EI <- cbind(impgcs_19EI[[1]], impgcs_19EI[[2]][,2], impgcs_19EI[[3]][,2])
-data_19EI[is.na(GCSE)&is.na(GCSM)&is.na(GCSV)&is.na(clin_gcs),
-          c("GCSE", "GCSM", "GCSV"):=impgcs_19EI[,2:4]]
-data_19EI[,clin_gcs:=fifelse(is.na(clin_gcs), GCSE+GCSM+GCSV, clin_gcs)]
+dummi_19EI <- mice::mice(data_19EI[,.(hiv_stat, GCSE, GCSM, GCSV, 
+  age, WHITE, LYMP, NEUTRO, EOSI, PLATE)], m=1, maxit=0, seed = 219)
+pred_mat <- dummi_19EI$predictorMatrix
+pred_mat[2:4, 6:10] <- 0
+pred_mat[6:10, 2:4] <- 0
+pred_mat[1,] <- 0
+
+mi_19EI <- mice::mice(data_19EI[,.(hiv_stat, GCSE, GCSM, GCSV, 
+  age, WHITE, LYMP, NEUTRO, EOSI, PLATE)], m=1, maxit=1500, seed = 219, predictorMatrix = pred_mat)
+imp_19EI <- mice::complete(mi_19EI)[c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE")]
+data_19EI <- cbind(data_19EI[,
+  c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE") := NULL], imp_19EI)
+# impgcs_19EI <- lapply(impgcs_19EI, function(x) 
+#   cbind(row = row.names(x), x)[row.names(x) %in% which(is.na(data_19EI$clin_gcs)),])
+# impgcs_19EI <- cbind(impgcs_19EI[[1]], impgcs_19EI[[2]][,2], impgcs_19EI[[3]][,2])
+# data_19EI[is.na(GCSE)&is.na(GCSM)&is.na(GCSV)&is.na(clin_gcs),
+#           c("GCSE", "GCSM", "GCSV"):=impgcs_19EI[,2:4]]
+# data_19EI[,clin_gcs:=fifelse(is.na(clin_gcs), GCSE+GCSM+GCSV, clin_gcs)]
 
 #Red blood cell lumbar puncture might need correction
 #There is interaction but let's loosen it b/c we are on log scale
@@ -56,14 +73,14 @@ Xd <- data_19EI %$% cbind(
   clin_contact_tb,                      #5
   xray_pul_tb,                          #6
   xray_miliary_tb,                      #7
-  csf_ink
+  csf_ink | csf_crypto
 )
 
 Xc <- data_19EI %$% cbind(
   #age=(age-mean(age, na.rm=TRUE))/10,   #1    #8
-  age=log2(age+1),                      #1    #8 
+  age=log2(age)-mean(log2(age)),                      #1    #8 
   id=log2(clin_illness_day),            #2    #9
-  glu=log2(BLDGLU),                     #3    #10 
+  glu=log10(BLDGLU),                     #3    #10 
   csfglu=log10(1+csf_glucose),           #4    #11
   csflym=log10(csf_lympho+1),            #5    #12   
   csfpro=log10(csf_protein),             #6    #13   
@@ -88,8 +105,9 @@ Tc <- data_19EI %$% cbind(
   4-GCSE, 
   6-GCSM, 
   5-GCSV, 
-  log2(fifelse(is.na(WHITE), mean(WHITE[!data_19EI$hiv_stat], na.rm=TRUE), WHITE)), 
-  log2(fifelse(is.na(LYMP), mean(LYMP[!data_19EI$hiv_stat], na.rm=TRUE), LYMP))
+  log2(WHITE), 
+  log2(LYMP),
+  csf_bac_verylow, csf_bac_low, csf_bac_med
 )
 
 is.not.na <- Negate(is.na)

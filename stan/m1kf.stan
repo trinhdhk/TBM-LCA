@@ -37,7 +37,7 @@ parameters {
   ordered[2] z_Xpert;
   
   //Penalty terms
-  real<lower=0> sp[adapt_penalty]; //sigma for the penalty
+  real<lower=0> sp[adapt_penalty*2]; //sigma for the penalty
 }
 
 
@@ -49,7 +49,7 @@ transformed parameters {
 
 model {
   int nu = 4;
-  real SP = adapt_penalty == 1 ? sp[1] : penalty_term;
+  real SP[2] = adapt_penalty == 1 ? sp : {penalty_term, penalty_term};
    // Imputation model ---------------------------------------------------------
 #include includes/impute_model/variables_declaration.stan 
 #include includes/impute_model/impute_priors.main_part.stan 
@@ -100,9 +100,9 @@ generated quantities {
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[N_all] theta;
+  matrix[N_all, nX] X;
 
   {
-    matrix[N_all, nX] X;
 #include includes/impute_model/generate_X_CV.stan
     
     theta = inv_logit(a0 + X*a);

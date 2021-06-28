@@ -5,12 +5,10 @@
   real age_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),1])];
   real id_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),2])];
   
-  //TODO fix HIV
   {
     vector[N_all] z_HIV = HIV_a0 + to_matrix(Tc_all[:,4:5]) * HIV_a;
     Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], to_array_1d(z_HIV)), obs_Xd_all[:,1]);
   }
-  //Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], rep_array(HIV_a0, N_all)), obs_Xd_all[:,1]); //HIV
   
   //Age & illness day
   {

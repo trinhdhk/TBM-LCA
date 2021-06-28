@@ -1,25 +1,26 @@
-  // Penrose Moore pseudoinverse via QR decomposition
-  matrix pseudo_inverse(matrix A){
-    int N = rows(A);
-    int M = cols(A);
-    matrix[M, N] invA;
-    matrix[N, M] Q = qr_thin_Q(A);
-    matrix[M, M] R = qr_thin_R(A);
-    invA = R \ Q';
-    return invA;
-  }
+  // // Penrose Moore pseudoinverse via QR decomposition
+  // matrix pseudo_inverse(matrix A){
+  //   int N = rows(A);
+  //   int M = cols(A);
+  //   matrix[M, N] invA;
+  //   matrix[N, M] Q = qr_thin_Q(A);
+  //   matrix[M, M] R = qr_thin_R(A);
+  //   // invA = R \ (Q');
+  //   invA = Q \ (R');
+  //   return invA;
+  // }
   
   //center a vector[]
-  vector[] center(vector[] X){
-    int N = size(X);
-    int M = num_elements(X[1]);
-    vector[M] Xc[N];
-    for (n in 1:N) {
-      real m = mean(X[n]);
-      Xc[n] = X[n] - m;
-    }    
-    return Xc;
-  }
+  // vector[] center(vector[] X){
+  //   int N = size(X);
+  //   int M = num_elements(X[1]);
+  //   vector[M] Xc[N];
+  //   for (n in 1:N) {
+  //     real m = mean(X[n]);
+  //     Xc[n] = X[n] - m;
+  //   }    
+  //   return Xc;
+  // }
   
   // Summing over an int array
   int sum2d(int[,] a) {
@@ -332,15 +333,15 @@
   Mu: vector of mean of X
   L: cholesky decomposition of X
   **/
-  vector[] multi_normal_cholesky_partial_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix L){
+  
+  vector[] multi_normal_partial_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix S){
     int N = dims(X)[1]; //all observation
     int M = dims(X)[2]; //all value
-    matrix[M, M] S = tcrossprod(L); // reconstruct the cov matrix from cholesky
     vector[M] new_X[N]; //fully imputed X 
     
     if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
     if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");
-    if (dims(L)[1] != M || dims(L)[2] != M) reject("Number of elements in L mismatched!");
+    if (dims(S)[1] != M || dims(S)[2] != M) reject("Number of elements in L mismatched!");
     if (num_elements(Mu[1]) != M) reject("Number of elements in Mu mismatched!");
     
     for (n in 1:N){
@@ -386,11 +387,17 @@
         }
       } else if (sum(obs) == 0){ //Nothing is observed then normal rng is performed
         vector[M] Mu_x = Mu[n];
-        new_X[n] = multi_normal_cholesky_rng(Mu_x, L);
+        new_X[n] = multi_normal_rng(Mu_x, S);
       }
     }
     
     return new_X;
+  } 
+  
+  vector[] multi_normal_cholesky_partial_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix L){
+    int M = dims(X)[2]; //all value
+    matrix[M, M] S = tcrossprod(L); // reconstruct the cov matrix from cholesky
+    return(multi_normal_partial_rng(X, obs_X, Mu, S));
   }
   
   /**

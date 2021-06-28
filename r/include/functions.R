@@ -56,11 +56,8 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
   }
   
   # First parallelize all chains:
-  future::plan(future::multisession, workers=cores, gc=TRUE)
+  future::plan(future::multicore, workers=cores, gc=TRUE)
   wd <- getwd()
-  #progressr::handlers(progressr::handler_pbcol(
-   # complete = function(s) crayon::bgRed(crayon::yellow(s)),
-   # incomplete = function(s) crayon::bgBlack(crayon::white(s))))
   progressr::handlers(progressr::handler_progress)
   progressr::with_progress({
     p <- progressr::progressor(steps = n_fold*chains)
@@ -204,14 +201,14 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,
           if (length(par_dims) >= 2 && par_dims[min(length(par_dims),2)] == length(holdout_k)) {
             commas <- paste(rep(',', length(par_dims)-2), collapse = " ")
             # browser()
-            call_string <- glue::glue('extract_holdout_par[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n),
+            call_string <- glue::glue('extract_holdout_par[(dim(par_extract_list[[1]][[p]])[1]*(n-1)*d+1):(dim(par_extract_list[[1]][[p]])[1]*n*d),
                                     holdout_k=={holdout} {commas}] <- k_par[,holdout_k=={holdout} {commas}]')
             eval(parse(text=call_string))
           } else {
-            commas <- paste(rep(',', length(par_dims)-1), collapse = " ")
-            call_string <-- glue::glue('extract_holdout_par[[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n) {commas}] <- 
-                                      k_par[{commas}]')
-            eval(parse(text=call_string))
+            #commas <- paste(rep(',', length(par_dims)-1), collapse = " ")
+            #call_string <-- glue::glue('extract_holdout_par[[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n) {commas}] <- 
+            #                          k_par[{commas}]')
+            #eval(parse(text=call_string))
           }
         }
       }
@@ -222,17 +219,60 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,
   setNames(extract_holdout, extract_pars)
 }
 
- 
+ # Thin histogram
+thinhist_subplot <- function(x, normalize.factor = NULL, digits = 2, yscale = 1, zero_y = 0, plot = TRUE){
+  round_factor = 10^digits
+  sub = floor(min(x*round_factor))/round_factor
+  sup = ceiling(max(x*round_factor))/round_factor
+  breaks = seq(sub, sup, 10^-digits)
+  x.breaks = hist(x, breaks, plot = FALSE)
+  if (!length(normalize.factor)) normalize.factor <- max(x.breaks$count)
+  counts = (x.breaks$count / normalize.factor) * yscale + zero_y
+  require(ggplot2)
+  p <- geom_segment(aes(y = zero_y, x = x.breaks$mids, yend = counts, xend = x.breaks$mids))
+  if (!plot) return(p)
+  ggplot() + p  +
+    ylab("") + xlab("")
+}
+
+thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale = 1, plot = TRUE){
+  round_factor = 10^digits
+  sub = floor(min(x*round_factor))/round_factor
+  sup = ceiling(max(x*round_factor))/round_factor
+  breaks = seq(sub, sup, 10^-digits)
+  x.breaks = hist(x, breaks, plot = FALSE)
+  normalize.factor <- if (normalize) quantile(x.breaks$count, .9, na.rm=TRUE) else NULL
+  p <-
+    list(
+      thinhist_subplot(x[y==0], normalize.factor=normalize.factor, digits = digits, yscale = yscale, zero_y=0, plot=FALSE),
+      thinhist_subplot(x[y==1], normalize.factor=normalize.factor, digits = digits, yscale = -yscale, zero_y=1, plot=FALSE)  
+    )
+  if (!plot) return(p)
+  ggplot() + p[[1]] + p[[2]] + 
+    ylab("") + xlab("")
+}
 
 # Function to draw the calibration curve
-calib_curve <- function(pred, obs, title = NULL, method="loess", se = TRUE, ...){
+calib_curve <- function(pred, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, hist.normalize = TRUE, ...){
   require(ggplot2)
-  ggplot(mapping=aes(x = pred)) + 
-    geom_smooth(aes(y = as.numeric(obs)), color="red", se = se, method = method, ...) + 
+  method <- match.arg(method)
+  p <- ggplot(mapping=aes(x = pred))
+  if (method == "loess")
+	  p <- p + geom_smooth(aes( y = as.numeric(obs)), color="#B92000", se = se, method = method, ...)
+  else
+    p <- p + stat_smooth(aes( y = as.numeric(obs)), method="glm", formula=y~splines::ns(x,knots), color = "#B92000", ...) 
+	# geom_smooth(aes(y = as.numeric(obs)), color="red", se = se, formula = + 
     # geom_ribbon(aes(ymin = lb, ymax=ub), alpha=.5, fill=grey(.6)) +
-    geom_line(aes(y = pred)) +
-    geom_point(aes(y = as.numeric(obs))) +
+  p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = .1, plot = FALSE)
+  p + 
+    geom_line(aes(y = pred), color = "#676767") +
+    # geom_point(aes(y = as.numeric(obs))) +
+    # thinhist_subplot(x = pred[obs==1], yscale=-.1, zero_y = 1, plot=FALSE) + 
+    # thinhist_subplot(x = pred[obs==0], yscale=.1, zero_y = 0, plot=FALSE) +
+    p0[[1]] + p0[[2]] +
     ylab("Observed") + xlab("Predicted")+
+    scale_y_continuous(breaks = seq(0, 1, length.out = 5))+
+    scale_x_continuous(breaks = seq(0, 1, length.out = 5))+
     ggtitle(title)
 }
 

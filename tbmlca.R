@@ -41,6 +41,8 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA){
     with(recipe,
          list(
            N_all = nrow(data_19EI),
+           nB = 1L,
+           B = as.array(7), #vector(),
            nFA = n_FA,
            nXc = ncol(Xc),
            nXd = ncol(Xd),
@@ -61,7 +63,7 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA){
            penalty_term = penalty_term
          )
     )
-  
+
   folds <- misc$repeated_kfold(inp, K = K, N_rep = N, N_obs = nrow(recipe$data_19EI), seed = seed)
   if (!is.null(cache_file)) saveRDS(folds, file = cache_file)
   folds
@@ -316,7 +318,6 @@ with(
         rstan::stan_model(sampler)
       }
     )
-    
     writeLines(">> Sample")
     pars <- c("z_Smear", "z_Mgit", "z_Xpert",
               "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta")
@@ -329,10 +330,12 @@ with(
       "age_a0", "age_a", "age_sigma",
       "id_a0", "id_a", "id_sigma",
       if(model != "m6kf") c("csf_a0", "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
-    if (!model %in% c("m0kf", "m1kf")) pars <- c(pars, "b_RE", "b_HIV")
+    if (!model %in% c("m0kf", "m1kf", "m7kf")) pars <- c(pars, "b_RE", "b_HIV")
+    if (model == "m3kf") pars <- c(pars, "b")
     if (model == "m4kf") pars <- c(pars, "b_XpertLevel")
     if (model == "m5kf") pars <- c(pars, "c_Xpert")
     if (model == "m6kf") pars <- c(pars, "U_csf_all", "L_csf")
+    if (model == "m7kf") pars <- c(pars, "b_RE")
     results$outputs <- misc$stan_kfold(sampler = sampler,
                                list_of_datas=inputs,
                                backend = "rstan",

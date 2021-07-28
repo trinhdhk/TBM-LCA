@@ -1,6 +1,6 @@
 //Train data
 int<lower=1> N = sum(keptin);
-int<lower=1> N_valid = N_all - N;
+int<lower=0> N_valid = N_all - N;
 int N_miss_gscv_valid = N_valid - sum(obs_Tc_all[which_not(keptin),3]);
 
 int<lower=0, upper=1> Y_Smear[N] = Y_Smear_all[which(keptin)];

@@ -11,4 +11,4 @@
   if != 0 will create manual penalty.
   */
   int<lower=0, upper=2> penalty_family;
-  real<lower=0> penalty_term[2];
+  real<lower=-1> penalty_term[2];

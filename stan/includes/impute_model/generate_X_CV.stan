@@ -25,8 +25,10 @@
     }
   }
   
-  Xc_imp[which_not(keptin),1] = impute_cont_1d(Xc_all[which_not(keptin),1], obs_Xc_all[which_not(keptin),1], age_imp_valid); //Age
-  Xc_imp[which_not(keptin),2] = impute_cont_1d(Xc_all[which_not(keptin),2], obs_Xc_all[which_not(keptin),2], id_imp_valid); //illness day
+  if (sum(keptin) < N_all){
+    Xc_imp[which_not(keptin),1] = impute_cont_1d(Xc_all[which_not(keptin),1], obs_Xc_all[which_not(keptin),1], age_imp_valid); //Age
+    Xc_imp[which_not(keptin),2] = impute_cont_1d(Xc_all[which_not(keptin),2], obs_Xc_all[which_not(keptin),2], id_imp_valid); //illness day
+  }
   Xc_imp[which(keptin),1] = impute_cont_1d(Xc[:, 1], obs_Xc[:, 1], age_imp);
   Xc_imp[which(keptin),2] = impute_cont_1d(Xc[:, 2], obs_Xc[:, 2], id_imp);
   
@@ -37,13 +39,15 @@
     vector[3] Mu_cs[N_valid];
     int CS_imp_valid[N_valid, 3];
     int j = 1;
-    for (n in which_not(keptin)){
-      Mu_cs[j] = cs_a0 + cs_a[:,1]*Xd_imp[n,1] + cs_a[:,2]*Xc_imp[n,2];
-      j += 1;
+    if (sum(keptin) < N_all){
+      for (n in which_not(keptin)){
+        Mu_cs[j] = cs_a0 + cs_a[:,1]*Xd_imp[n,1] + cs_a[:,2]*Xc_imp[n,2];
+        j += 1;
+      }
+      CS_imp_valid = multi_probit_partial_rng(Td_cs_valid, obs_cs_valid, Mu_cs, L_Omega_cs);
+      Xd_imp[which_not(keptin),2] = to_vector(any(CS_imp_valid));
     }
-    CS_imp_valid = multi_probit_partial_rng(Td_cs_valid, obs_cs_valid, Mu_cs, L_Omega_cs);
     Xd_imp[which(keptin),2] = binary_rng(impute_binary_cmb(Xd[:,2], obs_Xd[:,2], to_array_2d(append_all(z_cs)), obs_cs), obs_Xd[:,2]); //Clinical Symptoms
-    Xd_imp[which_not(keptin),2] = to_vector(any(CS_imp_valid));
   }
   
   // Motor palsy
@@ -53,33 +57,29 @@
     vector[3] Mu_mp[N_valid];
     int mp_imp_valid[N_valid, 3];
     int j = 1;
-    for (n in which_not(keptin)){
-      Mu_mp[j] = mp_a0 + mp_a[:,1]*Xd_imp[n,1] + mp_a[:,2]*Xc_imp[n,2];
-      j += 1;
+    if (sum(keptin) < N_all){
+      for (n in which_not(keptin)){
+        Mu_mp[j] = mp_a0 + mp_a[:,1]*Xd_imp[n,1] + mp_a[:,2]*Xc_imp[n,2];
+        j += 1;
+      }
+      mp_imp_valid = multi_probit_partial_rng(Td_mp_valid, obs_mp_valid, Mu_mp, L_Omega_mp);
+      Xd_imp[which_not(keptin),3] = to_vector(any(mp_imp_valid));
     }
-    mp_imp_valid = multi_probit_partial_rng(Td_mp_valid, obs_mp_valid, Mu_mp, L_Omega_mp);
     Xd_imp[which(keptin),3] = binary_rng(impute_binary_cmb(Xd[:,3], obs_Xd[:,3], to_array_2d(append_all(z_mp)), obs_mp), obs_Xd[:,3]); //Motor palsy
-    Xd_imp[which_not(keptin),3] = to_vector(any(mp_imp_valid));
   }
   
   // CSF lab
   {
-    vector[5] csf_mu_valid[N_valid];
-    int j = 1;
-    //int k = 0; //counter for the rng trial
-    for (n in which_not(keptin)){
-      csf_mu_valid[j, 1:2] = csf_a0[1:2] + glu_a*Td_all[n, 7];
-      csf_mu_valid[j, 3:5] = csf_a0[3:5];
-      j += 1;
+    if (sum(keptin) < N_all){
+      vector[6] csf_mu_valid[N_valid] = rep_array(rep_vector(0, 6), N_valid) ;
+      Xc_imp[which_not(keptin),3:8] = multi_normal_cholesky_partial_rng(Xc_all[which_not(keptin),3:8], obs_Xc_all[which_not(keptin),3:8], csf_mu_valid, L_Omega_csf);
     }
     
-    Xc_imp[which_not(keptin),3:7] = multi_normal_cholesky_partial_rng(Xc_all[which_not(keptin),3:7], obs_Xc_all[which_not(keptin),3:7], csf_mu_valid, L_Omega_csf);
-    
-    Xc_imp[which(keptin),3:7] = impute_cont_2d(Xc[:,3:7], obs_Xc[:,3:7], append_array(append_array(bld_glu_imp, csf_glu_imp), csf_other_imp));
+    Xc_imp[which(keptin),3:8] = impute_cont_2d(Xc[:,3:8], obs_Xc[:,3:8], csf_imp);
   }
   
-  if (nXc > 7) // Other if exists
-  for (j in 8:nXc) Xc_imp[:, j] = Xc_all[:, j];
+  if (nXc > 8) // Other if exists
+  for (j in 9:nXc) Xc_imp[:, j] = Xc_all[:, j];
   
   X = append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), append_all(Xc_imp));
 }

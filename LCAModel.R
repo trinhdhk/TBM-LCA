@@ -5,24 +5,28 @@ LCAModel <- R6::R6Class(
     model = NULL,
     model_cmb = NULL,
     recipe = NULL,
+    params = NULL,
     n_fold = integer(),
     n_rep = integer(),
     folds = integer(),
     holdout = integer(),
-    initialize = function(model_name, model_dir = "outputs",
-                          model_file = file.path(model_dir, paste0(model_name, ".RDS"))
+    initialize = function(model_file, model_dir = "outputs",
+                          model_name = model_file,
+                          recipe = 'data/cleaned/data_input.Rdata'
     ){
+      model_file <- file.path(model_dir, paste0(model_file, ".RDS"))
       model <- readRDS(model_file)
       self$recipe <- new.env()
-      load('data/cleaned/data_input.Rdata', envir = self$recipe)
+      load(recipe, envir = self$recipe)
       self$folds <- model$folds
       self$holdout <- self$folds$holdout
       self$n_fold <- model$fold
-      self$n_rep <- model$n_rep
+      self$n_rep <- model$rep
       self$model_name <- model_name
-      self$model <- model$outputs
-      self$model_cmb <- rstan::sflist2stanfit(self$model)
-      source('r/include/functions.R', local=private$.misc)
+      self$model <- if (self$n_fold>1) model$outputs else list(model$outputs)
+      self$model_cmb <- if (self$n_fold>1) rstan::sflist2stanfit(self$model) else model$outputs
+      self$params <- model$params
+      self$update_misc()
     },
     print = function(){
       cat("TBM LCA model", self$model_name, "\n")
@@ -32,14 +36,49 @@ LCAModel <- R6::R6Class(
     summary = function(...){
       rstan::summary(self$model_cmb, ...)
     },
+    update_misc = function(){
+      source('r/include/functions.R', local=private$.misc)
+    },
+    extract = function(...){
+      rstan::extract(self$model_cmb, ...)
+    },
+    export_to_Shiny = function(file = NULL){
+      pars <- self$params
+      pars <- grep('^[ab]', pars, value = TRUE)
+      extracted <- rstan::extract(self$model_cmb, pars=pars)
+      model_name <- self$model_name
+      obj <- list(coef = extracted, model_mode = 'full', model_name = model_name)
+      if (length(file)) return(
+        saveRDS(
+          obj,
+          file = file
+        )
+      )
+      obj
+    },
+    export_to_simplified = function(file = NULL, .full = FALSE){
+      ztheta <- rstan::extract(self$model_cmb,
+                          pars = 'theta')$theta %>% qlogis()
+      export <- list(
+        mu_ztheta = apply(ztheta, 2, mean),
+        sd_ztheta = apply(ztheta, 2, sd),
+        if (.full) ztheta = ztheta,
+        recipe = self$recipe,
+        model_name = self$model_name
+      )
+      
+      class(export) <- 'TBMLCA_export'
+      if (length(file)) return(saveRDS(export, file))
+      export
+    },
     mcmc_intervals = rlang::new_function(
       args = append(rlang::fn_fmls(bayesplot::mcmc_intervals)[-1], list(ylabs = NULL)),
       body = rlang::expr({
         args <- as.list(match.call())[-1]
         args <- c(x=self$model_cmb, args[names(args)!="ylabs"])
         pl <- do.call(bayesplot::mcmc_intervals, args)
-        if (!length(args$ylabs)) return(pl)
-        pl <- suppressWarnings(private$.misc$change_ylabs(pl, labs = args$ylabs))
+        if (!length(ylabs)) return(pl)
+        pl <- suppressWarnings(private$.misc$change_ylabs(pl, labs = ylabs))
         pl
       })
     ),
@@ -97,6 +136,7 @@ LCAModel <- R6::R6Class(
       span = .75,
       knots = 5,
       est = c("mean", "median"),
+      plot_rep = FALSE, theme = ggplot2::theme_bw,
       ...
     ){
       which <- match.arg(which); method <- match.arg(method)
@@ -105,44 +145,25 @@ LCAModel <- R6::R6Class(
       est <- match.arg(est)
       
       p_summary <- self$p
-      
+      p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
       if (which == "Y"){
         Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        private$.misc$calib_curve(p_summary$p_Smear[[est]],Y_Smear_all, "Smear", span=span, method = method, knots=knots,...) +
-          private$.misc$calib_curve(p_summary$p_Mgit[[est]],Y_Mgit_all,   "Mgit",  span=span,method = method, knots=knots,...) +
-          private$.misc$calib_curve(p_summary$p_Xpert[[est]],Y_Xpert_all, "Xpert", span=span,method = method, knots=knots,...) 
-        # if (method == "loess"){
-        #   private$.misc$calib_curve(p_summary$p_Smear[[est]],Y_Smear_all, "Smear", span=span, ...) +
-        #   private$.misc$calib_curve(p_summary$p_Mgit[[est]],Y_Mgit_all,   "Mgit",  span=span, ...) +
-        #   private$.misc$calib_curve(p_summary$p_Xpert[[est]],Y_Xpert_all, "Xpert", span=span, ...) 
-        # } else {
-        #   ggplot(mapping=aes(x=p_summary$p_Smear[[est]], y=Y_Smear_all)) + 
-        #   stat_smooth(method="glm", formula=y~splines::ns(x,knots), color = "red", ...) + 
-        #   geom_line(aes(y=p_summary$p_Smear[[est]])) +
-        #   ggplot(mapping=aes(x=p_summary$p_Mgit[[est]], y=Y_Mgit_all)) + 
-        #   stat_smooth(method="glm", formula=y~splines::ns(x,knots), color = "red",...) + 
-        #   geom_line(aes(y=p_summary$p_Mgit[[est]])) + 
-        #   ggplot(mapping=aes(x=p_summary$p_Xpert[[est]], y=Y_Xpert_all)) + 
-        #   stat_smooth(method="glm", formula=y~splines::ns(x,knots), color = "red", ...) + 
-        #   geom_line(aes(y=p_summary$p_Xpert[[est]]))
-        # }
+        private$.misc$calib_curve(p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), Y_Smear_all, "Smear", span=span, method = method, knots=knots,..., theme = theme) + xlab("") + 
+          private$.misc$calib_curve(p_summary$p_Mgit[[est]], lapply(p_rep, function(.) .$p_Mgit[[est]]), Y_Mgit_all,   "Mgit",  span=span,method = method, knots=knots,..., theme = theme) + ylab("") +
+          private$.misc$calib_curve(p_summary$p_Xpert[[est]], lapply(p_rep, function(.) .$p_Xpert[[est]]),Y_Xpert_all, "Xpert", span=span,method = method, knots=knots,..., theme = theme) + xlab("") + ylab("")
+      
       } else {
-        private$.misc$calib_curve(p_summary$theta[[est]], C, "Positive TBM", span=span, method = method, knots=knots,...)
-        # if (method == "loess")
-        #   private$.misc$calib_curve(p_summary$theta[[est]], C, "Positive TBM", span=span)
-        # else 
-        #   ggplot(mapping=aes(x=p_summary$theta[[est]], y=as.numeric(C))) + 
-        #     stat_smooth(method="glm", formula=y~splines::ns(x,knots), color = "red", ...) + 
-        #     geom_line(aes(y=p_summary$theta[[est]]))
+        private$.misc$calib_curve(p_summary$theta[[est]], lapply(p_rep, function(.) .$theta[[est]]), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
       }
     },
     density_plot = function(
       which = c("Y", "C"),
       C = !self$recipe$data_19EI$other_dis_dx,
-      est = c("mean", "median")
+      est = c("mean", "median"),
+      theme = ggplot2::theme_bw 
     ){
       which <- match.arg(which)
       require(ggplot2)
@@ -155,18 +176,19 @@ LCAModel <- R6::R6Class(
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        classifierplots::density_plot(Y_Smear_all, p_summary$p_Smear[[est]]) + ggplot2::ggtitle("Smear") + 
-          classifierplots::density_plot(Y_Mgit_all , p_summary$p_Mgit[[est]]) + ggplot2::ggtitle("Mgit") + 
-          classifierplots::density_plot(Y_Xpert_all, p_summary$p_Xpert[[est]]) + ggplot2::ggtitle("Xpert")
+        classifierplots::density_plot(Y_Smear_all, p_summary$p_Smear[[est]]) + theme() + ggplot2::ggtitle("Smear") + xlab("") + ggplot2::theme(legend.position = 'none') +
+          classifierplots::density_plot(Y_Mgit_all , p_summary$p_Mgit[[est]]) + theme() + ggplot2::ggtitle("Mgit") + ylab("") +  ggplot2::theme(legend.position = 'none') + 
+          classifierplots::density_plot(Y_Xpert_all, p_summary$p_Xpert[[est]]) + theme() + ggplot2::ggtitle("Xpert") + xlab("") + ylab("")
       } else 
-        classifierplots::density_plot(as.integer(C), p_summary$theta[[est]]) + ggplot2::ggtitle("Positive TBM")
+        classifierplots::density_plot(as.integer(C), p_summary$theta[[est]]) + theme() + ggplot2::ggtitle("Positive TBM") 
     },
     roc_plot = function(
       which = c("Y", "C"),
       C = !self$recipe$data_19EI$other_dis_dx,
       resamps = 2000,
       force_bootstrap = NULL,
-      est = c("mean", "median")
+      est = c("mean", "median"),
+      theme = ggplot2::theme_bw
     ){
       which <- match.arg(which)
       require(ggplot2)
@@ -179,14 +201,16 @@ LCAModel <- R6::R6Class(
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        classifierplots::roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + ggplot2::ggtitle("Smear") + 
-        classifierplots::roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] , resamps = resamps, force_bootstrap = force_bootstrap) + ggplot2::ggtitle("Mgit") + 
-        classifierplots::roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + ggplot2::ggtitle("Xpert")
+        suppressMessages(
+          classifierplots::roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Smear") + scale_x_continuous(name="") +
+          classifierplots::roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] , resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Mgit") + scale_y_continuous(name="") +  
+          classifierplots::roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Xpert") + scale_x_continuous(name="") + scale_y_continuous(name="")
+        )
       } else 
-        classifierplots::roc_plot(C, p_summary$theta[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + ggplot2::ggtitle("Positive TBM")
+        classifierplots::roc_plot(C, p_summary$theta[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Positive TBM")
     }
   ),
-  private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL),
+  private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL, .p_rep = NULL),
   active = list(
     loglik = function(){
       if (length(private$.loglik)) return(private$.loglik)
@@ -206,6 +230,19 @@ LCAModel <- R6::R6Class(
       } 
       
       private$.p
+    },
+    p_rep = function(){
+      if (self$n_rep == 1) return(self$p)
+      if (is.null(private$.p_rep)){
+        private$.p_rep <- vector("list", self$n_rep)
+        for (n in seq_len(self$n_rep)){
+          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
+          p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
+          p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
+          private$.p_rep[[n]] <- p_summary
+        }
+      }
+      private$.p_rep
     }
   )
 )

@@ -21,19 +21,19 @@ id_a  ~ normal(0, 2.5);
 id_sigma ~ normal(0, 1);
 
 // - CSF lab tests  // -GCSV
-to_vector(glu_a) ~ normal(0, 2.5);
+// to_vector(glu_a) ~ normal(0, 2.5);
 L_Omega_csf ~ lkj_corr_cholesky(4);
 L_sigma_csf ~ normal(0, 2.5);
-csf_a0 ~  normal(0, 2.5);
+// csf_a0 ~  normal(0, 2.5);
 
 {
-  vector[5] csf_mu[N];
-  matrix[5, 5] L_Sigma_csf = diag_pre_multiply(L_sigma_csf, L_Omega_csf);
+  // vector[5] csf_mu[N];
+  matrix[6, 6] L_Sigma_csf = diag_pre_multiply(L_sigma_csf, L_Omega_csf);
   
-  for (n in 1:N){
-    csf_mu[n, 1:2] = csf_a0[1:2] + glu_a*Td[n, 7];
-    csf_mu[n, 3:5] = csf_a0[3:5];
-  }
+  // for (n in 1:N){
+  //   csf_mu[n, 1:2] = csf_a0[1:2] + glu_a*Td[n, 7];
+  //   csf_mu[n, 3:5] = csf_a0[3:5];
+  // }
   
-  Xc_imp[:,3:7] ~ multi_normal_cholesky(csf_mu, L_Sigma_csf);
+  Xc_imp[:,3:8] ~ multi_normal_cholesky(rep_vector(0,6), L_Sigma_csf);
 }

@@ -24,14 +24,13 @@ int<lower=0> N_neg_mp;
 int<lower=1,upper=N> n_neg_mp[sum2d(obs_mp) - size(n_pos_mp)];
 int<lower=1,upper=3> d_neg_mp[size(n_neg_mp)];
 
-// * CSF laboratory test Xc[3:7] --------------------------------------------
-int obs_bld_glu = sum(obs_Xc[:,3]);
-int obs_csf_glu = sum(obs_Xc[:,4]);
-int obs_csf_other = sum2d(obs_Xc[:,5:7]);
+// * CSF laboratory test Xc[3:8] --------------------------------------------
+int obs_csf = sum2d(obs_Xc[:,3:8]);
 
 // * GCS Xc[:,8], Tc[:, 1:3]
-int obs_gcs = sum(obs_Xc[:,8]);
-int obs_gcs_compartment = sum2d(obs_Tc[:,1:3]);
+//Removed
+// int obs_gcs = sum(obs_Xc[:,8]);
+// int obs_gcs_compartment = sum2d(obs_Tc[:,1:3]);
 
 // * Var assignments --------------------------------------------------------
 N_pos_cs  = size(n_pos_cs);

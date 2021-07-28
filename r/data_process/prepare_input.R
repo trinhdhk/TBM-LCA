@@ -43,17 +43,17 @@ data_19EI[, GCSV:=fifelse(is.na(GCSV),
                                #GCSE+GCSM==10,5), #NO BECAUSE ISREDUCED==TRUE
                          GCSV)]
 dummi_19EI <- mice::mice(data_19EI[,.(hiv_stat, GCSE, GCSM, GCSV, 
-  age, WHITE, LYMP, NEUTRO, EOSI, PLATE)], m=1, maxit=0, seed = 219)
+  age, WHITE, LYMP, NEUTRO, EOSI, PLATE, csf_wbc)], m=1, maxit=0, seed = 219)
 pred_mat <- dummi_19EI$predictorMatrix
 pred_mat[2:4, 6:10] <- 0
 pred_mat[6:10, 2:4] <- 0
-pred_mat[1,] <- 0
+pred_mat[1,-c(6,11)] <- 0
 
 mi_19EI <- mice::mice(data_19EI[,.(hiv_stat, GCSE, GCSM, GCSV, 
-  age, WHITE, LYMP, NEUTRO, EOSI, PLATE)], m=1, maxit=1500, seed = 219, predictorMatrix = pred_mat)
-imp_19EI <- mice::complete(mi_19EI)[c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE")]
+  age, WHITE, LYMP, NEUTRO, EOSI, PLATE,csf_wbc)], m=1, maxit=500, seed = 219, predictorMatrix = pred_mat)
+imp_19EI <- mice::complete(mi_19EI)[c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE", "csf_wbc")]
 data_19EI <- cbind(data_19EI[,
-  c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE") := NULL], imp_19EI)
+  c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE") := NULL], imp_19EI) # "csf_wbc"
 # impgcs_19EI <- lapply(impgcs_19EI, function(x) 
 #   cbind(row = row.names(x), x)[row.names(x) %in% which(is.na(data_19EI$clin_gcs)),])
 # impgcs_19EI <- cbind(impgcs_19EI[[1]], impgcs_19EI[[2]][,2], impgcs_19EI[[3]][,2])
@@ -73,21 +73,23 @@ Xd <- data_19EI %$% cbind(
   clin_contact_tb,                      #5
   xray_pul_tb,                          #6
   xray_miliary_tb,                      #7
-  csf_ink | csf_crypto
+  csf_ink | csf_crypto                  #8
 )
 
 Xc <- data_19EI %$% cbind(
-  #age=(age-mean(age, na.rm=TRUE))/10,   #1    #8
-  age=log2(age)-mean(log2(age)),                      #1    #8 
-  id=log2(clin_illness_day),            #2    #9
-  glu=log10(BLDGLU),                     #3    #10 
-  csfglu=log10(1+csf_glucose),           #4    #11
-  csflym=log10(csf_lympho+1),            #5    #12   
-  csfpro=log10(csf_protein),             #6    #13   
-  csflac=log10(csf_lactate),             #7    #14   
-  gcs=15-clin_gcs,                      #8    #15
-  csfeos=log10(csf_eos+1),               #9    #16
-  csfred=log10(REDCELL+1)                #10   #17
+  age=log2(age)-mean(log2(age)),         #1    #9 
+  id=log2(clin_illness_day),             #2    #10
+  glu=scale(log2(BLDGLU), scale=F),                     #3    #11 
+  csfglu=scale(log2(1+csf_glucose), scale=F),           #4    #12
+  csflym=scale(log10(csf_lympho+1), scale=F),            #5    #13   
+  csfpro=scale(log2(csf_protein), scale=F),             #6    #14   
+  csflac=scale(log2(csf_lactate), scale=F),             #7    #15   
+  # csfwbc=scale(log10(csf_wbc), scale=F),                 #8    #16
+  csfneu=scale(log10(csf_wbc - csf_lympho - csf_eos + 1), scale=F),    #8.   #16
+  gcs=15-clin_gcs,                       #9    #17
+  # gcs2=(15-clin_gcs)^2,
+  csfeos=scale(log10(csf_eos+1), scale=F),               #10   #18
+  csfred=scale(log10(REDCELL+1), scale=F)                #11   #19
 )
 
 Td <- data_19EI %$% cbind(
@@ -96,8 +98,8 @@ Td <- data_19EI %$% cbind(
   ISCOUGH,                              #3
   HEMIPLEGIA,                           #4
   PARAPLEGIA,                           #5
-  TETRAPLEGIA,                          #6
-  ISDIABETE                             #7
+  TETRAPLEGIA                          #6
+  # ISDIABETE                             #7
 )
 
 

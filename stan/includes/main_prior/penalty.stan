@@ -1,2 +1,2 @@
-sp1 ~ uniform(0, 10); //hyper-prior for the penalty adaptation
-sp2 ~ uniform(0, 10); //hyper-prior for the penalty adaptation
+// sp ~ uniform(0, 5); //hyper-prior for the penalty adaptation
+sp ~ normal(0, 2.5);

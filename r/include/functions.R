@@ -1,3 +1,161 @@
+#fix rstan check for date when recompiling
+my_stan_model <- 
+  function (file, model_name = "anon_model", model_code = "", 
+            stanc_ret = NULL, boost_lib = NULL, eigen_lib = NULL, save_dso = TRUE, 
+            verbose = FALSE, auto_write = rstan_options("auto_write"), 
+            obfuscate_model_name = TRUE, allow_undefined = FALSE, allow_optimizations = FALSE, 
+            standalone_functions = FALSE, use_opencl = FALSE, warn_pedantic = FALSE, 
+            warn_uninitialized = FALSE, includes = NULL, isystem = c(if (!missing(file)) dirname(file), 
+                                                                     getwd())) 
+  {
+    if (isTRUE(rstan_options("threads_per_chain") > 1L)) {
+      Sys.setenv(STAN_NUM_THREADS = rstan_options("threads_per_chain"))
+    }
+    if (is.null(stanc_ret)) {
+      model_name2 <- deparse(substitute(model_code))
+      if (is.null(attr(model_code, "model_name2"))) 
+        attr(model_code, "model_name2") <- model_name2
+      if (missing(model_name)) 
+        model_name <- NULL
+      if (missing(file)) {
+        tf <- tempfile()
+        writeLines(model_code, con = tf)
+        file <- file.path(dirname(tf), paste0(tools::md5sum(tf), 
+                                              ".stan"))
+        if (!file.exists(file)) 
+          file.rename(from = tf, to = file)
+        else file.remove(tf)
+      }
+      else file <- normalizePath(file)
+      stanc_ret <- stanc(file = file, model_code = model_code, 
+                         model_name = model_name, verbose = verbose, obfuscate_model_name = obfuscate_model_name, 
+                         allow_undefined = allow_undefined, 
+                         standalone_functions = standalone_functions, use_opencl = use_opencl, 
+                         warn_pedantic = warn_pedantic, warn_uninitialized = warn_uninitialized, 
+                         isystem = isystem)
+      model_re <- "(^[[:alnum:]]{2,}.*$)|(^[A-E,G-S,U-Z,a-z].*$)|(^[F,T].+)"
+      if (!is.null(model_name)) 
+        if (!grepl(model_re, model_name)) 
+          stop("model name must match ", model_re)
+      S4_objects <- apropos(model_re, mode = "S4", ignore.case = FALSE)
+      if (length(S4_objects) > 0) {
+        e <- environment()
+        stanfits <- sapply(mget(S4_objects, envir = e, inherits = TRUE), 
+                           FUN = is, class2 = "stanfit")
+        stanmodels <- sapply(mget(S4_objects, envir = e, 
+                                  inherits = TRUE), FUN = is, class2 = "stanmodel")
+        if (any(stanfits)) 
+          for (i in names(which(stanfits))) {
+            obj <- get_stanmodel(get(i, envir = e, inherits = TRUE))
+            if (identical(obj@model_code[1], stanc_ret$model_code[1])) 
+              return(obj)
+          }
+        if (any(stanmodels)) 
+          for (i in names(which(stanmodels))) {
+            obj <- get(i, envir = e, inherits = TRUE)
+            if (identical(obj@model_code[1], stanc_ret$model_code[1])) 
+              return(obj)
+          }
+      }
+      mtime <- file.info(file)$mtime
+      file.rds <- gsub("stan$", "rds", file)
+      md5 <- tools::md5sum(file)
+      if (!file.exists(file.rds)) {
+        file.rds <- file.path(tempdir(), paste0(md5, ".rds"))
+      }
+      if (!file.exists(file.rds) || isTRUE((mtime.rds <- file.info(file.rds)$mtime) < 
+                                           as.POSIXct(packageDescription("rstan")$Date)) || 
+          !is(obj <- readRDS(file.rds), "stanmodel") || !is_sm_valid(obj) || 
+          (!identical(stanc_ret$model_code, obj@model_code) && 
+           is.null(message("hash mismatch so recompiling; make sure Stan code ends with a blank line"))) || 
+          avoid_crash(obj@dso@.CXXDSOMISC$module) && is.null(message("recompiling to avoid crashing R session"))) {
+      }
+      else return(invisible(obj))
+    }
+    if (!is.list(stanc_ret)) {
+      stop("stanc_ret needs to be the returned object from stanc.")
+    }
+    m <- match(c("cppcode", "model_name", "status"), names(stanc_ret))
+    if (any(is.na(m))) {
+      stop("stanc_ret does not have element `cppcode', `model_name', and `status'")
+    }
+    else {
+      if (!stanc_ret$status) 
+        stop("stanc_ret is not a successfully returned list from stanc")
+    }
+    if (.Platform$OS.type != "windows") {
+      CXX <- get_CXX()
+      if (!is.null(attr(CXX, "status")) || nchar(CXX) == 0) {
+        WIKI <- "https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started"
+        warning(paste("C++ compiler not found on system. If absent, see\n", 
+                      WIKI))
+      }
+      else if (grepl("69", CXX, fixed = TRUE)) 
+        warning("You may need to launch Xcode once to accept its license")
+    }
+    else CXX <- "g++"
+    model_cppname <- stanc_ret$model_cppname
+    model_name <- stanc_ret$model_name
+    model_code <- stanc_ret$model_code
+    model_cppcode <- stanc_ret$cppcode
+    model_cppcode <- paste("#ifndef MODELS_HPP", "#define MODELS_HPP", 
+                           "#define STAN__SERVICES__COMMAND_HPP", "#include <rstan/rstaninc.hpp>", 
+                           model_cppcode, "#endif", sep = "\n")
+    inc <- paste("#include <Rcpp.h>\n", "using namespace Rcpp;\n", 
+                 if (is.null(includes)) 
+                   model_cppcode
+                 else sub("(class[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*)", 
+                          paste(includes, "\\1"), model_cppcode), "\n", get_Rcpp_module_def_code(model_cppname), 
+                 sep = "")
+    if (verbose && interactive()) 
+      cat("COMPILING THE C++ CODE FOR MODEL '", model_name, 
+          "' NOW.\n", sep = "")
+    if (verbose) 
+      cat(system_info(), "\n")
+    if (!is.null(boost_lib)) {
+      old.boost_lib <- rstan_options(boost_lib = boost_lib)
+      on.exit(rstan_options(boost_lib = old.boost_lib))
+    }
+    if (!file.exists(rstan_options("boost_lib"))) 
+      stop("Boost not found; call install.packages('BH')")
+    if (!is.null(eigen_lib)) {
+      old.eigen_lib <- rstan_options(eigen_lib = eigen_lib)
+      on.exit(rstan_options(eigen_lib = old.eigen_lib), add = TRUE)
+    }
+    if (!file.exists(rstan_options("eigen_lib"))) 
+      stop("Eigen not found; call install.packages('RcppEigen')")
+    dso <- cxxfunctionplus(signature(), body = paste(" return Rcpp::wrap(\"", 
+                                                     model_name, "\");", sep = ""), includes = inc, plugin = "rstan", 
+                           save_dso = save_dso | auto_write, module_name = paste("stan_fit4", 
+                                                                                 model_cppname, "_mod", sep = ""), verbose = verbose)
+    obj <- new("stanmodel", model_name = model_name, model_code = model_code, 
+               dso = dso, mk_cppmodule = mk_cppmodule, model_cpp = list(model_cppname = model_cppname, 
+                                                                        model_cppcode = model_cppcode))
+    if (missing(file) || (file.access(dirname(file), mode = 2) != 
+                          0) || !isTRUE(auto_write)) {
+      tf <- tempfile()
+      writeLines(model_code, con = tf)
+      file <- file.path(tempdir(), paste0(tools::md5sum(tf), 
+                                          ".stan"))
+      if (!file.exists(file)) 
+        file.rename(from = tf, to = file)
+      else file.remove(tf)
+      saveRDS(obj, file = gsub("stan$", "rds", file))
+    }
+    else if (isTRUE(auto_write)) {
+      file <- gsub("stan$", "rds", file)
+      if (file.exists(file)) {
+        rds <- try(readRDS(file), silent = TRUE)
+        if (!is(rds, "stanmodel")) 
+          warning(rds, " exists but is not a 'stanmodel' so not overwriting")
+        else saveRDS(obj, file = file)
+      }
+      else saveRDS(obj, file = file)
+    }
+    invisible(obj)
+  }
+environment(my_stan_model) <- environment(rstan::stan_model)
+
 # Function to change y label for bayesplots.
 # Trinh Dong, 2020-12
 # mcmc_plot: a plot from bayesplot
@@ -13,14 +171,18 @@ change_ylabs <- function(mcmc_plot, ..., labs = character(), top_down = TRUE){
 
 # functions to create repeated kfold
 repeated_kfold <- function(K = 10, N_rep = 4, N_obs, data, seed = 123, cores = 10){
+  if (K == 1) return(
+    list(keptin = list(rep(1L, N_obs)), holdout = list(rep(0L, N_obs)), 
+         inputs = list(modifyList(data, list(keptin = rep(1L, N_obs)))))
+  )
   holdout <- vector("list", N_rep * K)
   keptin <- vector("list", N_rep * K)
   for(n in seq_len(N_rep)){
     set.seed(seed + n - 1)
     hh <- loo::kfold_split_random(K = K, N = N_obs)
     foldkept <- matrix(1, nrow = N_obs, ncol = K)
-    for(i in 1:N_obs) foldkept[i, hh[i]] <- 0
-    foldhold  <- 1- foldkept
+    for(i in 1L:N_obs) foldkept[i, hh[i]] <- 0
+    foldhold  <- 1L - foldkept
     keptin[((n-1)*K+1):(n*K)] <- split(foldkept,rep(1:ncol(foldkept),each=nrow(foldkept)))
     holdout[((n-1)*K+1):(n*K)]  <- split(foldhold,rep(1:ncol(foldhold),each=nrow(foldhold)))
   }
@@ -37,6 +199,20 @@ repeated_kfold <- function(K = 10, N_rep = 4, N_obs, data, seed = 123, cores = 1
 
 #function to parrallelize all computations
 #need at least two chains !!!
+normal_stan <- function(model, data, include_paths=NULL, sample_dir = NULL, backend, chains, cores, seed, pars,...){
+  sample_file <- file.path(sample_dir, 'data_chain')
+  if (backend == 'rstan') {
+    sf <- rstan::sampling(model, data=data, sample_file = sample_file, chains=chains, cores=cores, seed=seed, pars=pars,... )
+  } else {
+    m <- model$clone()
+    sf <- m$sample(data = data,
+                   chains = 1, seed = seed,
+                   output_dir = sample_dir,...)
+  }
+  
+  sf
+}
+
 stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_dir = NULL, backend = c("cmdstanr", "rstan"), chains, cores, seed, pars, merge = TRUE,...){
   # library(pbmcapply)
   backend <- match.arg(backend)
@@ -54,7 +230,8 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
       backend <- backend2
     }
   }
-  
+  if (length(list_of_datas) == 1L) 
+    return(normal_stan(model, list_of_datas[[1]], include_path, sample_dir, backend,chains, cores, seed, pars,...))
   # First parallelize all chains:
   future::plan(future::multicore, workers=cores, gc=TRUE)
   wd <- getwd()
@@ -253,27 +430,47 @@ thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale =
 }
 
 # Function to draw the calibration curve
-calib_curve <- function(pred, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, hist.normalize = TRUE, ...){
+calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, hist = TRUE, hist.normalize = TRUE, ..., theme = ggplot2::theme_bw){
   require(ggplot2)
-  method <- match.arg(method)
+  maincolor <- "#CD113B"
+  subcolor1 <- "#111111"
+  subcolor2 <- "#999999"
+  
+  method <- match.arg(method) 
+  # browser()
   p <- ggplot(mapping=aes(x = pred))
-  if (method == "loess")
-	  p <- p + geom_smooth(aes( y = as.numeric(obs)), color="#B92000", se = se, method = method, ...)
-  else
-    p <- p + stat_smooth(aes( y = as.numeric(obs)), method="glm", formula=y~splines::ns(x,knots), color = "#B92000", ...) 
-	# geom_smooth(aes(y = as.numeric(obs)), color="red", se = se, formula = + 
-    # geom_ribbon(aes(ymin = lb, ymax=ub), alpha=.5, fill=grey(.6)) +
-  p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = .1, plot = FALSE)
-  p + 
-    geom_line(aes(y = pred), color = "#676767") +
-    # geom_point(aes(y = as.numeric(obs))) +
-    # thinhist_subplot(x = pred[obs==1], yscale=-.1, zero_y = 1, plot=FALSE) + 
-    # thinhist_subplot(x = pred[obs==0], yscale=.1, zero_y = 0, plot=FALSE) +
-    p0[[1]] + p0[[2]] +
+  add_pred <- function(pr, line = FALSE){
+    pr <- pr
+    if (method == "loess"){
+      geom_smooth(aes(x = pr, y = as.numeric(obs)), color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line, method = method,...)
+    } else {
+      stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(x,knots), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+    }
+  }
+  
+  for (pr in pred_rep) p <- p + add_pred(pr)
+  for (pr in pred_rep) p <- p + add_pred(pr, line = .3)
+    
+  
+  if (method == "loess"){
+	  p <- p + geom_smooth(aes( y = as.numeric(obs)), color=maincolor, fill = subcolor2, se = se, size=.9, alpha=.3, method = method, ...)
+  }
+  else {
+    p <- p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(x,knots), color = maincolor, fill = subcolor2, size=.9, alpha = .6/length(pred_rep), se = se,...) 
+  }
+  p <- p + 
+    geom_line(aes(y = pred), color = "#000000") + 
     ylab("Observed") + xlab("Predicted")+
-    scale_y_continuous(breaks = seq(0, 1, length.out = 5))+
+    scale_y_continuous(breaks = seq(0, 1, length.out = 5), limits = c(0,1), oob = scales::squish)+
     scale_x_continuous(breaks = seq(0, 1, length.out = 5))+
     ggtitle(title)
+  
+  if (hist){
+    p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = .1, plot = FALSE)
+    p <- p + p0[[1]] + p0[[2]]
+  }
+  
+  p + theme()
 }
 
 

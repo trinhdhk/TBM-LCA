@@ -6,6 +6,7 @@ functions{
 data {
   int<lower=1> N_all;   //Number of patient
   int<lower=1, upper=4> nFA; //Latent factors
+  int<lower=0, upper=1> unsure_spc;
   
 #include includes/data/X.stan
 #include includes/data/Y.stan

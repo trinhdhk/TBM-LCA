@@ -10,16 +10,38 @@
   //   return invA;
   // }
   
-  //center a vector[]
-  // vector[] center(vector[] X){
-  //   int N = size(X);
-  //   int M = num_elements(X[1]);
-  //   vector[M] Xc[N];
-  //   for (n in 1:N) {
-  //     real m = mean(X[n]);
-  //     Xc[n] = X[n] - m;
-  //   }    
+  //scale a vector[]
+  // vector Scale(vector X, int scale){
+  //   int M = num_elements(X);
+  //   vector[M] Xc;
+  //   real m = mean(X);
+  //   Xc = X - m;
+  //   if (scale==1) Xc /= sd(X);
   //   return Xc;
+  // }
+  
+  // scale an array of vectors
+  // vector[] ScaleA(vector[] X, int scale){
+    // int N = size(X);
+    // int M = num_elements(X[1]);
+    // vector[M] Xc[N];
+    // for (m in 1:M) {
+    //     vector[M] Xm = to_vector(X[:,m]) - mean(X[:,m]);
+    //     if (scale==1) Xm /= sd(X[:,m]);
+    //     Xc[:,m] = to_array_1d(Xm);
+    // }
+    // return Xc;
+    // return X;
+  // }
+  
+  // scale an matrix column-wise
+  // matrix ScaleM(matrix X, int scale){
+    // int M = dims(X)[2]; 
+    // int N = dims(X)[1];
+    // matrix[N, M] Xc;
+    // for (m in 1:M) Xc[:,m] = Scale(X[:,m], scale);
+    // return Xc;
+    // return X;
   // }
   
   // Summing over an int array
@@ -339,6 +361,7 @@
     int M = dims(X)[2]; //all value
     vector[M] new_X[N]; //fully imputed X 
     
+    if (dims(X)[1] == 0) return {[]'};
     if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
     if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");
     if (dims(S)[1] != M || dims(S)[2] != M) reject("Number of elements in L mismatched!");
@@ -397,6 +420,7 @@
   vector[] multi_normal_cholesky_partial_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix L){
     int M = dims(X)[2]; //all value
     matrix[M, M] S = tcrossprod(L); // reconstruct the cov matrix from cholesky
+    if (dims(X)[1] == 0) return {[]'};
     return(multi_normal_partial_rng(X, obs_X, Mu, S));
   }
   
@@ -408,12 +432,16 @@
   ** Due to the limitation in Stan, X must be constraint before go into the function.
   **/
   int[,] multi_probit_partial_rng(int[,] X, int[,] obs_X, vector[] Mu, matrix L){
+    int empty[0,0];
     int N = dims(X)[1];
-    int M = dims(X)[2];
+    int M = dims(X)[size(dims(X))];
     
     int sign_X[N,M];
     vector[M] rng_X[N];
     int result[N,M];
+    if (N == 0) {
+      return empty;
+    };
     
     if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
     if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");

@@ -33,11 +33,9 @@ real<lower=0> id_sigma;
 real id_imp[N - sum(obs_Xc[:,2])];
 
 // Impute csf lab tests as mvNormal -----------------------------------------
-vector[5] csf_a0;
-vector[2] glu_a; //For diabetes
-cholesky_factor_corr[5] L_Omega_csf;
-vector<lower=0>[5] L_sigma_csf;
-real bld_glu_imp[N - obs_bld_glu];
-real<lower=0> csf_glu_imp[N - obs_csf_glu]; 
-real csf_other_imp[(N*3) - obs_csf_other];
+// vector[6] csf_a0;
+// vector[2] glu_a; //For diabetes //Second thought: this does not work.
+cholesky_factor_corr[6] L_Omega_csf;
+vector<lower=0>[6] L_sigma_csf;
+real csf_imp[N*6 - obs_csf];
 

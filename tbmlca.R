@@ -43,7 +43,7 @@ args <-
 argparser <- parse_args(args)
 
 # Functions to create folds
-create_folds <- function(){
+create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_spc, quad_RE){
   inp <- 
     with(recipe,
          list(
@@ -88,6 +88,8 @@ with(
   argparser,
   {
     # If no name for output file, do auto-inference
+    model_no <- as.numeric(model)
+    model <- paste0('m', model)
     if (is.na(output_file)) output_file <- paste(model,"RDS",sep=".")
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
     # Check 
@@ -102,6 +104,7 @@ with(
     warmup <- as.integer(warmup)
     init_r <- as.numeric(init_r)
     penalty_term <- as.numeric(penalty_term)
+    if (penalty_term[1] < 0 || penalty_term[2] < -1) stop('Invalid penalty term(s)')
     n_FA <- as.vector(m6_n_FA)
     B <- if (all(is.na(as.numeric(m3_B)))) vector() else as.array(as.numeric(m3_B))
     pos_a <- if (all(is.na(as.numeric(pos_a)))) vector() else as.array(as.numeric(pos_a))
@@ -139,7 +142,7 @@ with(
     writeLines(crayon::yellow("- Model", model))
     writeLines(crayon::yellow("-", fold, "fold(s) with", rep, "repetition(s)"))
     writeLines(crayon::yellow("- Prior family:", switch(as.character(penalty_family), "0" = "Student t", "1" = "Laplace", "2" = "Normal"),
-      "with scales = {", toString(ifelse(penalty_term==0, "~U[0,5]", penalty_term)), "}"))
+      "with scales = {", toString(ifelse(penalty_term==0, "~N[0,2.5]", penalty_term)), "}"))
     writeLines(crayon::yellow("- Seed =", seed))
     writeLines(crayon::yellow("- Stan config: Cores =", cores, "Chains =", chains, "Iter =", iter, "Warmup =", warmup, "Init_r =", init_r, "Adapt_delta =", adapt_delta))
     if (model == "m6kf")

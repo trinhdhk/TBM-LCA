@@ -4,14 +4,13 @@ functions{
 
 data {
   int<lower=1> N_all;   //Number of patient
+  int<lower=1, upper=4> nFA; //Latent factors
   int<lower=0> nB; //Number of added RE  
   int<lower=1> B[nB];
   int<lower=0, upper=1> unsure_spc;
   int<lower=0, upper=1> quad_RE;
-  int<lower=0> nA_neg;
-  int<lower=0> nA_pos;
-  int<lower=0> A_neg[nA_neg]; //position of negative a(s)
-  int<lower=0> A_pos[nA_pos]; //position of positive a(s)
+ 
+#include includes/data/a.stan 
 #include includes/data/X.stan
 #include includes/data/Y.stan
 #include includes/cross_validation/data.stan
@@ -23,13 +22,15 @@ transformed data{
   int adapt_penalty[2];
   
   // * Global variables -------------------------------------------------------
-    int nX = nXc + nXd; // Total number of covariates 
-  
+  int nX = nXc + nXd; // Total number of covariates 
+  int nA = nX - (5-nFA); //Number of coef
+#include includes/pca/transformed_data/variables_declaration.stan
 #include includes/cross_validation/transform_data_Y.stan
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
   
   for (i in 1:2) adapt_penalty[i] = penalty_term[i] == 0 ? 1 : 0;
+#include includes/pca/transformed_data/transform.stan
 }
 
 parameters {
@@ -37,14 +38,11 @@ parameters {
 #include includes/impute_model/parameters.stan
   
   // Parameters of the logistics regression -----------------------------------
-  real a0; //intercept
-  vector<lower=0>[nA_pos] a_pos; // assuming HIV must have positive effect. 
-  vector<upper=0>[nA_neg] a_neg;
-  vector[nX - nA_pos - nA_neg] a_;
-  vector[3] b_HIV; //adjustment of RE with HIV Xd[,1]
-  vector[3] b_cs;
-  matrix[nB,3] b;
-  vector<lower=0>[3] b_RE;
+#include includes/parameters/a.stan
+  vector[3] b_HIV_raw; //adjustment of RE with HIV Xd[,1]
+  vector[3] b_cs_raw;
+  matrix[nB,3] b_raw;
+  vector<lower=0>[3] b_RE_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 
@@ -53,53 +51,39 @@ parameters {
   
   //Penalty terms
   vector<lower=0>[adapt_penalty[1]+adapt_penalty[2]] sp;
+#include includes/pca/parameters.stan
 }
 
 
 transformed parameters {
-  vector[nX] a; //Add HIV coef to the vector of coef
+#include includes/transform_parameters/a_variable_declaration.stan
+  real b_HIV;
+  real b_cs;
+  vector[nB] b;
+  vector<lower=0>[3] b_RE;
 #include includes/impute_model/transform_parameters.stan
-  {
-    int nA_posneg = nA_pos + nA_neg;
-    int A_[nX - nA_posneg];
-    int A_posneg[nA_posneg] = append_array(A_pos, A_neg);
-    int A_posneg_asc[nA_posneg] = sort_asc(A_posneg);
-    int J = 1;
-    int k = 1;
-    for (i in 1:nX) {
-      int match = 0;
-      if (J <= (nA_posneg))
-        for (j in J:(nA_posneg)){
-          if (A_posneg_asc[j] == i) {
-            match = 1;
-            J += 1;
-            break;
-          }
-        }
-      if (match == 0) {
-        A_[k] = i;
-        k += 1;
-      }
-    }
-    a[A_posneg] = append_row(a_pos, a_neg);
-    a[A_] = a_;
-  }
+#include includes/pca/transform_parameters.stan
+
+   {
+#include includes/transform_parameters/penalty.stan
+#include includes/transform_parameters/a_transform.stan
+    b = b_raw * SP[2];
+    b_HIV = b_HIV_raw * SP[2];
+    b_cs = b_cs_raw * SP[2];
+    b_RE = b_RE_raw * SP[2];
+  } 
 }
 
 
 model {
   int nu = 4;
-  real SP[2];
   // Imputation model ---------------------------------------------------------
-#include includes/impute_model/variables_declaration.stan 
-#include includes/impute_model/impute_priors.main_part.stan 
-    
-    SP[1] = (adapt_penalty[1] == 1) ? sp[1] : penalty_term[1];
-    SP[2] = (penalty_term[2] == 0) ? sp[num_elements(sp)] : (penalty_term[2] == -1) ? SP[1] : penalty_term[2];
+#include includes/pca/impute_model/variables_declaration.stan 
+#include includes/pca/impute_model/impute_priors.main_part.stan 
     
     // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
-#include includes/main_prior/m.stan
+#include includes/main_prior/a.stan
 #include includes/main_prior/penalty.stan
     RE ~ normal(0,1);
     if (penalty_family == 0){
@@ -190,22 +174,22 @@ model {
               vector[4] pat_bac_load1[2] = get_patterns(Xd_imp[n,1:2], {0, 0}, [b_HIV[1], b_cs[1]]');
               vector[4] pat_bac_load2[2] = get_patterns(Xd_imp[n,1:2], {0, 0}, [b_HIV[2], b_cs[2]]');
               vector[4] pat_bac_load3[2] = get_patterns(Xd_imp[n,1:2], {0, 0}, [b_HIV[3], b_cs[3]]');
-            vector[4] logprob_Y = pat_bac_load1[1];
-            vector[4] bac_load1 = pat_bac_load1[2] + dot_product(b[:,1], Xc_imp[n,B]);
-            vector[4] bac_load2 = pat_bac_load2[2] + dot_product(b[:,2], Xc_imp[n,B]);
-            vector[4] bac_load3 = pat_bac_load3[2] + dot_product(b[:,3], Xc_imp[n,B]);
+              vector[4] logprob_Y = pat_bac_load1[1];
+              vector[4] bac_load1 = pat_bac_load1[2] + dot_product(b[:,1], Xc_imp[n,B]);
+              vector[4] bac_load2 = pat_bac_load2[2] + dot_product(b[:,2], Xc_imp[n,B]);
+              vector[4] bac_load3 = pat_bac_load3[2] + dot_product(b[:,3], Xc_imp[n,B]);
+              
+              vector[4] z_Smear_RE = z_Smear[2] + bac_load1 + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
+              vector[4] z_Mgit_RE  = z_Mgit[2]  + bac_load2 + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
+              vector[4] z_Xpert_RE = z_Xpert[2] + bac_load3 + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
             
-            vector[4] z_Smear_RE = z_Smear[2] + bac_load1 + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
-            vector[4] z_Mgit_RE  = z_Mgit[2]  + bac_load2 + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
-            vector[4] z_Xpert_RE = z_Xpert[2] + bac_load3 + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
-            
-            log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp([
-              logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
-              logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2])),
-              logprob_Y[3] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[3]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[3]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[3])),
-              logprob_Y[4] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[4]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[4]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[4]))
-              ]),
-              bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
+              log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp([
+                logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
+                logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2])),
+                logprob_Y[3] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[3]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[3]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[3])),
+                logprob_Y[4] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[4]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[4]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[4]))
+                ]),
+                bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
           }
         }
       }
@@ -238,7 +222,7 @@ generated quantities {
   matrix[N_all, nX] X;
 
   {
-#include includes/impute_model/generate_X_CV.stan
+#include includes/pca/impute_model/generate_X_CV.stan
     
     theta = inv_logit(a0 + X*a);
     {

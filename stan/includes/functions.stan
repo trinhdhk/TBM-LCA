@@ -1,49 +1,8 @@
-  // // Penrose Moore pseudoinverse via QR decomposition
-  // matrix pseudo_inverse(matrix A){
-  //   int N = rows(A);
-  //   int M = cols(A);
-  //   matrix[M, N] invA;
-  //   matrix[N, M] Q = qr_thin_Q(A);
-  //   matrix[M, M] R = qr_thin_R(A);
-  //   // invA = R \ (Q');
-  //   invA = Q \ (R');
-  //   return invA;
-  // }
-  
-  //scale a vector[]
-  // vector Scale(vector X, int scale){
-  //   int M = num_elements(X);
-  //   vector[M] Xc;
-  //   real m = mean(X);
-  //   Xc = X - m;
-  //   if (scale==1) Xc /= sd(X);
-  //   return Xc;
-  // }
-  
-  // scale an array of vectors
-  // vector[] ScaleA(vector[] X, int scale){
-    // int N = size(X);
-    // int M = num_elements(X[1]);
-    // vector[M] Xc[N];
-    // for (m in 1:M) {
-    //     vector[M] Xm = to_vector(X[:,m]) - mean(X[:,m]);
-    //     if (scale==1) Xm /= sd(X[:,m]);
-    //     Xc[:,m] = to_array_1d(Xm);
-    // }
-    // return Xc;
-    // return X;
-  // }
-  
-  // scale an matrix column-wise
-  // matrix ScaleM(matrix X, int scale){
-    // int M = dims(X)[2]; 
-    // int N = dims(X)[1];
-    // matrix[N, M] Xc;
-    // for (m in 1:M) Xc[:,m] = Scale(X[:,m], scale);
-    // return Xc;
-    // return X;
-  // }
-  
+/* --------------
+Helper functions for model
+Trinh Dong, 2021
+---------------*/
+ 
   // Summing over an int array
   int sum2d(int[,] a) {
     int s = 0;
@@ -81,7 +40,7 @@
   }
   
   // Mimick the which function in R
-  // not stands for !v;
+  // might not work for !v, use which_not instead;
   int[] which(int[] v){
     int W[sum(v)];
     int w = 1;
@@ -95,6 +54,7 @@
     return W;
   }
   
+  // Equivalent to which(!v) in R
   int[] which_not(int[] v){
     int W[size(v) - sum(v)];
     int w = 1;
@@ -148,8 +108,8 @@
     return y;
   }
   
-  //Function to sum over 2||3 "or" logical variables.
-  //this can be generalise but I am lazy so meh
+  // Function to sum over 2||3 "or" logical variables.
+  // this can be generalise but I am lazy so meh
   real sum_probs_or(real[] probs){
     int s = size(probs);
     real sum_prob;
@@ -322,7 +282,7 @@
     return imp;
   }
   
-   // This function for rng binary variables with awarenss of observervation
+   // This function for rng binary variables with awareness of observervation
   vector binary_rng(vector imputed_1d, int[] obs){
     int N = num_elements(imputed_1d);
     vector[N] val;
@@ -429,7 +389,7 @@
   Because the multi probit 1993 technique only put the constraints on the SUR
   The idea is to rng the observed basing on the constraints
   And use that rng to sampling the missing using the multi_normal_cholesky_partial_rng
-  ** Due to the limitation in Stan, X must be constraint before go into the function.
+  ** Due to the limitation in Stan, X must be constrained before fed into the function.
   **/
   int[,] multi_probit_partial_rng(int[,] X, int[,] obs_X, vector[] Mu, matrix L){
     int empty[0,0];
@@ -460,8 +420,8 @@
         int sign_agree = 0;
         int iter = 1;
         while (sign_agree == 0 && iter < 100000){
-          int m = 1;
-          rng_X[n] = multi_normal_cholesky_rng(Mu[n], L);
+          int m      = 1;
+          rng_X[n]   = multi_normal_cholesky_rng(Mu[n], L);
           sign_agree = 1;
           while (sign_agree == 1 && m <= M){
             if (rng_X[n, m]*x[m] < 0) sign_agree = 0;
@@ -487,8 +447,8 @@
     real y[N];
     for (n in 1:N){
       p_0[n] = normal_cdf(0, mu[n], sigma);
-      u[n] = uniform_rng(p_0[n], 1);
-      y[n] = mu[n] + sigma * Phi(u[n]);
+      u[n]   = uniform_rng(p_0[n], 1);
+      y[n]   = mu[n] + sigma * Phi(u[n]);
     } 
     return y;
   }

@@ -6,6 +6,7 @@ data {
   int<lower=1> N_all;   //Number of patient
   int<lower=0, upper=1> unsure_spc;
 
+#include includes/data/a.stan 
 #include includes/data/X.stan
 #include includes/data/Y.stan
 #include includes/cross_validation/data.stan
@@ -29,28 +30,28 @@ parameters {
 #include includes/impute_model/parameters.stan
   
   // Parameters of the logistics regression -----------------------------------
-  real a0; //intercept
-  real<lower=0> a_pos; // assuming HIV must have positive effect. 
-  vector[nX - 1] a_; 
+#include includes/parameters/a.stan 
   
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
   
-  //Penalty terms
-  real<lower=0> sp[adapt_penalty*2]; //sigma for the penalty
+#include includes/parameters/penalty.stan
 }
 
 
 transformed parameters {
-  vector[nX] a = append_row(a_pos, a_); //Add HIV coef to the vector of coef
+#include includes/transform_parameters/a_variable_declaration.stan
+  {
+#include includes/transform_parameters/penalty.stan
+#include includes/transform_parameters/a_transform.stan
+  }
 #include includes/impute_model/transform_parameters.stan
 }
 
 
 model {
   int nu = 4;
-  real SP[2] = adapt_penalty == 1 ? sp : {penalty_term, penalty_term};
    // Imputation model ---------------------------------------------------------
 #include includes/impute_model/variables_declaration.stan 
 #include includes/impute_model/impute_priors.main_part.stan 
@@ -58,7 +59,7 @@ model {
   
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
-#include includes/main_prior/mN.stan
+#include includes/main_prior/a.stan
 #include includes/main_prior/penalty.stan
 
   for (n in 1:N){

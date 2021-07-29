@@ -88,13 +88,12 @@ with(
   argparser,
   {
     # If no name for output file, do auto-inference
-    model_no <- as.numeric(model)
-    model <- paste0('m', model)
+    model_no <- as.numeric(substr(model, 3))
     if (is.na(output_file)) output_file <- paste(model,"RDS",sep=".")
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
     # Check 
-    stopifnot(!intersect(pos_a, neg_a))
-    # Coerce numerics
+    stopifnot(!(intersect(pos_a, neg_a) && min(length(pos_a), length(pos_b)) > 0))
+    # Coerce numeric
     fold <- as.integer(fold)
     rep  <- as.integer(rep)
     chains <- as.integer(chains)

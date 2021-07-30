@@ -1,5 +1,4 @@
 {
-      vector[nA] a_raw;
       int nA_posneg = nA_pos + nA_neg;
       int A_[nX - nA_posneg];
       int A_posneg[nA_posneg] = append_array(A_pos, A_neg);

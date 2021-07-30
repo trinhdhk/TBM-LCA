@@ -68,8 +68,9 @@ transformed parameters {
   {
 #include includes/transform_parameters/penalty.stan
 #include includes/transform_parameters/a_transform.stan
-#include includes/transform_parameters/b_HIV_RE.stan
     b_FE = b_FE_raw * SP[2];
+    b_RE = b_RE_raw * SP[2];
+    b_HIV = b_HIV_raw * SP[2] / mean(b_FE);
     b = b_raw * SP[2] / mean(b_FE);
   }
 }

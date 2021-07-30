@@ -22,7 +22,7 @@ transformed data{
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
-
+  int nA = nX; // Number of coef
 #include includes/cross_validation/transform_data_Y.stan
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
@@ -62,9 +62,10 @@ transformed parameters {
   {
 #include includes/transform_parameters/penalty.stan
 #include includes/transform_parameters/a_transform.stan
-#include includes/transform_parameters/b_HIV_RE.stan
     
     b_FE = b_FE_raw * SP[2];
+    b_RE = b_RE_raw * SP[2];
+    b_HIV = b_HIV_raw * SP[2] / mean(b_FE);
     b = b_raw * SP[2] / mean(b_FE);
   }
 }
@@ -136,7 +137,6 @@ model {
           vector[2] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
           vector[2] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
           vector[2] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
-          
           log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
             logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
             logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))

@@ -88,11 +88,12 @@ with(
   argparser,
   {
     # If no name for output file, do auto-inference
-    model_no <- as.numeric(substr(model, 3))
+    model_no <- as.numeric(substr(model, 2,2))
+    is_pca <- grepl('_pca', model)
     if (is.na(output_file)) output_file <- paste(model,"RDS",sep=".")
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
     # Check 
-    stopifnot(!(intersect(pos_a, neg_a) && min(length(pos_a), length(pos_b)) > 0))
+    stopifnot(!(length(intersect(pos_a, neg_a)) > 0 && max(length(pos_a), length(neg_a)) > 0))
     # Coerce numeric
     fold <- as.integer(fold)
     rep  <- as.integer(rep)
@@ -188,25 +189,25 @@ with(
     writeLines(">> Sample")
     pars <- c("z_Smear", "z_Mgit", "z_Xpert",
               "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta")
-    if (model != "m0kf") pars <- c(pars, "a0", "a")
+    if (model_no > 0) pars <- c(pars, "a0", "a")
     # if (model != "m0kf" && any(penalty_term == 0)) pars <- c(pars, paste0("sp", c(1,2)[penalty_term==0]))
-    if (model != "m0kf" && any(penalty_term == 0)) pars <- c(pars, 'sp')
-    if (model != "m0kf" && all_params) pars <- c(pars, 
+    if (model_no > 0 && any(penalty_term == 0)) pars <- c(pars, 'sp')
+    if (model_no > 0 && all_params) pars <- c(pars, 
       "HIV_a0", "HIV_a", 
       "cs_a0", "cs_a", "L_Omega_cs",
       "mp_a0", "mp_a", "L_Omega_mp",
       "age_a0", "age_a", "age_sigma",
       "id_a0", "id_a", "id_sigma",
-      if(model != "m6kf") c( "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
-    if (!model %in% c("m0kf", "m1kf", "m7kf")) pars <- c(pars, "b_RE", "b_HIV")
-    if (model %in% c("m3kf", "m3skf", "m8kf", "m9kf", "m10kf")) pars <- c(pars, "b")
-    if (model %in% c("m10kf")) pars <- c(pars, "b_FE")
-    if (model == "m3skf") pars <- c(pars, c("d0", "d", "lambda"))
-    if (model == "m4kf") pars <- c(pars, "b_XpertLevel")
-    if (model == "m5kf") pars <- c(pars, "c_Xpert")
-    if (model == "m6kf") pars <- c(pars, "U_csf_all", "L_csf")
-    if (model == "m7kf") pars <- c(pars, "b_RE")
-    if (model %in% c("m8kf", "m9kf", "m10kf")) pars <- c(pars, "b_cs")
+      if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
+    if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
+    if (model_no >= 3) pars <- c(pars, "b")
+    if (model_no == 4) pars <- c(pars, "b_FE")
+    # if (model == "m3skf") pars <- c(pars, c("d0", "d", "lambda"))
+    # if (model_no) pars <- c(pars, "b_XpertLevel")
+    # if (model == "m5kf") pars <- c(pars, "c_Xpert")
+    if (is_pca) pars <- c(pars, "U_csf_all", "L_csf")
+    # if (model == "m7kf") pars <- c(pars, "b_RE")
+    if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     results$outputs <- misc$stan_kfold(sampler = sampler,
                                list_of_datas=inputs,

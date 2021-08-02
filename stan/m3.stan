@@ -39,7 +39,6 @@ parameters {
   real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
-  vector<lower=0>[3] b_FE_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 

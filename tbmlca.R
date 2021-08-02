@@ -93,7 +93,8 @@ with(
     if (is.na(output_file)) output_file <- paste(model,"RDS",sep=".")
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
     # Check 
-    stopifnot(!(length(intersect(pos_a, neg_a)) > 0 && max(length(pos_a), length(neg_a)) > 0))
+    stopifnot(!(length(intersect(pos_a, neg_a)) > 0
+                && max(length(pos_a), length(neg_a)) > 0))
     # Coerce numeric
     fold <- as.integer(fold)
     rep  <- as.integer(rep)
@@ -112,6 +113,7 @@ with(
     lifted_spc <- as.numeric(lifted_spc)
     quad_RE <- m3_quadRE
     quad_Xc <- as.integer(quad_Xc)
+    quad_Xc <- if(any(is.na(quad_Xc))) NULL
     
     penalty_family <- switch(penalty_family, 
       "t" = 0,

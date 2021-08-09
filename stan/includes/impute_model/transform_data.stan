@@ -27,10 +27,12 @@ int<lower=1,upper=3> d_neg_mp[size(n_neg_mp)];
 // * CSF laboratory test Xc[3:8] --------------------------------------------
 int obs_csf = sum2d(obs_Xc[:,3:8]);
 
-// * GCS Xc[:,8], Tc[:, 1:3]
-//Removed
-// int obs_gcs = sum(obs_Xc[:,8]);
-// int obs_gcs_compartment = sum2d(obs_Tc[:,1:3]);
+// * GCS
+int obs_gcs_compartments = sum2d(obs_Tc[:,1:3]);
+int obs_gcs = sum(obs_Xc[:,9]);
+
+// * Blood test
+int obs_bld = sum2d(obs_Tc[:,4:5]);
 
 // * Var assignments --------------------------------------------------------
 N_pos_cs  = size(n_pos_cs);

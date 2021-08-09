@@ -6,7 +6,13 @@
   real id_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),2])];
   
   {
-    vector[N_all] z_HIV = HIV_a0 + to_matrix(Tc_all[:,4:5]) * HIV_a;
+    vector[2] Bld_imp[N_all];
+    if (sum(keptin) < N_all){
+      vector[3] bld_mu_valid[N_valid] = rep_array(bld_a0, N_valid) ;
+      Bld_imp[which_not(keptin),:] = multi_normal_cholesky_partial_pos_rng(Tc_all[which_not(keptin),4:5], obs_Tc_all[which_not(keptin),4:5], bld_mu_valid, L_Omega_bld);
+    }
+    Bld_imp[which(keptin),:] = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
+    vector[N_all] z_HIV = HIV_a0 + append_all(Bld_imp)*HIV_a;
     Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], to_array_1d(z_HIV)), obs_Xd_all[:,1]);
   }
   
@@ -78,8 +84,20 @@
     Xc_imp[which(keptin),3:8] = impute_cont_2d(Xc[:,3:8], obs_Xc[:,3:8], csf_imp);
   }
   
-  if (nXc > 8) // Other if exists
-  for (j in 9:nXc) Xc_imp[:, j] = Xc_all[:, j];
+  // GCS
+  {
+    vector[3] GCS_imp[N_all];
+    if (sum(keptin) < N_all){
+      vector[3] gcs_mu_valid[N_valid] = rep_array(gcs_a0, N_valid) ;
+      GCS_imp[which_not(keptin),:] = multi_normal_cholesky_partial_unit_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Omega_gcs);
+    }
+    GCS_imp[which(keptin),:] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], gcs_imp);
+    GCS_imp = round(GCS_imp);
+    Xc_imp[:,9] = to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4);
+  }
+  
+  if (nXc > 9) // Other if exists
+    for (j in 10:nXc) Xc_imp[:, j] = Xc_all[:, j];
   
   X = append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), append_all(Xc_imp));
 }

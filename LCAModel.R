@@ -5,11 +5,11 @@ LCAModel <- R6::R6Class(
     model = NULL,
     model_cmb = NULL,
     recipe = NULL,
-    params = NULL,
+    # params = NULL,
     n_fold = integer(),
     n_rep = integer(),
     folds = integer(),
-    holdout = integer(),
+    # holdout = integer(),
     initialize = function(model_file, model_dir = "outputs",
                           model_name = model_file,
                           recipe = 'data/cleaned/data_input.Rdata'
@@ -19,13 +19,14 @@ LCAModel <- R6::R6Class(
       self$recipe <- new.env()
       load(recipe, envir = self$recipe)
       self$folds <- model$folds
-      self$holdout <- self$folds$holdout
-      self$n_fold <- model$fold
-      self$n_rep <- model$rep
+      # self$holdout <- self$folds$holdout
+      self$n_fold <- model$.META$fold
+      self$n_rep <- model$.META$rep
       self$model_name <- model_name
-      self$model <- if (self$n_fold>1) model$outputs else list(model$outputs)
-      self$model_cmb <- if (self$n_fold>1) rstan::sflist2stanfit(self$model) else model$outputs
-      self$params <- model$params
+      self$model <-  model$outputs 
+      self$model_cmb <- rstan::sflist2stanfit(self$model)
+      # self$params <- model$.META$params
+      private$.META <- model$.META
       self$update_misc()
     },
     print = function(){
@@ -43,7 +44,7 @@ LCAModel <- R6::R6Class(
       rstan::extract(self$model_cmb, ...)
     },
     export_to_Shiny = function(file = NULL){
-      pars <- self$params
+      pars <- self$meta$params
       pars <- grep('^[ab]', pars, value = TRUE)
       extracted <- rstan::extract(self$model_cmb, pars=pars)
       model_name <- self$model_name
@@ -210,7 +211,7 @@ LCAModel <- R6::R6Class(
         classifierplots::roc_plot(C, p_summary$theta[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Positive TBM")
     }
   ),
-  private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL, .p_rep = NULL),
+  private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL, .p_rep = NULL, .META = list()),
   active = list(
     loglik = function(){
       if (length(private$.loglik)) return(private$.loglik)
@@ -243,6 +244,9 @@ LCAModel <- R6::R6Class(
         }
       }
       private$.p_rep
+    },
+    meta = function(){
+      private$.META
     }
   )
 )

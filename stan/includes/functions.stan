@@ -384,6 +384,66 @@ Trinh Dong, 2021
     return(multi_normal_partial_rng(X, obs_X, Mu, S));
   }
   
+  /*
+  multi_normal_cholesky_partial_rng with contraints 0, 1
+  */
+  vector[] multi_normal_cholesky_partial_unit_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix L){
+    int M = dims(X)[2]; //all value
+    int N = dims(X)[1]; //all observation
+    matrix[M, M] S = tcrossprod(L); // reconstruct the cov matrix from cholesky
+    vector[M] rng_X[N];
+    if (dims(X)[1] == 0) return {[]'};
+    
+    for (n in 1:N){
+      rng_X[n, which(obs_X[n,:])] = to_vector(X[n,which(obs_X[n,:])]);
+      if (sum(obs_X[n]) < M){
+        int is_unit = 0;
+        int iter = 1;
+        while (is_unit == 0 && iter < 100000){
+          int m      = 1;
+          rng_X[n]   = multi_normal_partial_rng({X[n,:]}, {obs_X[n,:]}, {Mu[n]}, S)[1];
+          is_unit = 1;
+          while (is_unit == 1 && m <= M){
+            if (rng_X[n,m] < 0 || rng_X[n,m] > 1) is_unit = 0;
+            m += 1;
+          }
+          iter += 1;
+        }
+      }
+    }
+    return(rng_X);
+  }
+  
+  /*
+  Multi noraml cholesky for postive
+  */
+  
+  vector[] multi_normal_cholesky_partial_pos_rng(real[,] X, int[,] obs_X, vector[] Mu, matrix L){
+    int M = dims(X)[2]; //all value
+    int N = dims(X)[1]; //all observation
+    matrix[M, M] S = tcrossprod(L); // reconstruct the cov matrix from cholesky
+    vector[M] rng_X[N];
+    if (dims(X)[1] == 0) return {[]'};
+    
+    for (n in 1:N){
+      rng_X[n, which(obs_X[n,:])] = to_vector(X[n,which(obs_X[n,:])]);
+      if (sum(obs_X[n]) < M){
+        int is_pos= 0;
+        int iter = 1;
+        while (is_pos == 0 && iter < 100000){
+          int m      = 1;
+          rng_X[n]   = multi_normal_partial_rng({X[n,:]}, {obs_X[n,:]}, {Mu[n]}, S)[1];
+          is_pos = 1;
+          while (is_pos == 1 && m <= M){
+            if (rng_X[n,m] < 0) is_pos = 0;
+            m += 1;
+          }
+          iter += 1;
+        }
+      }
+    }
+    return(rng_X);
+  }
   /**
   Rng the multi probit outcome.
   Because the multi probit 1993 technique only put the constraints on the SUR

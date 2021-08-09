@@ -32,14 +32,14 @@ args <-
   add_argument("--penalty-family", help = "Family for the regularised prior, either 't', 'normal', or 'laplace'", default = "t", short = "-F") %>%
   add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed, second term == -1 will make it follow the first", nargs = 2, default = c(0,0), short = "-P") %>%
   add_argument("--all-params", help = "Whether to expose imputation params, ignored for m0", flag = TRUE, short="-a") %>%
-  add_argument("--m6-n-FA", help = "For model 6 only: number of latent factor", default = 2, short = "-F") %>%
-  add_argument("--m3-B", help = "For model 3 only: vector of continuous variable indices to be included as predictor in intra-class model", nargs = Inf, default = NA, short = "-B") %>%
-  add_argument("--pos-a", help = "Position of positive coefficients", nargs = Inf, default = NA, short = '-p') %>%
-  add_argument("--neg-a", help = "Position of negative coefficients", nargs = Inf, default = NA, short = '-g') %>%
-  add_argument("--m3-quadRE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
+  add_argument("--quad-Xc", help = "Add quadratic effect for continuous variable, number are the positions in Xc", default = NA, nargs = Inf, short = '-q') %>%
+  add_argument("--pca-n-FA", help = "Number of latent factors for PCA, 0 for no PCA", default = 0, short = "-P") %>%
+  add_argument("--re-b", help = "Position of continuous variable to be included as predictor in bacillary burden model [0=none, 1=age, 2=illness day, 3=blood glucose, 4=csf glucose, 5=csf lympho, 6=csf protein, 7=csf lacate, 8=csf neutro, 9=gcs, 10=csf eos, 11=csf rbc, 12+=quadratic variables if exists]", nargs = Inf, default = 0, short = "-B") %>%
+  add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = 0, short = '-p') %>%
+  add_argument("--neg-a", help = "Position of negative coefficients, follow the same conventions as pos-a", nargs = Inf, default = 0, short = '-g') %>%
+  add_argument("--quad_RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
-  add_argument("--quad-Xc", help = "Add quadratic effect for continuous variable, number are the positions in Xc", default = NA, nargs = Inf, short = '-q')
-
+  add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE)
 argparser <- parse_args(args)
 
 # Functions to create folds
@@ -82,36 +82,39 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
   folds
 }
 
-my_stan_model <- misc$my_stan_model
-# my_stan_model <- rstan::stan_model
+
+results <- new.env(parent=emptyenv())
+results$.META <- argparser
 with(
   argparser,
   {
+    # Stan compiler
+    my_stan_model <- if (use_rstan_compiler) rstan::stan_model else misc$my_stan_model
     # If no name for output file, do auto-inference
     model_no <- as.numeric(substr(model, 2,2))
-    is_pca <- grepl('_pca', model)
+    if (pca_n_FA == 0 && grepl('_pca', model)) stop('Number of latent factor for PCA must be positive!')
+    is_pca <- grepl('_pca', model) || pca_n_FA > 0
+    if (is_pca && !grepl('_pca', model)) model <- paste0(model, '_pca')
     if (is.na(output_file)) output_file <- paste(model,"RDS",sep=".")
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
-    # Check 
     stopifnot(!(length(intersect(pos_a, neg_a)) > 0
                 && max(length(pos_a), length(neg_a)) > 0))
     # Coerce numeric
-    fold <- as.integer(fold)
-    rep  <- as.integer(rep)
-    chains <- as.integer(chains)
-    cores  <- as.integer(cores)
-    seed   <- as.integer(seed)
-    iter   <- as.integer(iter)
-    warmup <- as.integer(warmup)
-    init_r <- as.numeric(init_r)
-    penalty_term <- as.numeric(penalty_term)
+    # fold <- as.integer(fold)
+    # rep  <- as.integer(rep)
+    # chains <- as.integer(chains)
+    # cores  <- as.integer(cores)
+    # seed   <- as.integer(seed)
+    # iter   <- as.integer(iter)
+    # warmup <- as.integer(warmup)
+    # init_r <- as.numeric(init_r)
+    # penalty_term <- as.numeric(penalty_term)
     if (penalty_term[1] < 0 || penalty_term[2] < -1) stop('Invalid penalty term(s)')
-    n_FA <- as.vector(m6_n_FA)
-    B <- if (all(is.na(as.numeric(m3_B)))) vector() else as.array(as.numeric(m3_B))
-    pos_a <- if (all(is.na(as.numeric(pos_a)))) vector() else as.array(as.numeric(pos_a))
-    neg_a <- if (all(is.na(as.numeric(neg_a)))) vector() else as.array(as.numeric(neg_a))
+    n_FA <- if (any(!pca_n_FA %in% 0)) as.vector(pca_n_FA) else vector()
+    B <- if (any(!re_b %in% 0)) as.array(as.numeric(re_b)) else vector()
+    pos_a <- if (any(!pos_a %in% 0)) as.array(as.numeric(pos_a)) else vector()
+    neg_a <- if (any(!neg_a %in% 0)) as.array(as.numeric(neg_a)) else vector()
     lifted_spc <- as.numeric(lifted_spc)
-    quad_RE <- m3_quadRE
     quad_Xc <- as.integer(quad_Xc)
     quad_Xc <- if(any(is.na(quad_Xc))) NULL
     
@@ -204,11 +207,7 @@ with(
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
     if (model_no >= 3) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
-    # if (model == "m3skf") pars <- c(pars, c("d0", "d", "lambda"))
-    # if (model_no) pars <- c(pars, "b_XpertLevel")
-    # if (model == "m5kf") pars <- c(pars, "c_Xpert")
     if (is_pca) pars <- c(pars, "U_csf_all", "L_csf")
-    # if (model == "m7kf") pars <- c(pars, "b_RE")
     if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     results$outputs <- misc$stan_kfold(sampler = sampler,
@@ -232,18 +231,11 @@ with(
     
     # Save results
     writeLines(">> Save results")
+    results$model_name <- model
     results$folds  <- folds
-    results$seed   <- seed
-    results$fold <- fold
-    results$rep  <- rep
-    results$chains <- chains
-    results$iter   <- iter
-    results$warmup <- warmup
-    results$init_r <- init_r
-    results$penalty <- list(family = penalty_family, term = penalty_term)
-    results$params <- pars
+    results$.META$params <- pars
     saveRDS(results, file = file.path(output_dir, output_file))
-    # future::plan("sequential")
+    future::plan("sequential")
   })
 
 

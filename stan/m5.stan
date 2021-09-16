@@ -53,9 +53,9 @@ parameters {
 
 transformed parameters {
 #include includes/transform_parameters/a_variable_declaration.stan
-  real b_HIV;
-  real b_cs;
-  vector[nB] b;
+  vector[3] b_HIV;
+  vector[3] b_cs;
+  matrix[nB,3] b;
   vector<lower=0>[3] b_RE;
 #include includes/impute_model/transform_parameters.stan
    {
@@ -81,22 +81,22 @@ model {
 #include includes/main_prior/penalty.stan
     RE ~ normal(0,1);
     if (penalty_family == 0){
-      to_vector(b)  ~ student_t(nu, 0, SP[2]);
-      b_cs  ~ student_t(nu, 0, SP[2]);
-      b_RE ~ student_t(nu, 0, SP[2]);
-      b_HIV ~ student_t(nu, 0, SP[2]);
+      to_vector(b_raw)  ~ student_t(nu, 0, 1);
+      b_cs_raw  ~ student_t(nu, 0,1);
+      b_RE_raw ~ student_t(nu, 0, 1);
+      b_HIV_raw ~ student_t(nu, 0,1);
     }
     if (penalty_family == 1){
-      to_vector(b)  ~ double_exponential(0, SP[2]);
-      b_cs  ~ double_exponential(0, SP[2]);
-      b_RE ~ double_exponential(0, SP[2]);
-      b_HIV ~ double_exponential(0, SP[2]);
+      to_vector(b_raw)  ~ double_exponential(0, 1);
+      b_cs_raw  ~ double_exponential(0, 1);
+      b_RE_raw ~ double_exponential(0, 1);
+      b_HIV_raw ~ double_exponential(0, 1);
     }
     if (penalty_family == 2){
-      to_vector(b)  ~ normal(0, SP[2]);
-      b_cs  ~ normal(0, SP[2]);
-      b_RE ~ normal(0, SP[2]);
-      b_HIV ~ normal(0, SP[2]);
+      to_vector(b_raw)  ~ normal(0, 1);
+      b_cs_raw   ~ normal(0, 1);
+      b_RE_raw  ~ normal(0, 1);
+      b_HIV_raw  ~ normal(0, 1);
     }
     for (n in 1:N){
       int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);

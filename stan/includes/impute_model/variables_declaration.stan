@@ -18,7 +18,9 @@ Xd_imp[:,3]   = impute_binary_cmb(Xd[:,3], obs_Xd[:,3], to_array_2d(append_all(z
 Xc_imp[:,1]   = impute_cont_1d(Xc[:,1], obs_Xc[:,1], age_imp); //Age
 Xc_imp[:,2]   = impute_cont_1d(Xc[:,2], obs_Xc[:,2], id_imp); //Illness day
 Xc_imp[:,3:8] = impute_cont_2d(Xc[:,3:8], obs_Xc[:,3:8], csf_imp); //CSF Lab tests
-Xc_imp[:,9]   = to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4);
+for (n in 1:N){
+  Xc_imp[n,9] = obs_Xc[n,9] ? Xc[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
+}
 
 if (nXc > 9) // Other if exists
 for (j in 10:nXc) Xc_imp[:,j] = Xc[:,j];

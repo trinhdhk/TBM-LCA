@@ -15,7 +15,7 @@ data {
 
 transformed data{
   // Penalty term adaptation
-  int adapt_penalty = penalty_term == 0 ? 1 : 0;
+  int adapt_penalty[2];
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
@@ -23,6 +23,8 @@ transformed data{
 #include includes/cross_validation/transform_data_Y.stan
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
+
+ for (i in 1:2) adapt_penalty[i] = penalty_term[i] == 0 ? 1 : 0;
 }
  
 parameters {

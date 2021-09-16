@@ -34,12 +34,14 @@ args <-
   add_argument("--all-params", help = "Whether to expose imputation params, ignored for m0", flag = TRUE, short="-a") %>%
   add_argument("--quad-Xc", help = "Add quadratic effect for continuous variable, number are the positions in Xc", default = NA, nargs = Inf, short = '-q') %>%
   add_argument("--pca-n-FA", help = "Number of latent factors for PCA, 0 for no PCA", default = 0, short = "-P") %>%
-  add_argument("--re-b", help = "Position of continuous variable to be included as predictor in bacillary burden model [0=none, 1=age, 2=illness day, 3=blood glucose, 4=csf glucose, 5=csf lympho, 6=csf protein, 7=csf lacate, 8=csf neutro, 9=gcs, 10=csf eos, 11=csf rbc, 12+=quadratic variables if exists]", nargs = Inf, default = 0, short = "-B") %>%
-  add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = 0, short = '-p') %>%
-  add_argument("--neg-a", help = "Position of negative coefficients, follow the same conventions as pos-a", nargs = Inf, default = 0, short = '-g') %>%
+  add_argument("--re-b", help = "Position of continuous variable to be included as predictor in bacillary burden model [0=none, 1=age, 2=illness day, 3=blood glucose, 4=csf glucose, 5=csf lympho, 6=csf protein, 7=csf lacate, 8=csf neutro, 9=gcs, 10=csf eos, 11=csf rbc, 12+=quadratic variables if exists]", nargs = Inf, default = NA, short = "-B") %>%
+  add_argument("--include-d", help = "Add fixed outer effect for the bacillary burden", flag=TRUE) %>%
+  add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = NA, short = '-p') %>%
+  add_argument("--neg-a", help = "Position of negative coefficients, follow the same conventions as pos-a", nargs = Inf, default = NA, short = '-g') %>%
   add_argument("--quad_RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
-  add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE)
+  add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
+  add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf)
 argparser <- parse_args(args)
 
 # Functions to create folds
@@ -61,9 +63,14 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
            nXd = ncol(Xd),
            nTd = ncol(Td),
            nTc = ncol(Tc),
+           nD  = (include_d) * ncol(D),
+           D_all = if (include_d) D else array(dim=c(nrow(data_19EI), 0)),
            Y_Smear_all = data_19EI$csf_smear,
            Y_Mgit_all = data_19EI$csf_mgit,
            Y_Xpert_all = data_19EI$csf_xpert,
+           obs_Smear_all = data_19EI$obs_smear,
+           obs_Mgit_all = data_19EI$obs_mgit,
+           obs_Xpert_all = data_19EI$obs_xpert,
            Xc_all =  cbind(Xc, Xc[,quad_Xc]^2),
            Xd_all = Xd,
            Td_all = Td,
@@ -109,6 +116,9 @@ with(
     # warmup <- as.integer(warmup)
     # init_r <- as.numeric(init_r)
     # penalty_term <- as.numeric(penalty_term)
+    pos_a <- if (all(is.na(pos_a))) 0 else pos_a
+    neg_a <- if (all(is.na(neg_a))) 0 else neg_a
+    re_b <- if (all(is.na(re_b))) 0 else re_b
     if (penalty_term[1] < 0 || penalty_term[2] < -1) stop('Invalid penalty term(s)')
     n_FA <- if (any(!pca_n_FA %in% 0)) as.vector(pca_n_FA) else vector()
     B <- if (any(!re_b %in% 0)) as.array(as.numeric(re_b)) else vector()
@@ -116,7 +126,7 @@ with(
     neg_a <- if (any(!neg_a %in% 0)) as.array(as.numeric(neg_a)) else vector()
     lifted_spc <- as.numeric(lifted_spc)
     quad_Xc <- as.integer(quad_Xc)
-    quad_Xc <- if(any(is.na(quad_Xc))) NULL
+    if(any(is.na(quad_Xc))) quad_Xc <- NULL 
     
     penalty_family <- switch(penalty_family, 
       "t" = 0,
@@ -130,7 +140,7 @@ with(
     recipe$penalty_term = penalty_term
     recipe$penalty_family = penalty_family
     # Create results env
-    results <- new.env()
+    # results <- new.env()
     
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
@@ -210,6 +220,10 @@ with(
     if (is_pca) pars <- c(pars, "U_csf_all", "L_csf")
     if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
+    if (include_d) pars <- c(pars, c('d'))
+    if (grepl('missing', model)) pars <- c(pars, 'z_obs') 
+    if (!all(is.na(include_pars))) pars <- include_pars 
+   
     results$outputs <- misc$stan_kfold(sampler = sampler,
                                list_of_datas=inputs,
                                backend = "rstan",
@@ -233,7 +247,7 @@ with(
     writeLines(">> Save results")
     results$model_name <- model
     results$folds  <- folds
-    results$.META$params <- pars
+    results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
     saveRDS(results, file = file.path(output_dir, output_file))
     future::plan("sequential")
   })

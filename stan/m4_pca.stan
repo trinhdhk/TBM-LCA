@@ -7,6 +7,8 @@ data {
   int<lower=1, upper=4> nFA; //Latent factors
   int<lower=0> nB; //Number of added RE  
   int<lower=1> B[nB];
+  int<lower=0> nD;
+  matrix[N_all, nD] D_all; 
   int<lower=0, upper=1> unsure_spc;
   int<lower=0, upper=1> quad_RE;
   
@@ -26,6 +28,7 @@ transformed data{
   int nA = nX - (5-nFA); //Number of coef
 #include includes/pca/transformed_data/variables_declaration.stan
 #include includes/cross_validation/transform_data_Y.stan
+  matrix[N, nD] D = D_all[which(keptin)];
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
 
@@ -43,6 +46,7 @@ parameters {
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
   vector<lower=0>[3] b_FE_raw;
+  vector[nD] d_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 
@@ -62,6 +66,7 @@ transformed parameters {
   vector[nB] b;
   vector<lower=0>[3] b_RE;
   vector<lower=0>[3] b_FE;
+  vector[nD] d;
 #include includes/impute_model/transform_parameters.stan
 #include includes/pca/transform_parameters.stan
 
@@ -72,6 +77,7 @@ transformed parameters {
     b_RE = b_RE_raw * SP[2];
     b_HIV = b_HIV_raw * SP[2] / mean(b_FE);
     b = b_raw * SP[2] / mean(b_FE);
+    d = d_raw * SP[2];
   }
 }
 
@@ -92,18 +98,21 @@ model {
     b_HIV_raw ~ student_t(nu, 0, 1);
     b_RE_raw  ~ student_t(nu, 0, 1);
     b_FE_raw  ~ student_t(nu, 0, 1);
+    d_raw ~ student_t(nu, 0, 1);
   }
   if (penalty_family == 1){
     b_raw     ~ double_exponential(0, 1);
     b_HIV_raw ~ double_exponential(0, 1);
     b_RE_raw  ~ double_exponential(0, 1);
     b_FE_raw  ~ double_exponential(0, 1);
+    d_raw  ~ double_exponential(0, 1);
   }
   if (penalty_family == 2){
     b_raw     ~ normal(0, 1);
     b_HIV_raw ~ normal(0, 1);
     b_RE_raw  ~ normal(0, 1);
     b_FE_raw  ~ normal(0, 1);
+    d_raw  ~ normal(0, 1);
   }
   for (n in 1:N){
     int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
@@ -122,9 +131,9 @@ model {
           real theta = inv_logit(pat_thetas[2,i]);
             
           real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b, Xc_imp[n,B]);
-          real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
-          real z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
-          real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
+          real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d, D[n]) + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
+          real z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + dot_product(d, D[n]) + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
+          real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d, D[n]) + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
         
           log_liks[i] = logprob_theta + log_mix(theta, 
             bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
@@ -139,9 +148,9 @@ model {
           vector[2] logprob_Y = pat_bac_load[1];
           vector[2] bac_load = pat_bac_load[2] + dot_product(b, Xc_imp[n,B]);
           
-          vector[2] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
-          vector[2] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
-          vector[2] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
+          vector[2] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d, D[n]) + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
+          vector[2] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + dot_product(d, D[n]) + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
+          vector[2] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d, D[n]) + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
           
           log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
             logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
@@ -159,9 +168,9 @@ model {
       real theta = inv_logit(a0 + dot_product(a, X));
       
       real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, Xc_imp[n,B]);
-      real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
-      real z_Mgit_RE  = z_Mgit [2] + b_FE[2]*bac_load + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
-      real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
+      real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d, D[n]) + b_RE[1]*(RE[n] + square(RE[n])*quad_RE);
+      real z_Mgit_RE  = z_Mgit [2] + b_FE[2]*bac_load + dot_product(d, D[n]) + b_RE[2]*(RE[n] + square(RE[n])*quad_RE);
+      real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d, D[n]) + b_RE[3]*(RE[n] + square(RE[n])*quad_RE);
       
       target += log_mix(theta, 
       bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
@@ -191,9 +200,9 @@ generated quantities {
       RE_all[which(keptin)] = RE;
       for (n in which_not(keptin)) RE_all[n] = normal_rng(0, 1);
       bac_load = b_HIV*X[:,1] + X[:,B2]*b;
-      vector[N_all] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + b_RE[1]*(RE_all + square(RE_all)*quad_RE);
-      vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + b_RE[2]*(RE_all + square(RE_all)*quad_RE);
-      vector[N_all] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + b_RE[3]*(RE_all + square(RE_all)*quad_RE);
+      vector[N_all] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + D_all*d + b_RE[1]*(RE_all + square(RE_all)*quad_RE);
+      vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + D_all*d + b_RE[2]*(RE_all + square(RE_all)*quad_RE);
+      vector[N_all] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + D_all*d + b_RE[3]*(RE_all + square(RE_all)*quad_RE);
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
       p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);

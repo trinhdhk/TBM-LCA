@@ -33,6 +33,7 @@ int obs_gcs = sum(obs_Xc[:,9]);
 
 // * Blood test
 int obs_bld = sum2d(obs_Tc[:,4:5]);
+vector[2] bld_a0 = [0, 0]';
 
 // * Var assignments --------------------------------------------------------
 N_pos_cs  = size(n_pos_cs);

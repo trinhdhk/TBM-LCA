@@ -215,7 +215,7 @@ LCAModel <- R6::R6Class(
   active = list(
     loglik = function(){
       if (length(private$.loglik)) return(private$.loglik)
-      private$.loglik <- private$.misc$extract_log_lik_K(self$model, self$holdout)
+      private$.loglik <- private$.misc$extract_log_lik_K(self$model, self$folds$holdout)
     },
     elpd =function(){
       if (length(private$.elpd)) return(private$.elpd)
@@ -224,7 +224,7 @@ LCAModel <- R6::R6Class(
     },
     p = function(){
       if (is.null(private$.p)){
-        p <- private$.misc$extract_K_fold(self$model, self$holdout, pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
+        p <- private$.misc$extract_K_fold(self$model, self$folds$holdout, pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
         p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
         p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
         private$.p <- p_summary
@@ -237,7 +237,7 @@ LCAModel <- R6::R6Class(
       if (is.null(private$.p_rep)){
         private$.p_rep <- vector("list", self$n_rep)
         for (n in seq_len(self$n_rep)){
-          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
+          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$folds$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
           p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
           p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
           private$.p_rep[[n]] <- p_summary

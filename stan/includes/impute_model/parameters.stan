@@ -44,7 +44,7 @@
   real<lower=0, upper=1> gcs_imp[N*3 - obs_gcs_compartments];
   
   //Lymph and WHITE in blood
-  vector<lower=0>[2] bld_a0;
+  // vector<lower=0>[2] bld_a0;
   cholesky_factor_corr[2] L_Omega_bld;
   vector<lower=0>[2] L_sigma_bld;
   real<lower=0> bld_imp[N*2 - obs_bld];

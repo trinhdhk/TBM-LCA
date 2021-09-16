@@ -36,8 +36,8 @@ parameters {
   // Parameters of the logistics regression -----------------------------------
 #include includes/parameters/a.stan
   real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
-  real<lower=0> b_RE_raw;
   vector[nB] b_raw;
+  real<lower=0> b_RE_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 
@@ -52,8 +52,8 @@ parameters {
 transformed parameters {
 #include includes/transform_parameters/a_variable_declaration.stan
   real b_HIV;
-  real<lower=0> b_RE;
   vector[nB] b;
+  real<lower=0> b_RE;
 #include includes/impute_model/transform_parameters.stan
   {
     #include includes/transform_parameters/penalty.stan
@@ -92,7 +92,7 @@ model {
           real logprob_theta = pat_thetas[1,i];
           real theta = inv_logit(pat_thetas[2,i]);
           
-          real bac_load   = b_HIV*Xd_imp[n,1];
+          real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b, Xc_imp[n, B]);
           real z_Smear_RE = z_Smear[2] + b_RE*(bac_load + RE[n]);
           real z_Mgit_RE  = z_Mgit[2]  + b_RE*(bac_load + RE[n]);
           real z_Xpert_RE = z_Xpert[2] + b_RE*(bac_load + RE[n]);
@@ -108,7 +108,7 @@ model {
           
           vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [b_HIV]');
           vector[2] logprob_Y = pat_bac_load[1];
-          vector[2] bac_load = pat_bac_load[2];
+          vector[2] bac_load = pat_bac_load[2] + dot_product(b, Xc_imp[n, B]);
           
           vector[2] z_Smear_RE = z_Smear[2] + b_RE*(bac_load + RE[n]);
           vector[2] z_Mgit_RE  = z_Mgit[2]  + b_RE*(bac_load + RE[n]);
@@ -129,7 +129,7 @@ model {
       row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
-      real bac_load   = b_HIV*Xd_imp[n, 1];
+      real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, Xc_imp[n, B]);
       real z_Smear_RE = z_Smear[2] + b_RE*(bac_load + RE[n]);
       real z_Mgit_RE  = z_Mgit [2] + b_RE*(bac_load + RE[n]);
       real z_Xpert_RE = z_Xpert[2] + b_RE*(bac_load + RE[n]);
@@ -157,9 +157,11 @@ generated quantities {
     {
       vector[N_all] RE_all;
       vector[N_all] bac_load;
+      int B2[nB];
+      for (i in 1:nB) B2[i] = B[i]+nXd;
       RE_all[which(keptin)] = RE;
       for (n in which_not(keptin)) RE_all[n] = normal_rng(0, 1);
-      bac_load = b_HIV*X[:,1] + RE_all;
+      bac_load = b_HIV*X[:,1] + X[:, B2]*b + RE_all;
       vector[N_all] z_Smear_RE = z_Smear[2] + b_RE*bac_load;
       vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_RE*bac_load;
       vector[N_all] z_Xpert_RE = z_Xpert[2] + b_RE*bac_load;

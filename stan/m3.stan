@@ -56,7 +56,7 @@ transformed parameters {
   vector[nB] b;
   vector<lower=0>[3] b_RE;
 #include includes/impute_model/transform_parameters.stan
-   {
+  {
 #include includes/transform_parameters/penalty.stan
 #include includes/transform_parameters/a_transform.stan
 #include includes/transform_parameters/b_transform.stan

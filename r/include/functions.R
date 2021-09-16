@@ -1,3 +1,21 @@
+#Function to create multi mcmc_intervals
+mcmc_intervals_multi <-
+  \(fits = list(),..., .width=.5){
+    require(ggplot2)
+    w <- .15 * length(fits)
+    if (!length(names(fits))) names(fits) <- as.character(as.list(substitute(fits)[-1]))
+    est  <- sapply(seq_along(fits),
+                   \(i) {
+                     bayesplot::mcmc_intervals_data(fits[[i]], ...) |> 
+                       dplyr::mutate(Model = names(fits)[[i]])
+                   }, simplify=FALSE, USE.NAMES = TRUE)
+    est_dat <- dplyr::bind_rows(est) |> dplyr::mutate(Model = factor(Model, levels = names(fits)))
+    ggplot(est_dat, aes(y=parameter, color=Model)) +
+      geom_linerange(aes(xmin=ll, xmax=hh), position=position_dodge(width=w)) +
+      geom_linerange(aes(xmin=l, xmax=h), size=1, position=position_dodge(width=w)) +
+      geom_point(aes(x=m), size=1.2, position=position_dodge(width=w))
+  }
+
 #fix rstan check for date when recompiling
 my_stan_model <- 
   function (file, model_name = "anon_model", model_code = "", 
@@ -382,6 +400,7 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,
                                     holdout_k=={holdout} {commas}] <- k_par[,holdout_k=={holdout} {commas}]')
             eval(parse(text=call_string))
           } else {
+            stop('Par(s) is/are not individual propert(y/ies). Please use the rstan::extract instead!')
             #commas <- paste(rep(',', length(par_dims)-1), collapse = " ")
             #call_string <-- glue::glue('extract_holdout_par[[(dim(par_extract_list[[1]][[p]])[1]*(n-1)+1):(dim(par_extract_list[[1]][[p]])[1]*n) {commas}] <- 
             #                          k_par[{commas}]')

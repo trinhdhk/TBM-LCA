@@ -11,6 +11,7 @@ data {
 #include includes/data/Y.stan
 #include includes/cross_validation/data.stan
 #include includes/data/penalty.stan
+#include includes/impute_model/data.stan
 }
 
 transformed data{
@@ -19,6 +20,7 @@ transformed data{
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
+  int nA = nX + nQ;
 
 #include includes/cross_validation/transform_data_Y.stan
 #include includes/cross_validation/transform_data_X.stan
@@ -88,7 +90,7 @@ model {
       
     } else {
       // The normal way
-      row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
+      row_vector[nA] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
       target += log_mix(theta, 
@@ -104,7 +106,7 @@ generated quantities {
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[N_all] theta;
-  matrix[N_all, nX] X;
+  matrix[N_all, nA] X;
 
   {
 #include includes/impute_model/generate_X_CV.stan

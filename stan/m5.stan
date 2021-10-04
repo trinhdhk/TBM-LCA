@@ -14,6 +14,7 @@ data {
 #include includes/data/Y.stan
 #include includes/cross_validation/data.stan
 #include includes/data/penalty.stan  
+#include includes/impute_model/data.stan
 }
 
 transformed data{
@@ -213,7 +214,7 @@ generated quantities {
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[N_all] theta;
-  matrix[N_all, nX] X;
+  matrix[N_all, nA] X;
 
   {
 #include includes/impute_model/generate_X_CV.stan

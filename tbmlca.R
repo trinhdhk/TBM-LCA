@@ -59,7 +59,7 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
            nA_neg = length(neg_a),
            A_pos = pos_a,
            A_neg = neg_a,
-           nXc = ncol(Xc) + as.numeric(length(quad_Xc)),
+           nXc = ncol(Xc),
            nXd = ncol(Xd),
            nTd = ncol(Td),
            nTc = ncol(Tc),
@@ -71,14 +71,16 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
            obs_Smear_all = data_19EI$obs_smear,
            obs_Mgit_all = data_19EI$obs_mgit,
            obs_Xpert_all = data_19EI$obs_xpert,
-           Xc_all =  cbind(Xc, Xc[,quad_Xc]^2),
+           Xc_all = Xc,
            Xd_all = Xd,
            Td_all = Td,
            Tc_all = Tc,
-           obs_Xc_all = cbind(obs_Xc, obs_Xc[,quad_Xc]),
+           obs_Xc_all = cbind(obs_Xc),
            obs_Xd_all = obs_Xd,
            obs_Td_all = obs_Td,
            obs_Tc_all = obs_Tc,
+           nQ = length(quad_Xc),
+           quad_Xc_idx = as.array(quad_Xc),
            penalty_family = penalty_family,
            penalty_term = penalty_term
          )
@@ -217,7 +219,7 @@ with(
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
     if (model_no >= 3) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
-    if (is_pca) pars <- c(pars, "U_csf_all", "L_csf")
+    if (is_pca) pars <- c(pars, "L_csf")
     if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     if (include_d) pars <- c(pars, c('d'))

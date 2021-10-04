@@ -2,7 +2,7 @@
   vector[m_csf] L_t_csf = L_t0_csf * sigma_lt_csf + mu_lt_csf;
   real<lower=0> psi_csf = psi0_csf * sigma_psi_csf + mu_psi_csf; 
   cholesky_factor_cov[P_csf,D_csf] L_csf;  //lower triangular factor loadings Matrix 
-  cov_matrix[P_csf] Q_csf;   //Covariance mat
+  matrix[P_csf, P_csf] Q_csf;   //Covariance mat
   
   {
     int idx2 = 0;
@@ -19,5 +19,6 @@
       } 
     }
   } 
+  
   Q_csf = L_csf*L_csf' + diag_matrix(rep_vector(psi_csf + 1e-14, P_csf)); 
  //----------------------------------------------------------- 

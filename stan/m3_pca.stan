@@ -135,7 +135,7 @@ model {
       
     } else {
       // The normal way
-      row_vector[nX - (5-nFA)] X = append_col(Xd_imp[n,:], X_compl[n,:]);
+      row_vector[nA] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
       real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, X_compl[n, B2]);
@@ -156,7 +156,7 @@ generated quantities {
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[N_all] theta;
-  matrix[N_all, nX - (5 - nFA)] X;
+  matrix[N_all, nA] X;
   vector[nFA] U_csf_all[N_all];
 
   {

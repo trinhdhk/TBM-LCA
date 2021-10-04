@@ -1,10 +1,11 @@
 {
   // Imputation model --------------------------------------------------------
   matrix[N_all, 3] Xd_imp; //fully imputed discrete X
-  vector[nXc] Xc_imp[N_all]; //fully imputed cont X
+  vector[nXc+nQ] Xc_imp[N_all]; //fully imputed cont X
   real age_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),1])];
   real id_imp_valid[N_valid - sum(obs_Xc_all[which_not(keptin),2])];
   
+  //HIV and Blood
   {
     vector[2] Bld_imp[N_all];
     if (sum(keptin) < N_all){
@@ -100,6 +101,14 @@
   
   if (nXc > 9) // Other if exists
     for (j in 10:nXc) Xc_imp[:, j] = Xc_all[:, j];
+    
+  {
+    int j = nXc + 1;
+    for (q in quad_Xc_idx){
+      Xc_imp[:,j] = square(Xc_imp[:,q]);
+      j += 1;
+    }
+  }
   
   X = append_col(append_col(Xd_imp, to_matrix(Xd_all[:,4:nXd])), append_all(Xc_imp));
 }

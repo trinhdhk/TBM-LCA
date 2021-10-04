@@ -2,8 +2,8 @@
 vector[N] z_HIV;
 vector[N] p_HIV;
 matrix[N, 3] Xd_imp; //fully imputed discrete X
-vector[nXc] Xc_imp[N]; //fully imputed cont X
-matrix[N, nX - 3] X_compl;
+vector[nXc+nQ] Xc_imp[N]; //fully imputed cont X
+matrix[N, nA - 3] X_compl;
 vector[3] GCS_imp[N];
 vector[2] Bld_imp[N];
 
@@ -24,5 +24,13 @@ for (n in 1:N){
 
 if (nXc > 9) // Other if exists
 for (j in 10:nXc) Xc_imp[:,j] = Xc[:,j];
+
+{
+  int j = nXc + 1;
+  for (q in quad_Xc_idx){
+    Xc_imp[:,j] = square(Xc_imp[:,q]);
+    j += 1;
+  }
+}
 
 X_compl = append_col(to_matrix(Xd[:,4:nXd]), append_all(Xc_imp)); //complement part of X

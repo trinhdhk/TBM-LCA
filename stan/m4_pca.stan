@@ -25,7 +25,7 @@ transformed data{
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
-  int nA = nX - (5-nFA); //Number of coef
+  int nA = nX - (6-nFA); //Number of coef
 #include includes/pca/transformed_data/variables_declaration.stan
 #include includes/cross_validation/transform_data_Y.stan
   matrix[N, nD] D = D_all[which(keptin)];
@@ -164,7 +164,7 @@ model {
       
     } else {
       // The normal way
-      row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
+      row_vector[nA] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
       real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, Xc_imp[n,B]);
@@ -185,7 +185,7 @@ generated quantities {
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[N_all] theta;
-  matrix[N_all, nX] X;
+  matrix[N_all, nA] X;
 
   {
 #include includes/pca/impute_model/generate_X_CV.stan

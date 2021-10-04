@@ -321,11 +321,11 @@ Trinh Dong, 2021
     int M = dims(X)[2]; //all value
     vector[M] new_X[N]; //fully imputed X 
     
-    if (dims(X)[1] == 0) return {[]'};
-    if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
-    if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");
-    if (dims(S)[1] != M || dims(S)[2] != M) reject("Number of elements in L mismatched!");
-    if (num_elements(Mu[1]) != M) reject("Number of elements in Mu mismatched!");
+    // if (dims(X)[1] == 0) return {[]'};
+    // if (min(to_matrix(obs_X)) < 0 || max(to_matrix(obs_X)) > 1) reject("obs_X must be positive");
+    // if (dims(obs_X)[1] != N || dims(obs_X)[2] != M) reject("Size mismatched!");
+    // if (dims(S)[1] != M || dims(S)[2] != M) reject("Number of elements in L mismatched!");
+    // if (num_elements(Mu[1]) != M) reject("Number of elements in Mu mismatched!");
     
     for (n in 1:N){
       // vector[M] X_n = X[n];

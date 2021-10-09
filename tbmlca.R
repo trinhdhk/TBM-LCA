@@ -223,7 +223,8 @@ with(
     if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     if (include_d) pars <- c(pars, c('d'))
-    if (grepl('missing', model)) pars <- c(pars, 'z_obs') 
+    if (grepl('missing$', model)) pars <- c(pars, 'z_obs') 
+    if (grepl('missing$', model)) pars <- c(pars, 'z_obs_Xpert') 
     if (!all(is.na(include_pars))) pars <- include_pars 
    
     results$outputs <- misc$stan_kfold(sampler = sampler,

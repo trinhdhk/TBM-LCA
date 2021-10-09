@@ -17,6 +17,7 @@ data {
 #include includes/data/Y.stan
 #include includes/cross_validation/data.stan
 #include includes/data/penalty.stan  
+#include includes/impute_model/data.stan
 }
 
 transformed data{
@@ -27,7 +28,7 @@ transformed data{
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
-  int nA = nX; // Number of coef
+  int nA = nX + nQ; // Number of coef
 #include includes/cross_validation/transform_data_Y.stan
   int<lower=0, upper=1> obs_Smear[N] = obs_Smear_all[which(keptin)];
   int<lower=0, upper=1> obs_Mgit [N] = obs_Mgit_all [which(keptin)];
@@ -36,12 +37,6 @@ transformed data{
 #include includes/impute_model/transform_data.stan
 
   for (i in 1:2) adapt_penalty[i] = penalty_term[i] == 0 ? 1 : 0;
-  // {
-  //   for (n in 1:N_all){
-  //     obs_either_all[n] = (obs_Smear_all[n]==1)|(obs_Mgit_all[n]==1)|(obs_Xpert_all[n]==1);
-  //   }
-  //   obs_either = obs_either_all[which(keptin)];
-  // }
 }
  
 parameters {
@@ -210,7 +205,7 @@ model {
       
     } else {
       // The normal way
-      row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
+      row_vector[nA] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
       real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, Xc_imp[n,B]);

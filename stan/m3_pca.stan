@@ -48,9 +48,7 @@ parameters {
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
  
-  //Penalty terms
-  vector<lower=0>[adapt_penalty[1]+adapt_penalty[2]] sp;
-  
+#include includes/parameters/penalty.stan 
 #include includes/pca/parameters.stan
 }
 

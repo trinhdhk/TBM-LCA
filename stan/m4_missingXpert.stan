@@ -49,9 +49,8 @@ parameters {
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
   ordered[2] z_obs_Xpert;
- 
-  //Penalty terms
-  vector<lower=0>[adapt_penalty[1]+adapt_penalty[2]] sp;
+
+#include includes/parameters/penalty.stan 
 }
 
 
@@ -84,24 +83,25 @@ model {
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
 #include includes/main_prior/a.stan
+#include includes/main_prior/b.stan
 #include includes/main_prior/penalty.stan
   z_obs_Xpert[1] ~ logistic(0, .5);
   z_obs_Xpert[2] ~ logistic(logit(.99), 1);
   RE    ~ normal(0, 1);
   if (penalty_family == 0){
-    b_raw     ~ student_t(nu, 0, 1);
+    // b_raw     ~ student_t(nu, 0, 1);
     b_HIV_raw ~ student_t(nu, 0, 1);
     b_RE_raw  ~ student_t(nu, 0, 1);
     b_FE_raw  ~ student_t(nu, 0, 1);
   }
   if (penalty_family == 1){
-    b_raw     ~ double_exponential(0, 1);
+    // b_raw     ~ double_exponential(0, 1);
     b_HIV_raw ~ double_exponential(0, 1);
     b_RE_raw  ~ double_exponential(0, 1);
     b_FE_raw  ~ double_exponential(0, 1);
   }
   if (penalty_family == 2){
-    b_raw     ~ normal(0, 1);
+    // b_raw     ~ normal(0, 1);
     b_HIV_raw ~ normal(0, 1);
     b_RE_raw  ~ normal(0, 1);
     b_FE_raw  ~ normal(0, 1);

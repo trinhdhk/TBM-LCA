@@ -38,7 +38,7 @@ args <-
   add_argument("--include-d", help = "Add fixed outer effect for the bacillary burden", flag=TRUE) %>%
   add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = NA, short = '-p') %>%
   add_argument("--neg-a", help = "Position of negative coefficients, follow the same conventions as pos-a", nargs = Inf, default = NA, short = '-g') %>%
-  add_argument("--quad_RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
+  add_argument("--quad-RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
   add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf)

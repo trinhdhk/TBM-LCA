@@ -24,4 +24,7 @@
       a_raw[A_posneg] = append_row(a_pos, a_neg);
       a_raw[A_] = a_;
       a = a_raw*SP[1];
+      // for (i in 1:nA) {
+      //   a[i] *= sd_X[i]
+      // }
     }   

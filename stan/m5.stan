@@ -47,8 +47,7 @@ parameters {
   ordered[2] z_Mgit;
   ordered[2] z_Xpert;
   
-  //Penalty terms
-  vector<lower=0>[adapt_penalty[1]+adapt_penalty[2]] sp;
+#include includes/parameters/penalty.stan
 }
 
 
@@ -79,22 +78,49 @@ model {
     // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
 #include includes/main_prior/a.stan
+#include includes/main_prior/b.stan
 #include includes/main_prior/penalty.stan
     RE ~ normal(0,1);
+    if (nB > 0){
+      if (penalty_family == 1){
+        int j = 1;
+        for (i in B){
+          b_raw[j,:]  ~ student_t(nu, 1, inv(sd_X[i]));
+          j += 1;
+        }
+      }
+      
+      if (penalty_family == 1){
+        int j = 1;
+        for (i in B){
+          b_raw[j,:] ~ double_exponential(0, inv(sd_X[i]));
+          j += 1;
+        }
+      }
+      
+      if (penalty_family == 2){
+        int j = 1;
+        for (i in B){
+          b_raw[j,:]  ~ normal(0, inv(sd_X[i]));
+          j += 1;
+        }
+      }
+    }
+    
     if (penalty_family == 0){
-      to_vector(b_raw)  ~ student_t(nu, 0, 1);
+      // to_vector(b_raw)  ~ student_t(nu, 0, 1);
       b_cs_raw  ~ student_t(nu, 0,1);
       b_RE_raw ~ student_t(nu, 0, 1);
       b_HIV_raw ~ student_t(nu, 0,1);
     }
     if (penalty_family == 1){
-      to_vector(b_raw)  ~ double_exponential(0, 1);
+      // to_vector(b_raw)  ~ double_exponential(0, 1);
       b_cs_raw  ~ double_exponential(0, 1);
       b_RE_raw ~ double_exponential(0, 1);
       b_HIV_raw ~ double_exponential(0, 1);
     }
     if (penalty_family == 2){
-      to_vector(b_raw)  ~ normal(0, 1);
+      // to_vector(b_raw)  ~ normal(0, 1);
       b_cs_raw   ~ normal(0, 1);
       b_RE_raw  ~ normal(0, 1);
       b_HIV_raw  ~ normal(0, 1);

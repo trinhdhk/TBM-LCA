@@ -25,3 +25,6 @@
   if (nXc > 9) // Other if exists
   for (j in 10:nXc) Xc_imp[:,j] = Xc[:,j];
 
+  for (ii in 1:(nXc+nQ)){
+    sd_X[ii] = sd(Xc_imp[:,ii]);
+  }

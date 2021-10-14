@@ -97,17 +97,17 @@ Xd <- data_19EI %$% cbind(
 )
 
 Xc <- data_19EI %$% cbind(
-  age=scale(log2(age), scale=F),                                      #1    #9 
-  id=scale(log2(clin_illness_day),scale=F),                           #2    #10
-  glu=scale(log2(BLDGLU), scale=F),                                   #3    #11 
-  csfglu=scale(log2(1+csf_glucose), scale=F),                         #4    #12
-  csflym=scale(log10(csf_lympho+1), scale=F),                         #5    #13   
-  csfpro=scale(log2(csf_protein), scale=F),                           #6    #14   
-  csflac=scale(log2(csf_lactate), scale=F),                           #7    #15   
-  csfneu=scale(log10(csf_wbc - csf_lympho - csf_eos + 1), scale=F),   #8.   #16
+  age=scale(log2(age), scale=T),                                      #1    #9 
+  id=scale(log2(clin_illness_day),scale=T),                           #2    #10
+  glu=scale(log2(BLDGLU), scale=T),                                   #3    #11 
+  csfglu=scale(log2(1+csf_glucose), scale=T),                         #4    #12
+  csflym=scale(log10(csf_lympho+1), scale=T),                         #5    #13   
+  csfpro=scale(log2(csf_protein), scale=T),                           #6    #14   
+  csflac=scale(log2(csf_lactate), scale=T),                           #7    #15   
+  csfneu=scale(log10(csf_wbc - csf_lympho - csf_eos + 1), scale=T),   #8.   #16
   gcs=15-clin_gcs,                                                    #9    #17
-  csfeos=scale(log10(csf_eos+1), scale=F),                            #10   #18
-  csfred=scale(log10(REDCELL+1), scale=F)                             #11   #19
+  csfeos=scale(log10(csf_eos+1), scale=T),                            #10   #18
+  csfred=scale(log10(REDCELL+1), scale=T)                             #11   #19
 )
 
 Td <- data_19EI %$% cbind(
@@ -124,8 +124,8 @@ Tc <- data_19EI %$% cbind(
   (4-GCSE)/3,                                                         #1
   (6-GCSM)/5,                                                         #2
   (5-GCSV)/4,                                                         #3
-  scale(log2(WHITE), scale=F),                                        #4
-  scale(log2(LYMP), scale=F)                                          #5
+  scale(log2(WHITE), scale=T),                                        #4
+  scale(log2(LYMP), scale=T)                                          #5
   # csf_bac_verylow, csf_bac_low, csf_bac_med 
 )
 

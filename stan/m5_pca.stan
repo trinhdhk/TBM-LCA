@@ -28,7 +28,7 @@ transformed data{
 #include includes/cross_validation/transform_data_Y.stan
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
-  
+
   for (i in 1:2) adapt_penalty[i] = penalty_term[i] == 0 ? 1 : 0;
 #include includes/pca/transformed_data/transform.stan
 }
@@ -86,23 +86,49 @@ model {
 #include includes/main_prior/a.stan
 #include includes/main_prior/penalty.stan
     RE ~ normal(0,1);
+    if (nB > 0){
+      if (penalty_family == 1){
+        int j = 1;
+        for (i in B){
+          b_raw[j,:]  ~ student_t(nu, 1, inv(sd_X[i]));
+          j += 1;
+        }
+      }
+      
+      if (penalty_family == 1){
+        int j = 1;
+        for (i in B){
+          b_raw[j,:] ~ double_exponential(0, inv(sd_X[i]));
+          j += 1;
+        }
+      }
+      
+      if (penalty_family == 2){
+        int j = 1;
+        for (i in B){
+          b_raw[j,:]  ~ normal(0, inv(sd_X[i]));
+          j += 1;
+        }
+      }
+    }
+    
     if (penalty_family == 0){
-      to_vector(b)  ~ student_t(nu, 0, SP[2]);
-      b_cs  ~ student_t(nu, 0, SP[2]);
-      b_RE ~ student_t(nu, 0, SP[2]);
-      b_HIV ~ student_t(nu, 0, SP[2]);
+      // to_vector(b_raw)  ~ student_t(nu, 0, 1);
+      b_cs_raw  ~ student_t(nu, 0,1);
+      b_RE_raw ~ student_t(nu, 0, 1);
+      b_HIV_raw ~ student_t(nu, 0,1);
     }
     if (penalty_family == 1){
-      to_vector(b)  ~ double_exponential(0, SP[2]);
-      b_cs  ~ double_exponential(0, SP[2]);
-      b_RE ~ double_exponential(0, SP[2]);
-      b_HIV ~ double_exponential(0, SP[2]);
+      // to_vector(b_raw)  ~ double_exponential(0, 1);
+      b_cs_raw  ~ double_exponential(0, 1);
+      b_RE_raw ~ double_exponential(0, 1);
+      b_HIV_raw ~ double_exponential(0, 1);
     }
     if (penalty_family == 2){
-      to_vector(b)  ~ normal(0, SP[2]);
-      b_cs  ~ normal(0, SP[2]);
-      b_RE ~ normal(0, SP[2]);
-      b_HIV ~ normal(0, SP[2]);
+      // to_vector(b_raw)  ~ normal(0, 1);
+      b_cs_raw   ~ normal(0, 1);
+      b_RE_raw  ~ normal(0, 1);
+      b_HIV_raw  ~ normal(0, 1);
     }
     for (n in 1:N){
       int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);

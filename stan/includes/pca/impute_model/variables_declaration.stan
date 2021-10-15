@@ -19,7 +19,8 @@
   Xc_imp[:,3:8] = impute_cont_2d(CSF_scaled[which(keptin),:], obs_Xc[:,3:8], csf_imp); //CSF Lab tests
   
   for (n in 1:N){
-    Xc_imp[n,9] = obs_Xc[n,9] ? Xc[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
+    // Xc_imp[n,9] = obs_Xc[n,9] ? Xc[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
+    Xc_imp[n,9] = obs_Xc[n,9] ? Xc[n,9] : (GCS_imp[n,1]*3 + GCS_imp[n,2]*5 + GCS_imp[n,3]*4)/3;
   }
   
   if (nXc > 9) // Other if exists

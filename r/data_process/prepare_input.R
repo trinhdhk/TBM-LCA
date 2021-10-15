@@ -34,6 +34,7 @@ setDT(test_data)
 #remove age=0 bc outlier, replace it with the one in the test data
 new_age = test_data[PatientCode==data_19EI[age==0, USUBJID],Age]
 data_19EI[, age := ifelse(age==0, new_age, age)]
+# data_19EI = merge(data_19EI, test_data[,.(USUBJID=PatientCode, Contaminated)], all.x=TRUE)
 #Red blood cell lumbar puncture might need correction
 #There is interaction but let's loosen it b/c we are on log scale
 data_19EI[,csf_rbc:=ifelse(is.na(REDCELL),0,REDCELL)]
@@ -45,6 +46,7 @@ data_19EI = merge(
                              csf_smear=ZielNeelsen,
                              csf_mgit=MGITculture,
                              csf_xpert=GeneXpert,
+                             csf_mgit_contaminated = Contaminated,
                              Volume),
   all=TRUE)  
 
@@ -59,6 +61,20 @@ data_19EI[, `:=`(
   csf_smear = ifelse(is.na(csf_smear), 0, csf_smear),
   csf_mgit  = ifelse(is.na(csf_mgit ), 0, csf_mgit ),
   csf_xpert = ifelse(is.na(csf_xpert), 0, csf_xpert)
+)]
+
+# Correction for traumatic lumbar puncture
+# If csf_rbc >= 10
+debloody = function(csf_cell, bld_cell, csf_rbc, bld_rbc){
+  ifelse(csf_rbc >= 10, sapply(csf_cell - bld_cell * csf_rbc / bld_rbc, max, 0), csf_cell)
+}
+data_19EI[, `:=`(
+  csf_neutro = csf_wbc - csf_lympho - csf_eos)][, `:=`(
+  csf_wbc_corrected = debloody(csf_wbc, WHITE*1000, REDCELL, HEMO*1e6),
+  csf_lympho_corrected = debloody(csf_lympho, LYMP/100*WHITE*1000, REDCELL, HEMO*1e6),
+  csf_neutro_corrected = debloody(csf_neutro, NEUTRO/100*WHITE*1000, REDCELL, HEMO*1e6),
+  csf_eos_corrected = debloody(csf_eos, EOSI/100*WHITE*1000, REDCELL, HEMO*1e6),
+  csf_protein_corrected = csf_protein - 0.011 * REDCELL / 1000
 )]
 ################ Not used
 #impute gcsv using: https://pubmed.ncbi.nlm.nih.gov/32898843/
@@ -101,12 +117,12 @@ Xc <- data_19EI %$% cbind(
   id=scale(log2(clin_illness_day),scale=T),                           #2    #10
   glu=scale(log2(BLDGLU), scale=T),                                   #3    #11 
   csfglu=scale(log2(1+csf_glucose), scale=T),                         #4    #12
-  csflym=scale(log10(csf_lympho+1), scale=T),                         #5    #13   
-  csfpro=scale(log2(csf_protein), scale=T),                           #6    #14   
+  csflym=scale(log10(csf_lympho_corrected+1), scale=T),                         #5    #13   
+  csfpro=scale(log2(csf_protein_corrected), scale=T),                           #6    #14   
   csflac=scale(log2(csf_lactate), scale=T),                           #7    #15   
-  csfneu=scale(log10(csf_wbc - csf_lympho - csf_eos + 1), scale=T),   #8.   #16
-  gcs=15-clin_gcs,                                                    #9    #17
-  csfeos=scale(log10(csf_eos+1), scale=T),                            #10   #18
+  csfneu=scale(log10(csf_neutro_corrected+1), scale=T),   #8.   #16
+  gcs=(15-clin_gcs)/3,                                                    #9    #17
+  csfeos=scale(log10(csf_eos_corrected+1), scale=T),                            #10   #18
   csfred=scale(log10(REDCELL+1), scale=T)                             #11   #19
 )
 
@@ -130,7 +146,7 @@ Tc <- data_19EI %$% cbind(
 )
 
 D = data_19EI %$% cbind(
-  scale(Volume/2, scale=FALSE)
+  scale(Volume/2, scale=T)
 )
 
 # Record the missingness and Set all missing to 0

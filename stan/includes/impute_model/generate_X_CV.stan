@@ -94,7 +94,8 @@
     }
     GCS_imp[which(keptin),:] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], gcs_imp);
     for (n in 1:N_all){
-      Xc_imp[n,9] = obs_Xc_all[n,9] ? Xc_all[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
+      Xc_imp[n,9] = obs_Xc_all[n,9] ? Xc_all[n,9] : (GCS_imp[n,1]*3 + GCS_imp[n,2]*5 + GCS_imp[n,3]*4)/3;
+      // Xc_imp[n,9] = obs_Xc_all[n,9] ? Xc_all[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
     }
     Xc_imp[:,9] = round(Xc_imp[:,9]);
   }

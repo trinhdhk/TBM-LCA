@@ -200,7 +200,7 @@ tibble::tribble(
   flextable::add_footer_row(values='"?" predictors were included and excluded in separated models.', colwidths = 3) |>
   flextable::add_footer_row(values='"0" predictors were not included in any model', colwidths = 3) |>
   flextable::add_footer_row(values='"++" predictors were strongly believed to be positive risk factors', colwidths=3) |>
-  flextable::add_footer_row(values='"+", "-", and "+/-" reflects prior believes, but no informative prior was imposed', colwidths=3) |>
+  flextable::add_footer_row(values='"+", "-", and "+/-" reflect weak pre-model believes', colwidths=3) |>
   # flextable::merge_at(j = 1:3, part = "footer") |>
   # flextable::set_caption('Contribution of different variables in each model') |>
   flextable::width(j=1, width=2) |>
@@ -397,7 +397,7 @@ data_dirty %$%
 
 In the case where missing values were imputed, figure \@ref(fig:impute-model) depicts how those were sampled, together with their potential donors. Note that due to technical limitation, imputed LoGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
 
-```{dot impute-model, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Clustered covariables were imputed together in a multivariate regression. Arrows demonstrate a donor $\rightarrow$ response correlation.", fig.id="impute-model"}
+```{dot impute-model, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Clustered covariables were imputed together in a multivariate regression. Arrows demonstrate a donor $\\rightarrow$ response correlation.", fig.id="impute-model"}
 digraph imp_model{
   rankdir = TB;
   resolution=500;
@@ -511,11 +511,11 @@ digraph imp_model{
 
 ### Prior choices
 
-In the **imputation**, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for LoGCS (E, V, and M) as their supports were two-sided constained \@ref(data-pre-processing) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations \@ref(appendix-details).
+In the **imputation**, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for LoGCS (E, V, and M) as their supports were two-sided constrained (session \@ref(data-pre-processing)) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations (appendix \@ref(appendix-details)).
 
 Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc]
 
-```{r lkj, out.width='30%', fig.cap="Density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case. 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation"}
+```{r lkj, out.width='30%', fig.cap="Density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case.1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation"}
 ggplot() + 
   ggdist::stat_dist_halfeye(aes(y = 0, dist = 'lkjcorr_marginal', arg1=2, arg2=4)) +
   xlab(latex2exp::TeX('Correlation')) +
@@ -962,12 +962,12 @@ For $1 \leq i \leq 678$, {$C \in {0,1}$, $\theta_i$} is the *latent class* and *
 
 ```{aligned_formula, fml.lab='eq:lca-fml', results='asis'}
 \begin{aligned}
-P_i = P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) &= \theta_i * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=1)\\ 
+P_i &= P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i)\\
+&= \theta_i * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=1)\\ 
 &\ \ \ \ + (1-\theta_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=0) \\
 &= \theta_i * P(y^{Smear}_i | C=1) * P(y^{Mgit}_i | C=1) * P(y^{Xpert}_i | C=1) \\
 &\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
 \end{aligned} 
-$$
 ```
 
 Under the assumption of local independence (model 0 and 1), the probabilities of positive test within class only depend on the latent class itself, thus $P(y^{Smear}_i, y^{Mgit}_i, y^{Xpert}_i|C = c) = P(y^{Smear}_j, y^{Mgit}_j, y^{Xpert}_j|C = c) = const$ for $c \in {0, 1}$.
@@ -982,7 +982,6 @@ P_i = P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) &= \theta_i * P(y^{Smear}_i,y^{Mgit}
 &= \theta_i * P(y^{Smear}_i | C=1,X^{(t)}_i) * P(y^{Mgit}_i | C=1,X^{(t)}_i * P(y^{Xpert}_i | C=1, X^{(t)}_i \\
 &\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
 \end{aligned} 
-$$
 ```
 
 s.t.
@@ -996,16 +995,22 @@ logit(P^{Smear|Mgit|Xpert}_i) &= z^{Smear|Mgit|Xpert}_0 + BD_i * b_{BD} \\
 
 where $z_0$ is the intercept, $b_BD$ is the coefficient of bacillary burden on test results, $B$ is the vector of coefficients, and $RE$ is the individual random effect.  
 
-In model 4, we additionally captured the sample-wise fluctuation that cannot be explained by the bacillary burden alone. This fluctuation is regressed by one extra random effect not shared between tests. For numerical stability, we combined the random effect in `r my_fn$labEq.docx('eq:bd')` with this, so that:
+In model 4, we additionally captured the sample-wise fluctuation that cannot be explained by the bacillary burden alone. This fluctuation is regressed by one extra random effect not shared between tests. For numerical stability, we combined the random effect in formula `r my_fn$labEq.docx('eq:bd')` with this, so that:
 
 ```{aligned_formula, fml.lab='eq:bd2', results='asis'}
 \begin{aligned}
-logit(P(y^{Smear}_i)) &= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2} = z^{Smear}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Smear}_i * b_{RE2} \\
-&= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2} = z^{Smear}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Smear}_i * b_{RE} \\
-logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2} = z^{Mgit}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Mgit}_i * b_{RE2} \\
-&= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2} = z^{Mgit}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Mgit}_i * b_{RE} \\
-logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2} = z^{Xpert}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Xpert}_i * b_{RE2}
-&= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2} = z^{Xpert}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Xpert}_i * b_{RE}
+logit(P(y^{Smear}_i)) &= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2}\\
+&= z^{Smear}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Smear}_i * b_{RE2} \\
+&= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2} \\
+&= z^{Smear}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Smear}_i * b_{RE} \\
+logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2}\\
+&= z^{Mgit}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Mgit}_i * b_{RE2} \\
+&= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2} \\
+&= z^{Mgit}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Mgit}_i * b_{RE} \\
+logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2}\\
+&= z^{Xpert}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Xpert}_i * b_{RE2} \\
+&= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2}\\
+&= z^{Xpert}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Xpert}_i * b_{RE}
 \end{aligned} 
 ```
 
@@ -1056,18 +1061,26 @@ obs_rate = c(.1, .95)
 obs3     = generate_Y(C, obs_rate)
 ```
 
-The likelihood function of the model shall be $$
+The likelihood function of the model shall be 
+$$
 P(Y_1,Y_2,Y_3,obs_3|X,X_2,X_3) = \prod_{n=1}^N \sum_{c=0}^1 (P_n(Y_1,Y_2,Y_3,obs_3|C=1)P(C=c|X,X_2,X_3)
-$$ Consider an individual $n$: If $obs3=1$: $$
+$$ 
+
+Consider an individual $n$: If $obs3=1$: 
+$$
 \begin{aligned}
-P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},y_3=Y_3^{(n)},obs_3=1|X_n,X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|obs_3=1,C=c)P(obs_3=1)P(C=c)\\
+&P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},y_3=Y_3^{(n)},obs_3=1|X_n,X_2^{(n)},X_3^{(n)} \\
+&= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|obs_3=1,C=c)P(obs_3=1)P(C=c)\\
 &= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|C=c)P(obs_3=1)P(C=c)\\
 \end{aligned}
 $$ (as $Y_1, Y_2, Y_3, obs_3$ are conditionally independent on $C$).
 
-Similarly, for those whose $obs_3=0$: $$
+Similarly, for those whose $obs_3=0$: 
+
+$$
 \begin{aligned}
-P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|obs_3=0,C=c)P(obs_3=0)P(C=c)\\
+&P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)})\\
+&= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|obs_3=0,C=c)P(obs_3=0)P(C=c)\\
 &= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|C=c)P(obs_3=0)P(C=c)\\
 \end{aligned}
 $$
@@ -1077,58 +1090,58 @@ We considered five sets of prior distribution for $X, X_2, X_3, Y_1, Y_2, Y_3$, 
 1.  Weak prior:
 
 $$
-  \begin{aligned}
-  (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
-  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-  obs\_rate|{C=0} &\sim Logistic(0,.7) \\
-  obs\_rate|{C=1} &\sim Logistic(0,.7)
-  \end{aligned}
-  $$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(0,.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 2.  Good but conservative knowledge for observation rate, weak prior for manifest variables:
 
 $$
-  \begin{aligned}
-  (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
-  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-  obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
-  obs\_rate|{C=1} &\sim Logistic(0,.7)
-  \end{aligned}
-  $$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 3.  Good but conservative knowledge for observation rate and manifest variables:\
-    $$
-      \begin{aligned}
-      (1-Spc_{X}) &\sim Logistic(logit(.1),.7) \\
-      (1-Spc_{X_2}) &\sim Logistic(logit(.01),.7) \\
-      (1-Spc_{X_3}) &\sim Logistic(logit(.05),.7) \\
-      Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-      obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
-      obs\_rate|{C=1} &\sim Logistic(0,.7)
-      \end{aligned}
-      $$
+$$
+\begin{aligned}
+(1-Spc_{X}) &\sim Logistic(logit(.1),.7) \\
+(1-Spc_{X_2}) &\sim Logistic(logit(.01),.7) \\
+(1-Spc_{X_3}) &\sim Logistic(logit(.05),.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 4.  Very strong knowledge for observation rate, weak prior for manifest variables:\
-    $$
-      \begin{aligned}
-      (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
-      Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-      obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
-      obs\_rate|{C=1} &\sim Logistic(0,.7)
-      \end{aligned}
-      $$
+$$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 5.  Very strong knowledge for observation rate and manifest variables:\
-    $$
-      \begin{aligned}
-      (1-Spc_{X}) &\sim Logistic(logit(.1),.2) \\
-      (1-Spc_{X_2}) &\sim Logistic(logit(.01),.2) \\
-      (1-Spc_{X_3}) &\sim Logistic(logit(.05),.2) \\
-      Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-      obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
-      obs\_rate|{C=1} &\sim Logistic(0,.7)
-      \end{aligned}
-      $$
+$$
+\begin{aligned}
+(1-Spc_{X}) &\sim Logistic(logit(.1),.2) \\
+(1-Spc_{X_2}) &\sim Logistic(logit(.01),.2) \\
+(1-Spc_{X_3}) &\sim Logistic(logit(.05),.2) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 All models were fitted under the probabilistic language \textsf{Stan} version 2.26 [@stan-doc] via \textsf{RStan} inferface [@stan].
 

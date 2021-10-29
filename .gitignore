@@ -13,3 +13,16 @@ stan/bin/
 *.png
 export/
 *.csf
+papers/clinical/code*
+papers/clinical/_minted-main/
+papers/clinical/figures/
+papers/clinical/images/
+papers/clinical/main_cache/
+papers/clinical/main_files/
+papers/clinical/*.docx
+papers/clinical/*.pdf
+papers/clinical/*.tex
+papers/clinical/*.log
+papers/clinical/*.png
+
+

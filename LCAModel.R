@@ -177,9 +177,9 @@ LCAModel <- R6::R6Class(
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        classifierplots::density_plot(Y_Smear_all, p_summary$p_Smear[[est]]) + theme() + ggplot2::ggtitle("Smear") + xlab("") + ggplot2::theme(legend.position = 'none') +
-          classifierplots::density_plot(Y_Mgit_all , p_summary$p_Mgit[[est]]) + theme() + ggplot2::ggtitle("Mgit") + ylab("") +  ggplot2::theme(legend.position = 'none') + 
-          classifierplots::density_plot(Y_Xpert_all, p_summary$p_Xpert[[est]]) + theme() + ggplot2::ggtitle("Xpert") + xlab("") + ylab("")
+        classifierplots::density_plot(as.integer(Y_Smear_all), p_summary$p_Smear[[est]]) + theme() + ggplot2::ggtitle("Smear") + xlab("") + ggplot2::theme(legend.position = 'none') +
+          classifierplots::density_plot(as.integer(Y_Mgit_all), p_summary$p_Mgit[[est]]) + theme() + ggplot2::ggtitle("Mgit") + ylab("") +  ggplot2::theme(legend.position = 'none') + 
+          classifierplots::density_plot(as.integer(Y_Xpert_all), p_summary$p_Xpert[[est]]) + theme() + ggplot2::ggtitle("Xpert") + xlab("") + ylab("")
       } else 
         classifierplots::density_plot(as.integer(C), p_summary$theta[[est]]) + theme() + ggplot2::ggtitle("Positive TBM") 
     },

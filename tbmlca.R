@@ -13,6 +13,7 @@ args <-
   add_argument("--input", help = "input Rdata file", 
                default = "data/cleaned/data_input.Rdata", short = "-i") %>%
   add_argument("--sampler", help = "sampler file, default to stan/<model>.stan", short = "-s") %>% 
+  add_argument("--mode", help = "mode, either sampling, optimizing, or vb. Apart from sampling, only iteration number is tweakable", default = "sampling", short="-m") %>%
   add_argument("--output-dir", help = "output folder", default = "outputs", short = "-o") %>%
   add_argument("--output-file", help = "output filename, default to auto-inference", short = "-f") %>%
   add_argument("--fold", help = "number of folds for cross-validation, ignored if not in a clean state and cache is available", default = 10, short = "-k") %>%
@@ -108,6 +109,8 @@ with(
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
     stopifnot(!(length(intersect(pos_a, neg_a)) > 0
                 && max(length(pos_a), length(neg_a)) > 0))
+    if ((rep>1 || fold>1) && mode != 'sampling') 
+      stop("Repeated K-Fold only support sampling.")
     # Coerce numeric
     # fold <- as.integer(fold)
     # rep  <- as.integer(rep)
@@ -226,18 +229,41 @@ with(
     if (grepl('missing$', model)) pars <- c(pars, 'z_obs') 
     if (grepl('missing$', model)) pars <- c(pars, 'z_obs_Xpert') 
     if (!all(is.na(include_pars))) pars <- include_pars 
+    
+    if (mode == "sampling"){
+      results$outputs <- misc$stan_kfold(sampler = sampler,
+                                         list_of_datas=inputs,
+                                         backend = "rstan",
+                                         chains = chains, cores = cores, 
+                                         thin = thin, 
+                                         merge = TRUE,
+                                         control = list(adapt_delta=adapt_delta, max_treedepth=12), 
+                                         init_r = init_r, seed = seed,
+                                         sample_dir = outdir,
+                                         pars = pars,
+                                         iter=iter, warmup=warmup)
+    } 
+    
+    if (mode == "optimizing"){
+      results$outputs <- rstan::optimizing(object = sampler,
+                                           verbose = TRUE,
+                                           data = inputs[[1]],
+                                           seed = seed,
+                                           hessian = TRUE,
+                                           draws = 1000,
+                                           iter = iter)
+    }
    
-    results$outputs <- misc$stan_kfold(sampler = sampler,
-                               list_of_datas=inputs,
-                               backend = "rstan",
-                               chains = chains, cores = cores, 
-                               thin = thin, 
-                               merge = TRUE,
-                               control = list(adapt_delta=adapt_delta, max_treedepth=12), 
-                               init_r = init_r, seed = seed,
-                               sample_dir = outdir,
-                               pars = pars,
-                               iter=iter, warmup=warmup)
+    if (mode == "vb"){
+      results$outputs <- rstan::vb(object = sampler,
+                                  data = inputs[[1]],
+                                  seed = seed,
+                                  iter = iter,
+                                  elbo_samples = max(warmup, 100),
+                                  adapt_iter = 200,
+                                  tol_rel_obj = 1e-5)
+    }
+    
     
     # Clear cache
     if (!keep_cache){
@@ -250,7 +276,8 @@ with(
     writeLines(">> Save results")
     results$model_name <- model
     results$folds  <- folds
-    results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
+    if (mode != 'optimizing')
+      results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
     saveRDS(results, file = file.path(output_dir, output_file))
     future::plan("sequential")
   })

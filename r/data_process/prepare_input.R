@@ -39,7 +39,7 @@ data_19EI[, age := ifelse(age==0, new_age, age)]
 #There is interaction but let's loosen it b/c we are on log scale
 data_19EI[,csf_rbc:=ifelse(is.na(REDCELL),0,REDCELL)]
 
-#join the test results
+#join the test results & remove conataminated
 data_19EI = merge(
   data_19EI |> dplyr::select(-csf_xpert, -csf_mgit, -csf_smear),
   test_data |> dplyr::select(USUBJID=PatientCode,
@@ -48,19 +48,19 @@ data_19EI = merge(
                              csf_xpert=GeneXpert,
                              csf_mgit_contaminated = Contaminated,
                              Volume),
-  all=TRUE)  
+  all=TRUE) |>
+  filter(is.na(csf_mgit_contaminated) | !csf_mgit_contaminated)
 
 saveRDS(data_19EI, 'export/data_dirty.RDS')
 
-
 data_19EI[, `:=`(
-  Volume    = ifelse(is.na(Volume), 6, Volume),
-  obs_smear = ifelse(is.na(csf_smear), 0, 1        ),
-  obs_mgit  = ifelse(is.na(csf_mgit ), 0, 1        ),
-  obs_xpert = ifelse(is.na(csf_xpert), 0, 1        ),
-  csf_smear = ifelse(is.na(csf_smear), 0, csf_smear),
-  csf_mgit  = ifelse(is.na(csf_mgit ), 0, csf_mgit ),
-  csf_xpert = ifelse(is.na(csf_xpert), 0, csf_xpert)
+  Volume    = fifelse(is.na(Volume), 6, Volume),
+  obs_smear = fifelse(is.na(csf_smear), 0, 1        ),
+  obs_mgit  = fifelse(is.na(csf_mgit ), 0, 1        ),
+  obs_xpert = fifelse(is.na(csf_xpert), 0, 1        ),
+  csf_smear = fifelse(is.na(csf_smear), F, csf_smear),
+  csf_mgit  = fifelse(is.na(csf_mgit ), F, csf_mgit ),
+  csf_xpert = fifelse(is.na(csf_xpert), F, csf_xpert)
 )]
 
 # Correction for traumatic lumbar puncture

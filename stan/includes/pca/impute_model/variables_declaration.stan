@@ -5,6 +5,7 @@
   matrix[N, nX - 3 - (6-nFA)] X_compl;
   vector[3] GCS_imp[N];
   vector[2] Bld_imp[N];
+  vector[nA] sd_X;
   
   Bld_imp       = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
   z_HIV         = HIV_a0 + append_all(Bld_imp)*HIV_a;
@@ -25,7 +26,3 @@
   
   if (nXc > 9) // Other if exists
   for (j in 10:nXc) Xc_imp[:,j] = Xc[:,j];
-
-  for (ii in 1:(nXc+nQ)){
-    sd_X[ii] = sd(Xc_imp[:,ii]);
-  }

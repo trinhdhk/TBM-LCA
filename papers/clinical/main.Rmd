@@ -17,13 +17,6 @@ institute:
   - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
   - kcl: King's College London, London, United Kingdom
 output: 
-  officedown::rdocx_document:
-    fig_caption: yes
-    reference_docx: includes/styles.docx
-    pandoc_args:
-      - '--lua-filter=includes/scholarly-metadata.lua'
-      - '--lua-filter=includes/author-info-blocks.lua'
-    toc: no
   bookdown::pdf_document2:
     toc: no
     pandoc_args:
@@ -34,6 +27,13 @@ output:
     highlight: pygments
     includes:
       in_header: includes/header.tex
+  officedown::rdocx_document:
+    fig_caption: yes
+    reference_docx: includes/styles.docx
+    pandoc_args:
+      - '--lua-filter=includes/scholarly-metadata.lua'
+      - '--lua-filter=includes/author-info-blocks.lua'
+    toc: no
 bibliography: references.bib
 ---
 
@@ -151,16 +151,33 @@ In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and X
 
 ### Data pre-processing
 
-Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to **Loss of GCS** (LoGCS = LoGCSV + LoGCSE + LoGCSM) so that a $GCS = 15$ would be equivalent to $LoGCS = 0$, while $GCS = 3$ would be translated to $LoGCS = 12$.
+Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to **Loss of GCS** (LoGCS = LoGCSV + LoGCSE + LoGCSM) so that a $GCS = 15$ would be equivalent to $LoGCS = 0$, while $GCS = 3$ would be translated to $LoGCS = 12$ \@ref(tab:gcs-tab).
 
-$$
-\begin{aligned}
-LoGCS = 15 - GCS \\
-LoGCSE = 4 - GCSE \\
-LoGCSV = 5 - GCSV \\
-LoGCSM = 6 - GCSM
-\end{aligned}
-$$
+```{r gcs-tab, out.width='100%', tab.id='gcs-tab', tab.cap='Conversion table from clasic Glasgow Coma Score (GCS) to Loss of GCS (LoGCS)'}
+
+tibble::tribble(
+  ~ Feature,                     ~ Response, ~ GCS, ~ LoGCS,
+  'Eye response',        'Open sponatenously', 4, 0,
+  'Eye response',     'Open to voice command', 3, 1,
+  'Eye response',              'Open to pain', 2, 2,
+  'Eye response',               'No eye open', 1, 3,
+  'Verbal response',             'Orientated', 5, 0,
+  'Verbal response',               'Confused', 4, 1,
+  'Verbal response',     'Inappopriate words', 3, 2,
+  'Verbal response','Incomprehensible sounds', 2, 3,
+  'Verbal response',     'No verbal response', 1, 4,
+  'Motor response',            'Obey command', 6, 0,
+  'Motor response',         'Localising pain', 5, 1,
+  'Motor response',    'Withdrawal from pain', 4, 2,
+  'Motor response',                 'Flexing', 3, 3,
+  'Motor response',               'Extending', 2, 4,
+  'Motor response',       'No motor response', 1, 5
+) |>
+  flextable::flextable() |>
+  flextable::width(j=1, width=2) |>
+  flextable::width(j=2, width=2) |>
+  flextable::theme_zebra()
+```
 
 We also made an adjustment for Past TB contact, in which we hypothesise that by changing the question into "Past noticeable contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the main study, no brain imaging was taken, hence not included.
 
@@ -171,7 +188,7 @@ Binary variables were encoded into 0 for falsified values ("Negative" or "No") a
 We created two-level model consisting of:
 
 1.  **Prevalence model**: A logistic regression model trying to estimate the prevalence of TBM amongst the study population
-2.  **Latent class analysis**: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. Latent bacillary burden is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive. This lifted the local independence assumptions of vanilla Latent Class Analysis described in figure \@ref(fig:classic-lca).
+2.  **Latent class analysis**: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. **Latent bacillary burden** is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive. This lifted the local independence assumptions of vanilla Latent Class Analysis described in figure \@ref(fig:classic-lca).
 
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
@@ -311,7 +328,7 @@ digraph {
 }
 ```
 
-The skeleton for all models is shown in figure \@ref(fig:skeleton-model). We use a stepwise approach where we incrementally added up more flexibility and lifted more constraints. We also include several extensions to explore many possibilities than can improve performance. In the main analysis, only CSF neutrophil count had quadratic effect as suggested by the TBM case definition [@marais2010]. A summary of all architectures an extensions are shown in table \@ref(tab:model-archs), whereas technical formulations are detailed in appendix \@ref(appendix-details).
+The skeleton for all models is shown in figure \@ref(fig:skeleton-model). We use a stepwise approach where we incrementally added up more flexibility and lifted more constraints. We also include several extensions to explore many possibilities than can improve performance. In the main analysis, only CSF neutrophil count had quadratic effect. A summary of all architectures an extensions are shown in table \@ref(tab:model-archs), whereas technical formulations are detailed in appendix \@ref(appendix-details).
 
 ```{r model-archs, tab.cap="Model architectures and extensions", tab.id="model-archs"}
 model_archs <-
@@ -515,7 +532,7 @@ In the **imputation**, $Normal(0,2.5)$ was chosen as prior distributions for all
 
 Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc]
 
-```{r lkj, out.width='30%', fig.cap="Density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case. 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation"}
+```{r lkj, out.width='30%', fig.cap="Example density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case. 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation. Black dot, thick, and thin line are the median, IQR and 95% credible interval"}
 ggplot() + 
   ggdist::stat_dist_halfeye(aes(y = 0, dist = 'lkjcorr_marginal', arg1=2, arg2=4)) +
   xlab(latex2exp::TeX('Correlation')) +
@@ -527,7 +544,7 @@ ggplot() +
         axis.ticks.y = element_blank())
 ```
 
-For **LCA**, we imposed Student T with 4 degree of freedom, centre around 0, with scale 5 ($t_4(0,\ 5)$) for the intercept reflecting our expectation that its absolute value would not be higher than 10 [@boonstra2019\]. For the coefficients, we considered a range of different prior families representing a spectrum of penalties bestowed upon the features [@prior-choice, @vanerp2019]:
+For **LCA**, we imposed Student T with 4 degree of freedom, centre around 0, with scale 5 ($t_4(0,\ 5)$) for the intercept reflecting our expectation that its absolute value would not be higher than 10 [@boonstra2019]. For the coefficients, we considered a range of different prior families representing a spectrum of penalties bestowed upon the features [@prior-choice, @vanerp2019]:
 
 -   Weakly informative prior: $t_4(0,\ s * sd)$
 
@@ -689,7 +706,7 @@ for (i in 1:2) plt[[i]] <- plt[[i]] + plot_layout(tag_level = 'new')
 color_me <- list("#000000", "#E69F00", "#56B4E9", c("#000000", "#E69F00", "#56B4E9", "#009E73"))
 withr::with_options(
   list(ggplot2.discrete.colour = color_me),
-  plt + plot_annotation(tag_levels = c('A',1), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% credible intervals of our priors') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
+  plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% credible intervals of our priors') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
 )
 ```
 
@@ -761,7 +778,7 @@ Models performances were estimated and compared by three metrics:
 
 -   Expected log point-wise predictive density (elpd) of hold-out observations [@vehtari2016]: Models with higher *elpd* are supposed to have more predictive values for untrained observations.
 
--   Visualised model calibration between estimated predicted and observed probabilities of positive confirmation tests, using a non-parametric loess fit [@rms].nA model with good calibration would predict the risk near to the observed truth.
+-   Visualised model calibration between estimated predicted and observed probabilities of positive confirmation tests, using a non-parametric loess fit [@rms]. A model with good calibration would predict the risk near to the observed truth.
 
 -   Receiver Operating Characteristic (ROC) curve and corresponding Areas Under the Curve (AUC) . Confidence interval for AUC was estimated by a 2000-time bootstrapping process. A model with good discriminative value would be better to distinguish between two class.
 
@@ -784,7 +801,7 @@ $$*where* $\mu_{expert}$ *and* $sd_{xpert}$ *are estimation and* $\frac{1}{2}$ *
 The main model underwent a relief of strict priors for test specificities in \`\@ref(eq:priors-response), the lifted model used the same prior for all three tests which cover specificity from at least 90%:
 
 $$
-1-Spc_{lifted} \sim Logistic(\mu, .7)
+1-Spc_{lifted} \sim Logistic(\mu, 1)
 $$ *where* $\mu = logit(0.001)$ for ZN Smear and MGIT, $\mu = logit(0.005)$ for Xpert.
 
 Lastly, as recent studies suggested a sup-optimal specificity of Xpert test on CSF samples[@nhu2013; @chen2020], our assumptions made in table \@ref(tab:missing-handling) might not completely valid. To tackle this, we considered a MAR scenario, where observation chance of confirmation tests depend on the unknown TBM status and locally independent to the value of confirmation tests. The observation status was then included in the model as a separated manifest variables. The validity of this method was depicted in a simulation study in \@ref(appendix-simulation-study).
@@ -798,7 +815,7 @@ obs_{TBM+} &\sim Logistic(logit(.95), 1)
 \end{aligned}
 $$
 
-```{r liftes-priors, out.width='100%', out.height='8cm', fig.width=8, fig.asp=.3, fig.align='center', fig.cap='Lifted prior for ZN Smear and MGIT specificities, compared to the old one (dark grey). 1: logit scale, 2: linear scale', warning=FALSE}
+```{r liftes-priors, out.width='90%', out.height='8cm', fig.width=7, fig.asp=.3, fig.align='center', fig.cap='Lifted prior for ZN Smear and MGIT specificities, compared to the old one (dark grey). 1: logit scale, 2: linear scale', warning=FALSE}
 pl.7.1_logistic <- ggplot() + ggdist::stat_halfeye(aes(x=rlogis(200000,qlogis(.001),.7)))+
   ggdist::stat_halfeye(aes(x=rlogis(200000,qlogis(.001),.3)), fill=grey(.3))+
   xlab('') + ylab('') +
@@ -837,10 +854,10 @@ As part of the exploratory analysis, we considered two models:
 As the full model requires a plethora of predictors and measurements, it might not be pragmatic in some limited contexts. We hence developed a simplified version of the prevalence sub-model which exclude all laboratorial features. The aim of this exploratory analysis is to provide a decent approximation of TBM risk yet needs only a minimal amount of information. We took out the analytic forms of posterior distributions from the best-performed model, on the logit scale, fed them into subsequent model where the number of predictors were reduced. The error term follows Logistic distribution with $scale = 1$.
 
 $$
-z_{approx} \sim Logistic(z_{full}, 1);
+z_{approx} \sim Logistic(z, 1);
 $$
 
-*s.t.* $z_{full}$ is the full model's output and $z_{approx}$ is an approximation of $z$.
+*s.t.* $z$ is the full model's output and $z_{approx}$ is an approximation of $z$.
 
 # Results
 
@@ -967,7 +984,6 @@ P_i = P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) &= \theta_i * P(y^{Smear}_i,y^{Mgit}
 &= \theta_i * P(y^{Smear}_i | C=1) * P(y^{Mgit}_i | C=1) * P(y^{Xpert}_i | C=1) \\
 &\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
 \end{aligned} 
-$$
 ```
 
 Under the assumption of local independence (model 0 and 1), the probabilities of positive test within class only depend on the latent class itself, thus $P(y^{Smear}_i, y^{Mgit}_i, y^{Xpert}_i|C = c) = P(y^{Smear}_j, y^{Mgit}_j, y^{Xpert}_j|C = c) = const$ for $c \in {0, 1}$.
@@ -982,30 +998,32 @@ P_i = P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) &= \theta_i * P(y^{Smear}_i,y^{Mgit}
 &= \theta_i * P(y^{Smear}_i | C=1,X^{(t)}_i) * P(y^{Mgit}_i | C=1,X^{(t)}_i * P(y^{Xpert}_i | C=1, X^{(t)}_i \\
 &\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
 \end{aligned} 
-$$
 ```
 
 s.t.
 
 ```{aligned_formula, fml.lab='eq:bd', results='asis'}
 \begin{aligned}
-logit(P^{Smear|Mgit|Xpert}_i) &= z^{Smear|Mgit|Xpert}_0 + BD_i * b_{BD} \\
-&= z^{Smear|Mgit|Xpert}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD}
+logit(P^Y_i) &= z^Y_0 + BD_i * b_{BD} \\
+&= z^Y_0 + (X^{(t)}_i)^T * B + RE_i * b_{BD}
 \end{aligned} 
 ```
 
-where $z_0$ is the intercept, $b_BD$ is the coefficient of bacillary burden on test results, $B$ is the vector of coefficients, and $RE$ is the individual random effect.  
+where $Y=Smear|Mgit|Xpert$ $z_0$ is the intercept, $b_BD$ is the coefficient of bacillary burden on test results, $B$ is the vector of coefficients, and $RE$ is the individual random effect.  
 
 In model 4, we additionally captured the sample-wise fluctuation that cannot be explained by the bacillary burden alone. This fluctuation is regressed by one extra random effect not shared between tests. For numerical stability, we combined the random effect in `r my_fn$labEq.docx('eq:bd')` with this, so that:
 
 ```{aligned_formula, fml.lab='eq:bd2', results='asis'}
 \begin{aligned}
-logit(P(y^{Smear}_i)) &= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2} = z^{Smear}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Smear}_i * b_{RE2} \\
-&= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2} = z^{Smear}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Smear}_i * b_{RE} \\
-logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2} = z^{Mgit}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Mgit}_i * b_{RE2} \\
-&= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2} = z^{Mgit}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Mgit}_i * b_{RE} \\
-logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2} = z^{Xpert}_0 + (X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Xpert}_i * b_{RE2}
-&= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2} = z^{Xpert}_0 + (X^{(t)}_i)^T * B) * b_{BD} + RE^{Xpert}_i * b_{RE}
+logit(P(y^{Smear}_i)) &= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2}\\
+&= z^{Smear}_0 + ((X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Smear}_i * b_{RE2} \\
+&= z^{Smear}_0 + ((X^{(t)}_i)^T * B) * b_{BD} + RE^{Smear}_i * b_{RE} \\
+logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2}\\
+&= z^{Mgit}_0 + ((X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Mgit}_i * b_{RE2} \\
+&= z^{Mgit}_0 + ((X^{(t)}_i)^T * B) * b_{BD} + RE^{Mgit}_i * b_{RE} \\
+logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2}\\
+&= z^{Xpert}_0 + ((X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Xpert}_i * b_{RE2}\\
+&= z^{Xpert}_0 + ((X^{(t)}_i)^T * B) * b_{BD} + RE^{Xpert}_i * b_{RE}
 \end{aligned} 
 ```
 
@@ -1019,7 +1037,50 @@ logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + X^{(t)}_i)^T * B + RE^{Xpert}_i * b_{RE}
 \end{aligned} 
 ```
 
+$\theta$ was a linear combination of potential predictors, which implies a logistic regression for latent binary outcome.
+
+```{aligned_formula, fml.lab='eq:theta'}
+logit(\theta) = a_0 + X^T A
+```
+*where X and A are vector of covariates and coefficients.*
+
+$StudentT$ with $df=4$ was used as a prior for $a_0$ as we believed that the intercept is bounded by $[-10,10]$. Let $A = [a_1,...a_M]^T$ in which M is the number of covariates:
+
+$$
+\begin{aligned}
+a_0 &\sim t_4(0, 6)\\
+a_i &\sim Dist(0, sd_1)
+\end{aligned}
+$$
+*where $sd_1$ is the penalised scale and $Dist$ one of is $Normal$, $DoubleExponential$, or $StudentT_4$.
+
+RE was imposed a standard normal distribution as priors. To prevent sign-switching problem (i.e $RE*b_{RE} = (-RE)*(-b_{RE})$, $b_RE$ was left-truncated at 0)
+
+$$
+\begin{aligned}
+RE &\sim Normal(0,1)\\
+b_{RE} &\sim Dist(0, sd_2)\  s.t.\ b_{RE} > 0
+\end{aligned}
+$$
+*where $sd_2$ is the penalised scale and $Dist$ one of is $Normal$, $DoubleExponential$, or $StudentT_4$.
+
+Due to the set-up of model 3 and 4, penalisation on fixed effects was tricky as they were all subsequently multiply by *b_RE*. The prior scales were hence divided by $b_RE$ in model 3, and by the average of the three $b_RE$ in model 4.
+
+$$
+\begin{aligned}
+b_i \sim Dist(0, \frac{sd_2}{b_{RE}})
+\end{aligned}
+$$
+*in which $B=[b_1, b_2, ..., b_L]$ where L is the number of features contributed to the bacillary burden model.*
+
+We used separated penalty term (represented by separated penalised scale $sd_1$ and $sd_2$) for the prevalence model and bacillary burden model. $Normal(0, 2.5)$ was used as the prior for both, however.
+
+$$
+sd_{(1,2)} \sim Normal(0, 2.5)
+$$
+
 # Simulation study {#appendix-simulation-study}
+
 
 The purpose of this study is to estimate the perfomance an LCA model in the scenario where manifest variables were partially missing.
 

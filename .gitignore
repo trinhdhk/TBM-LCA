@@ -19,3 +19,4 @@ papers/clinical/*.tex
 papers/clinical/*.log
 papers/clinical/*.png
 
+.DS_Store

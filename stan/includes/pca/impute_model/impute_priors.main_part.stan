@@ -47,13 +47,13 @@
       else
         X_compl = append_col(append_col(to_matrix(Xd[:,4:nXd]), append_all(Xc_imp[:,1:2])), append_all(U_csf)); //complement part of X
         
-      for (ii in 1:3){
-        sd_X[ii] = sd(Xd_imp[:,ii]);
-      }
-      
-      for (ii in 1:(nA-3)){
-        sd_X[ii+3] = sd(X_compl[:,ii]);
-      }
+      // for (ii in 1:3){
+      //   sd_X[ii] = sd(Xd_imp[:,ii]);
+      // }
+      // 
+      // for (ii in 1:(nA-3)){
+      //   sd_X[ii+3] = sd(X_compl[:,ii]);
+      // }
 
     }
     

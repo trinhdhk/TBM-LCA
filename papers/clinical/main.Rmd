@@ -88,10 +88,8 @@ my_fn$labEq.docx <- function (lab, envir = docx.eqcounter) {
   return(paste0('(', get(x = gsub("eq:", "", lab), envir = envir), ')'))
 }
 
-# if (is_docx_output()) {
-  docx.eqcounter <- new.env()
-  docx.eqcounter$counter <- 0
-# }
+docx.eqcounter <- new.env()
+docx.eqcounter$counter <- 0
   
 # Register a knit engine for formula
 my_fn$aligned_formula_knit <- \(options){
@@ -113,17 +111,17 @@ data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
 
 # Introduction
 
-**Tuberculous meningitis (TBM)** is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of *Mycobacterium tuberculosis* in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for *M. tuberculosis* such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and Mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such parameters are illustrated in the uniform case definition for TBM [@marais2010] where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of particular clinical, CSF, and imaging findings, or with evidence of non-neurological *M. tuberculosis*.
+*Tuberculous meningitis (TBM)* is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of *Mycobacterium tuberculosis* in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for *M. tuberculosis* such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and Mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such parameters are illustrated in the uniform case definition for TBM [@marais2010] where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of particular clinical, CSF, and imaging findings, or with evidence of non-neurological *M. tuberculosis*.
 
 The uniform case definition, albeit widely adopted in clinical practice, does have its own disadvantages, which mostly born from its expertise base. The categorised representation of TBM risk into *Definitely not*, *Possible, Probable,* and *Definite* rather than actual probability can be hard to interpret, especially when used in estimating diagnostic tests' sensitivities and specificities and treatment's response. Secondly, scores of risk factors are consensually chosen not statistically built could lead to biased estimation of the risks. Apart from the extreme groups (Definite and Definitely not) which are micro-biologically confirmed, clinical diagnoses outputted from this scoring system is highly uncertain, leave a lot of rooms to the clinicians' decision. Lastly, the fact that it depends on "slow" laboratory assays (culturing) likely delays the diagnosis of patients, which occasionally might not be fruitful.
 
-**Latent Class Analysis (LCA)** is a statistical modelling technique which has been adopted in the settings where a gold standard does not exist. This model clusters individuals into latent classes by incorporating information from several *manifest variables*, each of which is hypothesised to follow a mixture of distributions generated from their class (figure \@ref(fig:classic-lca)). The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018\] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach over the time has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
+*Latent Class Analysis (LCA)* is a statistical modelling technique which has been adopted in the settings where a gold standard does not exist. This model clusters individuals into latent classes by incorporating information from several *manifest variables*, each of which is hypothesised to follow a mixture of distributions generated from their class (figure \@ref(fig:classic-lca)). The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach over the time has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
 
 ```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (1, 2, and 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='70%', fig.id = "classic-lca", , fig.cap.style = "Image Caption"}
 knitr::include_graphics("includes/graph1.jpg")
 ```
 
-This analysis's main objective are to **(1)** re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; **(2)** make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
+This analysis's main objective are to *(1)* re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; *(2)* make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
 
 As secondary objectives, our analysis also aim to build a simplified scoring system which only needs clinical and demographic information but has the capacity to approximate the full system's output - so that TBM risk can be calculated at admission. We also estimate a latent representation of individual bacillary burden given that they get TBM which may impact the tests results.
 
@@ -135,7 +133,7 @@ Data used for this analysis were extracted from an observational study study of 
 
 ## Data collection and testing procedures
 
-Demographic data and relevant medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. Patients with either a known HIV positive status, or a positive HIV test result, were considered **HIV positive**. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. HIV-related information was asked and optionally tested unless the patients were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD. Patients with either an known HIV infection or a positive subsequent HIV test would be considered **HIV positive**. Patients underwent clinical examination, routine blood testing, and analysis of sputum for M. tuberculosis where indicated. CSF was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were **Ziehl--Neelsen staining and smear (ZN Smear)**, **mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT)**, and **Xpert** or **Xpert MTB/RIF Ultra (XpertUltra)**. Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data [@donovan2020], Xpert and XpertUltra were considered the same in this analysis. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
+Demographic data and relevant medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. Patients with either a known HIV positive status, or a positive HIV test result, were considered HIV positive. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. HIV-related information was asked and optionally tested unless the patients were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD. Patients with either an known HIV infection or a positive subsequent HIV test would be considered HIV positive. Patients underwent clinical examination, routine blood testing, and analysis of sputum for M. tuberculosis where indicated. CSF was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were Ziehl--Neelsen staining and smear (ZN Smear), mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT), and Xpert or Xpert MTB/RIF Ultra (XpertUltra). Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data [@donovan2020], Xpert and XpertUltra were considered the same in this analysis. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
 
 Methods of CSF processing have been described elsewhere [@nhu2013, @donovan2020], however, briefly; CSF samples were centrifuged at 3000g for 15 minutes, and most of the CSF supernatant was removed. The CSF deposit was resuspended in 500µL of remaining supernatant, with this resuspended pellet then used for ZN smear (100µL), MGIT (200µL), and either Xpert or XpertUltra (200 µL).
 
@@ -145,13 +143,11 @@ In the instance of repeat CSF sampling (performed based on clinical need), only 
 
 ## Statistical Model
 
-All data preparation, cleaning, and processing were performed on statistical package **R**, version 4.1.0 [@rcoreteam]. The model was developed on the probabilistic language **Stan** via the interface **Rstan** , version 2.27 [@stan]. Plotting was done using package **bayesplot** [@bayesplot], **classifierplots** [@classifierplots], and **ggvenn** [@ggvenn]. Some other packages used include: **R6** [@r6], **rms** [@rms].
-
-In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. Linear predictors for the latent class prevalence were **history and demographic information** (HIV status, Age, Past noticeable TB contact), **clinical signs and symptoms** (Days from onset to admission, Systemic symptoms suggestive of tuberculosis, Focal neurological deficit, Cranial nerve palsy, Glasgow Coma Score - GCS), **Imaging chest data** (Pulmonary TB, Miliary TB), **CSF criteria (**lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and **Cryptococcus Antigen/Indian Ink** in combination**.**
+In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. Linear predictors for the latent class prevalence were *history and demographic information* (HIV status, Age, Past noticeable TB contact), *clinical signs and symptoms* (Days from onset to admission, Systemic symptoms suggestive of tuberculosis, Focal neurological deficit, Cranial nerve palsy, Glasgow Coma Score - GCS), *Imaging chest data* (Pulmonary TB, Miliary TB), *CSF criteria* (lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and *Cryptococcus Antigen/Indian Ink* in combination.
 
 ### Data pre-processing
 
-Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to **Loss of GCS** (LoGCS = LoGCSV + LoGCSE + LoGCSM) so that a $GCS = 15$ would be equivalent to $LoGCS = 0$, while $GCS = 3$ would be translated to $LoGCS = 12$ \@ref(tab:gcs-tab).
+Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Loss of GCS* (LoGCS = LoGCSV + LoGCSE + LoGCSM) so that a $GCS = 15$ would be equivalent to $LoGCS = 0$, while $GCS = 3$ would be translated to $LoGCS = 12$ (table \@ref(tab:gcs-tab)).
 
 ```{r gcs-tab, out.width='100%', tab.id='gcs-tab', tab.cap='Conversion table from clasic Glasgow Coma Score (GCS) to Loss of GCS (LoGCS)'}
 
@@ -174,9 +170,11 @@ tibble::tribble(
   'Motor response',       'No motor response', 1, 5
 ) |>
   flextable::flextable() |>
+  flextable::merge_v(j = 1) |>  
   flextable::width(j=1, width=2) |>
-  flextable::width(j=2, width=2) |>
-  flextable::theme_zebra()
+  flextable::width(j=2, width=2)
+# |>
+  # flextable::theme_zebra()
 ```
 
 We also made an adjustment for Past TB contact, in which we hypothesise that by changing the question into "Past noticeable contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the main study, no brain imaging was taken, hence not included.
@@ -187,8 +185,8 @@ Binary variables were encoded into 0 for falsified values ("Negative" or "No") a
 
 We created two-level model consisting of:
 
-1.  **Prevalence model**: A logistic regression model trying to estimate the prevalence of TBM amongst the study population
-2.  **Latent class analysis**: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. **Latent bacillary burden** is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive. This lifted the local independence assumptions of vanilla Latent Class Analysis described in figure \@ref(fig:classic-lca).
+1.  *Prevalence model*: A logistic regression model trying to estimate the prevalence of TBM amongst the study population
+2.  *Latent class analysis*: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. *Latent bacillary burden* is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive. This lifted the local independence assumptions of vanilla Latent Class Analysis described in figure \@ref(fig:classic-lca).
 
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
@@ -375,42 +373,7 @@ In the analysis, most missingness were assumed to be Missing At Random (MAR) and
 
 As HIV tests were not mandatory in the main study, HIV status itself was also incomplete, but their chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are also MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as donors.
 
-```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling"}
-na = \(x) sum(is.na(x))
-data_dirty$csf_neutro <- data_dirty$NEUPER * data_dirty$csf_wbc / 100
-data_dirty %$%
-  tibble::tribble(
-     ~ 'Variable'           , ~ 'N\n missing'     ,  ~ 'Expected Reason of Missingness'                      , ~ 'Mechanism',        ~ 'Handling method' ,
-    'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'HIV Status'            , na(hiv_stat)        , 'Test not mandatory'                                     , 'MAR/MCAR'           , 'Imputation'       ,
-    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR/MNAR'           , 'Imputation'       ,
-    'Local neuro-deficit'   , na(clin_motor_palsy), 'Unconscious'                                            , 'MAR/MNAR'           , 'Imputation'       ,
-    'Glasgow Coma Score'    , na(clin_gcs)        , 'Unconscious (GCSV) / Blinded (GCSE) / Unmeasured'       , 'MAR'                , 'Imputation'       ,
-    'Age'                   , na(age)             , 'Input error'                                            , 'MCAR'              , 'Imputation'       ,
-    'Illness days'          , na(clin_illness_day), 'Patients forget / Unconscious'                          , 'MAR'                , 'Imputation'       ,
-    'Blood Lymphocyte'      , na(LYMP)            , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
-    'Blood Neutrophil'      , na(NEUTRO)          , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
-    'Blood Glucose'         , na(BLDGLU)          , 'Most likely input error / Unmeasured (premature death)', 'MAR/MCAR'           , 'Imputation'       ,
-    'CSF glucose'           , na(csf_glucose)     , 'Unmeasured (premature death)'                           , 'MAR/MCAR'           , 'Imputation'       ,
-    'CSF lymphocyte count'  , na(csf_lympho)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
-    'CSF neutrophil count'  , na(csf_neutro)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
-    'CSF protein'           , na(csf_protein)     , 'Data input error / Unmeasured (premature death)'       , 'MAR/MCAR'           , 'Imputation'       ,
-    'CSF lactate'           , na(csf_lactate)     , 'Unmeasured (premature death)'                              , 'MAR/MCAR'           , 'Imputation'     
-    # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0'                  
-  ) |>
-  flextable::flextable() |>
-  # flextable::set_caption('Rationale and method of missing values handling') |>
-  flextable::width(width = 1.25) |>
-  flextable::footnote(i = c(14,15),j = 1,inline=FALSE,
-                      value=flextable::as_paragraph(rep('CSF Cell counts = CSF white-cell count x Pct of Cell Type / 100; if very low, then either lymphocytes or neutrophils had values, the other were left missing')),
-                      part = 'body') |>
-  flextable::merge_v(part='footer') |>
-  flextable::theme_zebra() |>
-  flextable::bold(bold=FALSE, part='footer') |>
-  flextable::italic(italic=TRUE, part='footer')
-```
+
 
 In the case where missing values were imputed, figure \@ref(fig:impute-model) depicts how those were sampled, together with their potential donors. Note that due to technical limitation, imputed LoGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
 
@@ -530,9 +493,9 @@ digraph imp_model{
 
 In the **imputation**, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for LoGCS (E, V, and M) as their supports were two-sided constained \@ref(data-pre-processing) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations \@ref(appendix-details).
 
-Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc]
+Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc].
 
-```{r lkj, out.width='30%', fig.cap="Example density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case. 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation. Black dot, thick, and thin line are the median, IQR and 95% credible interval"}
+```{r lkj, out.width='50%', out.height='5cm', fig.cap="Example density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case; 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation; black dot, thick, and thin line are the median, IQR and 95\\% credible interval", fig.align="center", fig.id="lkj"}
 ggplot() + 
   ggdist::stat_dist_halfeye(aes(y = 0, dist = 'lkjcorr_marginal', arg1=2, arg2=4)) +
   xlab(latex2exp::TeX('Correlation')) +
@@ -544,6 +507,8 @@ ggplot() +
         axis.ticks.y = element_blank())
 ```
 
+
+
 For **LCA**, we imposed Student T with 4 degree of freedom, centre around 0, with scale 5 ($t_4(0,\ 5)$) for the intercept reflecting our expectation that its absolute value would not be higher than 10 [@boonstra2019]. For the coefficients, we considered a range of different prior families representing a spectrum of penalties bestowed upon the features [@prior-choice, @vanerp2019]:
 
 -   Weakly informative prior: $t_4(0,\ s * sd)$
@@ -554,7 +519,7 @@ For **LCA**, we imposed Student T with 4 degree of freedom, centre around 0, wit
 
 s.t: $s \sim Normal(0,\ 2.5)\ \&\ s>0$ and $sd$ = Standard Deviation of corresponding covariates after the imputation
 
-For strongly positive risk factors (marked **++** in table \@ref(tab:predictor-tab)), above priors were left-truncated at 0. Individual random effects representing unmeasured bacillary burden was sampled from $Normal(0,1)$ distribution.
+For strongly positive risk factors (marked *++* in table \@ref(tab:predictor-tab)), above priors were left-truncated at 0. Individual random effects representing unmeasured bacillary burden was sampled from $Normal(0,1)$ distribution.
 
 ```{aligned_formula, fml.lab='eq:priors_response', results='asis'}
 \begin{aligned}
@@ -776,7 +741,7 @@ pl + plot_annotation(tag_levels=c('A', 1), tag_prefix = 'Fig.', tag_suffix=':', 
 
 Models performances were estimated and compared by three metrics:
 
--   Expected log point-wise predictive density (elpd) of hold-out observations [@vehtari2016]: Models with higher *elpd* are supposed to have more predictive values for untrained observations.
+-   Expected log point-wise predictive density (*elpd*) of hold-out observations [@vehtari2016]: Models with higher *elpd* are supposed to have more predictive values for untrained observations.
 
 -   Visualised model calibration between estimated predicted and observed probabilities of positive confirmation tests, using a non-parametric loess fit [@rms]. A model with good calibration would predict the risk near to the observed truth.
 
@@ -798,7 +763,7 @@ $$
 \delta \sim Normal(\mu_{expert}, sd_{expert})
 $$*where* $\mu_{expert}$ *and* $sd_{xpert}$ *are estimation and* $\frac{1}{2}$ *of 95% CI provided by interviewed experts*.
 
-The main model underwent a relief of strict priors for test specificities in \`\@ref(eq:priors-response), the lifted model used the same prior for all three tests which cover specificity from at least 90%:
+The main model underwent a relief of strict priors for test specificities in formula `r my_fn$labEq.docx('eq:priors_response')`, the lifted model used the same prior for all three tests which cover specificity from at least 90%:
 
 $$
 1-Spc_{lifted} \sim Logistic(\mu, 1)
@@ -859,6 +824,8 @@ $$
 
 *s.t.* $z$ is the full model's output and $z_{approx}$ is an approximation of $z$.
 
+All data preparation, cleaning, and processing were performed on statistical package R, version 4.1.0 [@rcoreteam]. The model was developed on the probabilistic language Stan via the interface Rstan , version 2.27 [@stan]. Plotting was done using package bayesplot [@bayesplot], classifierplots [@classifierplots], and ggvenn [@ggvenn]. Some other packages used include: R6 [@r6], rms [@rms].
+
 # Results
 
 Venn diagram for confirmation test results are demonstrated in \@ref(fig:venn-test)
@@ -875,6 +842,43 @@ data_19EI |>
                     text_size = 3, set_name_size = 4) +
   theme_void()
 
+```
+
+```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling"}
+na = \(x) sum(is.na(x))
+data_dirty$csf_neutro <- data_dirty$NEUPER * data_dirty$csf_wbc / 100
+data_dirty %$%
+  tibble::tribble(
+     ~ 'Variable'           , ~ 'N\n missing'     ,  ~ 'Expected Reason of Missingness'                      , ~ 'Mechanism',        ~ 'Handling method' ,
+    'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'HIV Status'            , na(hiv_stat)        , 'Test not mandatory'                                     , 'MAR/MCAR'           , 'Imputation'       ,
+    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR/MNAR'           , 'Imputation'       ,
+    'Local neuro-deficit'   , na(clin_motor_palsy), 'Unconscious'                                            , 'MAR/MNAR'           , 'Imputation'       ,
+    'Glasgow Coma Score'    , na(clin_gcs)        , 'Unconscious (GCSV) / Blinded (GCSE) / Unmeasured'       , 'MAR'                , 'Imputation'       ,
+    'Age'                   , na(age)             , 'Input error'                                            , 'MCAR'              , 'Imputation'       ,
+    'Illness days'          , na(clin_illness_day), 'Patients forget / Unconscious'                          , 'MAR'                , 'Imputation'       ,
+    'Blood Lymphocyte'      , na(LYMP)            , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    'Blood Neutrophil'      , na(NEUTRO)          , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    'Blood Glucose'         , na(BLDGLU)          , 'Most likely input error / Unmeasured (premature death)', 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF glucose'           , na(csf_glucose)     , 'Unmeasured (premature death)'                           , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lymphocyte count'  , na(csf_lympho)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
+    'CSF neutrophil count'  , na(csf_neutro)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
+    'CSF protein'           , na(csf_protein)     , 'Data input error / Unmeasured (premature death)'       , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lactate'           , na(csf_lactate)     , 'Unmeasured (premature death)'                              , 'MAR/MCAR'           , 'Imputation'     
+    # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0'                  
+  ) |>
+  flextable::flextable() |>
+  # flextable::set_caption('Rationale and method of missing values handling') |>
+  flextable::width(width = 1.25) |>
+  flextable::footnote(i = c(14,15),j = 1,inline=FALSE,
+                      value=flextable::as_paragraph(rep('CSF Cell counts = CSF white-cell count x Pct of Cell Type / 100; if very low, then either lymphocytes or neutrophils had values, the other were left missing')),
+                      part = 'body') |>
+  flextable::merge_v(part='footer') |>
+  flextable::theme_zebra() |>
+  flextable::bold(bold=FALSE, part='footer') |>
+  flextable::italic(italic=TRUE, part='footer')
 ```
 
 \newpage
@@ -1133,7 +1137,7 @@ P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^
 \end{aligned}
 $$
 
-We considered five sets of prior distribution for $X, X_2, X_3, Y_1, Y_2, Y_3$, and $obs_3$ corresponding for the level of prior knowledge. The formulation of priors follow the syntax in \@ref(eq:priors-response).
+We considered five sets of prior distribution for $X, X_2, X_3, Y_1, Y_2, Y_3$, and $obs_3$ corresponding for the level of prior knowledge. The formulation of priors follow the syntax in formula `r my_fn$labEq.docx('eq:priors_response')`.
 
 1.  Weak prior:
 

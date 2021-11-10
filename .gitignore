@@ -26,3 +26,5 @@ papers/clinical/*.log
 papers/clinical/*.png
 
 
+desktop.files.json
+papers/clinical/desktop.files.json

@@ -6,16 +6,16 @@ author:
       institute: [oucru, kcl]
       correspondence: true
   - Joseph Donovan:
-      institute: lshtm
+      institute: [oucru, lshtm]
   - Guy Thwaites:
       institute: [oucru, oxford]
   - Ronald Geskus:
       institute: [oucru, oxford]
 institute:
   - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam 
-  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
-  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
   - kcl: King's College London, London, United Kingdom
+  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
+  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
 output: 
   officedown::rdocx_document:
     fig_caption: yes
@@ -51,15 +51,17 @@ library(ggplot2)
 library(patchwork)
 library(officedown)
 
+# All the misc functions go here.
 my_fn <- new.env()
-#' Add labels accross a tbl
+
+## Add labels accross a tbl
 my_fn$add_labels <- \(.data, ...){
   cols <- list(...)
   for (i in seq_along(cols))
     attr(.data[[names(cols)[i]]], 'label') <- cols[[i]]
   .data
 }
-# Register a knit engine for stan code highlight
+## Register a knit engine for stan code highlight
 my_fn$stan_knitr_engine <- \(options){
   out <- c('\\begin{Shaded}','\\begin{minted}{stan}', options$code, '\\end{minted}','\\end{Shaded}')
   options$echo <- FALSE
@@ -68,8 +70,8 @@ my_fn$stan_knitr_engine <- \(options){
 }
 knitr::knit_engines$set(stan_code = my_fn$stan_knitr_engine)
 
-# Gist to number equations
-# https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
+## Gist to number equations
+## https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
 my_fn$is_docx_output <- function (fmt = knitr:::pandoc_to()) {
   if (length(fmt) == 0) {
     return(FALSE)
@@ -113,17 +115,19 @@ data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
 
 # Introduction
 
-**Tuberculous meningitis (TBM)** is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of *Mycobacterium tuberculosis* in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for *M. tuberculosis* such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and Mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such parameters are illustrated in the uniform case definition for TBM [@marais2010] where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of particular clinical, CSF, and imaging findings, or with evidence of non-neurological *M. tuberculosis*.
+*Tuberculous meningitis (TBM)* is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of *Mycobacterium tuberculosis* in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for *M. tuberculosis* such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such parameters are illustrated in the uniform case definition for TBM [@marais2010] where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of listed clinical, CSF, and imaging findings, or with evidence of non-neurological *M. tuberculosis*.
 
-The uniform case definition, albeit widely adopted in clinical practice, does have its own disadvantages, which mostly born from its expertise base. The categorised representation of TBM risk into *Definitely not*, *Possible, Probable,* and *Definite* rather than actual probability can be hard to interpret, especially when used in estimating diagnostic tests' sensitivities and specificities and treatment's response. Secondly, scores of risk factors are consensually chosen not statistically built could lead to biased estimation of the risks. Apart from the extreme groups (Definite and Definitely not) which are micro-biologically confirmed, clinical diagnoses outputted from this scoring system is highly uncertain, leave a lot of rooms to the clinicians' decision. Lastly, the fact that it depends on "slow" laboratory assays (culturing) likely delays the diagnosis of patients, which occasionally might not be fruitful.
+In the absence of a gold standard for TBM diagnosis, the uniform case definition has been widely adopted, particularly for the evaluation of new index diagnostic tests. However, the uniform case definition was developed as a standardised approach to reporting TBM research, rather than a gold standard for TBM diagnosis. When categorising cases of suspected TBM, the uniform case definition allocates cases to one of four levels; *Definite*, *Probable*, *Possible*, and *Not TBM*, with both *Probable* and *Possible* each encompassing a numerical score range where higher scores increase the probability of a diagnosis of TBM. All *Probable* cases do not therefore have the same probability of having TBM. *Definite TBM* incorporates microbiological tests, which, in the case of mycobacterial culture, may not return a positive result for several weeks. The best combination of these 4 levels that represents TBM, whilst including no cases of *non-TBM*, is not known and probably lies beyond the use of 4 levels. True TBM cases are likely represented by all *Definite* cases, most *Probable* cases, and some *Possible* cases. 
 
-**Latent Class Analysis (LCA)** is a statistical modelling technique which has been adopted in the settings where a gold standard does not exist. This model clusters individuals into latent classes by incorporating information from several *manifest variables*, each of which is hypothesised to follow a mixture of distributions generated from their class (figure \@ref(fig:classic-lca)). The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018\] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach over the time has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
+Another risk may lay within the fact that scores are based on consensus where a mere change does need more time and efforts, its flexibility and adaptability to different settings is inferior to a statistical model, in which case several models can be made basing on one same dataset. *(in case this is ambiguous: this closely links to one of our objectives where we build a simplified score table that uses only clinical and demographic data, for resources-limited settings and quick screening)*
+
+*Latent Class Analysis (LCA)* is a statistical modelling technique which has been adopted in the settings where a gold standard does not exist. This model clusters individuals into latent classes by incorporating information from several *manifest variables*, each of which is hypothesised to follow a mixture of distributions generated from their class (figure \@ref(fig:classic-lca)). The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach over the time has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
 
 ```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (1, 2, and 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='70%', fig.id = "classic-lca", , fig.cap.style = "Image Caption"}
 knitr::include_graphics("includes/graph1.jpg")
 ```
 
-This analysis's main objective are to **(1)** re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; **(2)** make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
+This analysis's main objective are to *(1)* re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; *(2)* make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
 
 As secondary objectives, our analysis also aim to build a simplified scoring system which only needs clinical and demographic information but has the capacity to approximate the full system's output - so that TBM risk can be calculated at admission. We also estimate a latent representation of individual bacillary burden given that they get TBM which may impact the tests results.
 
@@ -131,11 +135,11 @@ As secondary objectives, our analysis also aim to build a simplified scoring sys
 
 ## Population to analyse
 
-Data used for this analysis were extracted from an observational study study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections [@thwaites2002]. Participants for this analysis were enrolled between 29th August 2017 and 22nd January 2021. Enrolled participants to the prospective observational study were at least 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee [@donovan2020]. Specifically for the analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission.
+Data used for this analysis were extracted from an observational study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections [@thwaites2002]. Participants for this analysis were enrolled between 29th August 2017 and 22nd January 2021. Enrolled participants to the prospective observational study were at least 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee [@donovan2020]. Specifically for the analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission.
 
 ## Data collection and testing procedures
 
-Demographic data and relevant medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. Patients with either a known HIV positive status, or a positive HIV test result, were considered **HIV positive**. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. HIV-related information was asked and optionally tested unless the patients were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD. Patients with either an known HIV infection or a positive subsequent HIV test would be considered **HIV positive**. Patients underwent clinical examination, routine blood testing, and analysis of sputum for M. tuberculosis where indicated. CSF was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were **Ziehl--Neelsen staining and smear (ZN Smear)**, **mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT)**, and **Xpert** or **Xpert MTB/RIF Ultra (XpertUltra)**. Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data [@donovan2020], Xpert and XpertUltra were considered the same in this analysis. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
+Demographic data and relevant medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. Patients with either a known HIV positive status, or a positive HIV test result, were considered *HIV positive*. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. HIV-related information was asked and optionally tested unless the patients were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD. Patients with either an known HIV infection or a positive subsequent HIV test would be considered *HIV positive*. Patients underwent clinical examination, routine blood testing, and analysis of sputum for M. tuberculosis where indicated. CSF was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were *Ziehl--Neelsen staining and smear (ZN Smear)*, *mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT)*, and *Xpert* or *Xpert MTB/RIF Ultra (XpertUltra)*. Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data [@donovan2020], Xpert and XpertUltra were considered the same in this analysis. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
 
 Methods of CSF processing have been described elsewhere [@nhu2013, @donovan2020], however, briefly; CSF samples were centrifuged at 3000g for 15 minutes, and most of the CSF supernatant was removed. The CSF deposit was resuspended in 500µL of remaining supernatant, with this resuspended pellet then used for ZN smear (100µL), MGIT (200µL), and either Xpert or XpertUltra (200 µL).
 
@@ -145,13 +149,13 @@ In the instance of repeat CSF sampling (performed based on clinical need), only 
 
 ## Statistical Model
 
-All data preparation, cleaning, and processing were performed on statistical package **R**, version 4.1.0 [@rcoreteam]. The model was developed on the probabilistic language **Stan** via the interface **Rstan** , version 2.27 [@stan]. Plotting was done using package **bayesplot** [@bayesplot], **classifierplots** [@classifierplots], and **ggvenn** [@ggvenn]. Some other packages used include: **R6** [@r6], **rms** [@rms].
+All data preparation, cleaning, and processing were performed on statistical package *R*, version 4.1.0 [@rcoreteam]. The model was developed on the probabilistic language *Stan* via the interface *Rstan* , version 2.27 [@stan]. Plotting was done using package *bayesplot* [@bayesplot], *classifierplots* [@classifierplots], and *ggvenn* [@ggvenn]. Some other packages used include: *R6* [@r6], *rms* [@rms].
 
-In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. Linear predictors for the latent class prevalence were **history and demographic information** (HIV status, Age, Past noticeable TB contact), **clinical signs and symptoms** (Days from onset to admission, Systemic symptoms suggestive of tuberculosis, Focal neurological deficit, Cranial nerve palsy, Glasgow Coma Score - GCS), **Imaging chest data** (Pulmonary TB, Miliary TB), **CSF criteria (**lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and **Cryptococcus Antigen/Indian Ink** in combination**.**
+In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. Linear predictors for the latent class prevalence were *history and demographic information* (HIV status, Age, Past noticeable TB contact), *clinical signs and symptoms* (Days from onset to admission, Systemic symptoms suggestive of tuberculosis, Focal neurological deficit, Cranial nerve palsy, Glasgow Coma Score - GCS), *Imaging chest data* (Pulmonary TB, Miliary TB), *CSF criteria (*lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and *Cryptococcus Antigen/Indian Ink* in combination*.*
 
 ### Data pre-processing
 
-Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to **Loss of GCS** (LoGCS = LoGCSV + LoGCSE + LoGCSM) so that a $GCS = 15$ would be equivalent to $LoGCS = 0$, while $GCS = 3$ would be translated to $LoGCS = 12$.
+Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Loss of GCS* (LoGCS = LoGCSV + LoGCSE + LoGCSM) so that a $GCS = 15$ would be equivalent to $LoGCS = 0$, while $GCS = 3$ would be translated to $LoGCS = 12$.
 
 $$
 \begin{aligned}
@@ -170,8 +174,8 @@ Binary variables were encoded into 0 for falsified values ("Negative" or "No") a
 
 We created two-level model consisting of:
 
-1.  **Prevalence model**: A logistic regression model trying to estimate the prevalence of TBM amongst the study population
-2.  **Latent class analysis**: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. Latent bacillary burden is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive. This lifted the local independence assumptions of vanilla Latent Class Analysis described in figure \@ref(fig:classic-lca).
+1.  *Prevalence model*: A logistic regression model trying to estimate the prevalence of TBM amongst the study population
+2.  *Latent class analysis*: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. Latent bacillary burden is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive. This lifted the local independence assumptions of vanilla Latent Class Analysis described in figure \@ref(fig:classic-lca).
 
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
@@ -511,7 +515,7 @@ digraph imp_model{
 
 ### Prior choices
 
-In the **imputation**, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for LoGCS (E, V, and M) as their supports were two-sided constrained (session \@ref(data-pre-processing)) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations (appendix \@ref(appendix-details)).
+In the *imputation*, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for LoGCS (E, V, and M) as their supports were two-sided constrained (session \@ref(data-pre-processing)) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations (appendix \@ref(appendix-details)).
 
 Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc]
 
@@ -527,7 +531,7 @@ ggplot() +
         axis.ticks.y = element_blank())
 ```
 
-For **LCA**, we imposed Student T with 4 degree of freedom, centre around 0, with scale 5 ($t_4(0,\ 5)$) for the intercept reflecting our expectation that its absolute value would not be higher than 10 [@boonstra2019\]. For the coefficients, we considered a range of different prior families representing a spectrum of penalties bestowed upon the features [@prior-choice, @vanerp2019]:
+For *LCA*, we imposed Student T with 4 degree of freedom, centre around 0, with scale 5 ($t_4(0,\ 5)$) for the intercept reflecting our expectation that its absolute value would not be higher than 10 [@boonstra2019\]. For the coefficients, we considered a range of different prior families representing a spectrum of penalties bestowed upon the features [@prior-choice, @vanerp2019]:
 
 -   Weakly informative prior: $t_4(0,\ s * sd)$
 
@@ -537,7 +541,7 @@ For **LCA**, we imposed Student T with 4 degree of freedom, centre around 0, wit
 
 s.t: $s \sim Normal(0,\ 2.5)\ \&\ s>0$ and $sd$ = Standard Deviation of corresponding covariates after the imputation
 
-For strongly positive risk factors (marked **++** in table \@ref(tab:predictor-tab)), above priors were left-truncated at 0. Individual random effects representing unmeasured bacillary burden was sampled from $Normal(0,1)$ distribution.
+For strongly positive risk factors (marked *++* in table \@ref(tab:predictor-tab)), above priors were left-truncated at 0. Individual random effects representing unmeasured bacillary burden was sampled from $Normal(0,1)$ distribution.
 
 ```{aligned_formula, fml.lab='eq:priors_response', results='asis'}
 \begin{aligned}
@@ -1030,7 +1034,7 @@ The purpose of this study is to estimate the perfomance an LCA model in the scen
 
 In this study, we created $X, X_2, X_3$ as three covariates for latent class $C$. For simplicity, $Y_1, Y_2$, and $Y_3$ were three manifest variables whose data generation processes are locally independent w.r.t. $C$. $Y_3$, however were not completely observed; its observation rate (represented by the binary variable obs_rate) are different for $C=0$ and $C=1$.
 
-The data generation process was done in **R** version 4.1 [@rcoreteam] as below:
+The data generation process was done in *R* version 4.1 [@rcoreteam] as below:
 
 ``` r
 # Misc function

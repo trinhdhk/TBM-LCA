@@ -6,17 +6,24 @@ author:
       institute: [oucru, kcl]
       correspondence: true
   - Joseph Donovan:
-      institute: lshtm
+      institute: [oucru, lshtm]
   - Guy Thwaites:
       institute: [oucru, oxford]
   - Ronald Geskus:
       institute: [oucru, oxford]
 institute:
   - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam 
-  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
-  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
   - kcl: King's College London, London, United Kingdom
+  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
+  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
 output: 
+  officedown::rdocx_document:
+    fig_caption: yes
+    reference_docx: includes/styles.docx
+    pandoc_args:
+      - '--lua-filter=includes/scholarly-metadata.lua'
+      - '--lua-filter=includes/author-info-blocks.lua'
+    toc: no
   bookdown::pdf_document2:
     toc: no
     pandoc_args:
@@ -27,13 +34,6 @@ output:
     highlight: pygments
     includes:
       in_header: includes/header.tex
-  officedown::rdocx_document:
-    fig_caption: yes
-    reference_docx: includes/styles.docx
-    pandoc_args:
-      - '--lua-filter=includes/scholarly-metadata.lua'
-      - '--lua-filter=includes/author-info-blocks.lua'
-    toc: no
 bibliography: references.bib
 ---
 
@@ -51,15 +51,18 @@ library(ggplot2)
 library(patchwork)
 library(officedown)
 
+# All the misc functions go here.
 my_fn <- new.env()
-#' Add labels accross a tbl
+
+## Add labels accross a tbl
 my_fn$add_labels <- \(.data, ...){
   cols <- list(...)
   for (i in seq_along(cols))
     attr(.data[[names(cols)[i]]], 'label') <- cols[[i]]
   .data
 }
-# Register a knit engine for stan code highlight
+
+## Register a knit engine for stan code highlight
 my_fn$stan_knitr_engine <- \(options){
   out <- c('\\begin{Shaded}','\\begin{minted}{stan}', options$code, '\\end{minted}','\\end{Shaded}')
   options$echo <- FALSE
@@ -68,8 +71,8 @@ my_fn$stan_knitr_engine <- \(options){
 }
 knitr::knit_engines$set(stan_code = my_fn$stan_knitr_engine)
 
-# Gist to number equations
-# https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
+## Gist to number equations
+## https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
 my_fn$is_docx_output <- function (fmt = knitr:::pandoc_to()) {
   if (length(fmt) == 0) {
     return(FALSE)
@@ -113,7 +116,9 @@ data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
 
 *Tuberculous meningitis (TBM)* is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of *Mycobacterium tuberculosis* in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for *M. tuberculosis* such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and Mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such parameters are illustrated in the uniform case definition for TBM [@marais2010] where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of particular clinical, CSF, and imaging findings, or with evidence of non-neurological *M. tuberculosis*.
 
-The uniform case definition, albeit widely adopted in clinical practice, does have its own disadvantages, which mostly born from its expertise base. The categorised representation of TBM risk into *Definitely not*, *Possible, Probable,* and *Definite* rather than actual probability can be hard to interpret, especially when used in estimating diagnostic tests' sensitivities and specificities and treatment's response. Secondly, scores of risk factors are consensually chosen not statistically built could lead to biased estimation of the risks. Apart from the extreme groups (Definite and Definitely not) which are micro-biologically confirmed, clinical diagnoses outputted from this scoring system is highly uncertain, leave a lot of rooms to the clinicians' decision. Lastly, the fact that it depends on "slow" laboratory assays (culturing) likely delays the diagnosis of patients, which occasionally might not be fruitful.
+In the absence of a gold standard for TBM diagnosis, the uniform case definition has been widely adopted, particularly for the evaluation of new index diagnostic tests. However, the uniform case definition was developed as a standardised approach to reporting TBM research, rather than a gold standard for TBM diagnosis. When categorising cases of suspected TBM, the uniform case definition allocates cases to one of four levels; *Definite*, *Probable*, *Possible*, and *Not TBM*, with both *Probable* and *Possible* each encompassing a numerical score range where higher scores increase the probability of a diagnosis of TBM. All *Probable* cases do not therefore have the same probability of having TBM. *Definite TBM* incorporates microbiological tests, which, in the case of mycobacterial culture, may not return a positive result for several weeks. The best combination of these 4 levels that represents TBM, whilst including no cases of *non-TBM*, is not known and probably lies beyond the use of 4 levels. True TBM cases are likely represented by all *Definite* cases, most *Probable* cases, and some *Possible* cases. 
+
+Another risk may lay within the fact that scores are based on consensus where a mere change does need more time and efforts, its flexibility and adaptability to different settings is inferior to a statistical model, in which case several models can be made basing on one same dataset. *(in case this is ambiguous: this closely links to one of our objectives where we build a simplified score table that uses only clinical and demographic data, for resources-limited settings and quick screening)*
 
 *Latent Class Analysis (LCA)* is a statistical modelling technique which has been adopted in the settings where a gold standard does not exist. This model clusters individuals into latent classes by incorporating information from several *manifest variables*, each of which is hypothesised to follow a mixture of distributions generated from their class (figure \@ref(fig:classic-lca)). The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach over the time has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
 
@@ -215,6 +220,7 @@ tibble::tribble(
   flextable::add_footer_row(values='"?" predictors were included and excluded in separated models.', colwidths = 3) |>
   flextable::add_footer_row(values='"0" predictors were not included in any model', colwidths = 3) |>
   flextable::add_footer_row(values='"++" predictors were strongly believed to be positive risk factors', colwidths=3) |>
+
   flextable::add_footer_row(values='"+", "-", and "+/-" reflects prior believes, but no informative prior was imposed', colwidths=3) |>
   # flextable::merge_at(j = 1:3, part = "footer") |>
   # flextable::set_caption('Contribution of different variables in each model') |>
@@ -369,6 +375,7 @@ By design, most patients with very high chance of and/or evidently diagnosed wit
 
 #### Predictors
 
+
 In the analysis, most missingness were assumed to be Missing At Random (MAR) and imputed within the main model in one step, unless explicitly stated \@ref(tab:missing-handling). Composite predictors such as *TB-suggested symptoms* and *Glasgow Coma Score (GCS)* were imputed by corresponding compartments; and potentially correlated variables were grouped and imputed together. Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Continuous predictors are imputed using Multivariate Linear Regression<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly -->.
 
 As HIV tests were not mandatory in the main study, HIV status itself was also incomplete, but their chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are also MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as donors.
@@ -378,6 +385,7 @@ As HIV tests were not mandatory in the main study, HIV status itself was also in
 In the case where missing values were imputed, figure \@ref(fig:impute-model) depicts how those were sampled, together with their potential donors. Note that due to technical limitation, imputed LoGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
 
 ```{dot impute-model, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Clustered covariables were imputed together in a multivariate regression. Arrows demonstrate a donor $\rightarrow$ response correlation.", fig.id="impute-model"}
+
 digraph imp_model{
   rankdir = TB;
   resolution=500;
@@ -491,11 +499,13 @@ digraph imp_model{
 
 ### Prior choices
 
+
 In the **imputation**, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for LoGCS (E, V, and M) as their supports were two-sided constained \@ref(data-pre-processing) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations \@ref(appendix-details).
 
 Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc].
 
 ```{r lkj, out.width='50%', out.height='5cm', fig.cap="Example density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case; 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation; black dot, thick, and thin line are the median, IQR and 95\\% credible interval", fig.align="center", fig.id="lkj"}
+
 ggplot() + 
   ggdist::stat_dist_halfeye(aes(y = 0, dist = 'lkjcorr_marginal', arg1=2, arg2=4)) +
   xlab(latex2exp::TeX('Correlation')) +
@@ -506,6 +516,7 @@ ggplot() +
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 ```
+
 
 
 
@@ -671,6 +682,7 @@ for (i in 1:2) plt[[i]] <- plt[[i]] + plot_layout(tag_level = 'new')
 color_me <- list("#000000", "#E69F00", "#56B4E9", c("#000000", "#E69F00", "#56B4E9", "#009E73"))
 withr::with_options(
   list(ggplot2.discrete.colour = color_me),
+
   plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% credible intervals of our priors') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
 )
 ```
@@ -767,6 +779,7 @@ The main model underwent a relief of strict priors for test specificities in for
 
 $$
 1-Spc_{lifted} \sim Logistic(\mu, 1)
+
 $$ *where* $\mu = logit(0.001)$ for ZN Smear and MGIT, $\mu = logit(0.005)$ for Xpert.
 
 Lastly, as recent studies suggested a sup-optimal specificity of Xpert test on CSF samples[@nhu2013; @chen2020], our assumptions made in table \@ref(tab:missing-handling) might not completely valid. To tackle this, we considered a MAR scenario, where observation chance of confirmation tests depend on the unknown TBM status and locally independent to the value of confirmation tests. The observation status was then included in the model as a separated manifest variables. The validity of this method was depicted in a simulation study in \@ref(appendix-simulation-study).
@@ -1085,7 +1098,6 @@ $$
 
 # Simulation study {#appendix-simulation-study}
 
-
 The purpose of this study is to estimate the perfomance an LCA model in the scenario where manifest variables were partially missing.
 
 In this study, we created $X, X_2, X_3$ as three covariates for latent class $C$. For simplicity, $Y_1, Y_2$, and $Y_3$ were three manifest variables whose data generation processes are locally independent w.r.t. $C$. $Y_3$, however were not completely observed; its observation rate (represented by the binary variable obs_rate) are different for $C=0$ and $C=1$.
@@ -1142,58 +1154,58 @@ We considered five sets of prior distribution for $X, X_2, X_3, Y_1, Y_2, Y_3$, 
 1.  Weak prior:
 
 $$
-  \begin{aligned}
-  (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
-  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-  obs\_rate|{C=0} &\sim Logistic(0,.7) \\
-  obs\_rate|{C=1} &\sim Logistic(0,.7)
-  \end{aligned}
-  $$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(0,.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 2.  Good but conservative knowledge for observation rate, weak prior for manifest variables:
 
 $$
-  \begin{aligned}
-  (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
-  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-  obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
-  obs\_rate|{C=1} &\sim Logistic(0,.7)
-  \end{aligned}
-  $$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 3.  Good but conservative knowledge for observation rate and manifest variables:\
-    $$
-      \begin{aligned}
-      (1-Spc_{X}) &\sim Logistic(logit(.1),.7) \\
-      (1-Spc_{X_2}) &\sim Logistic(logit(.01),.7) \\
-      (1-Spc_{X_3}) &\sim Logistic(logit(.05),.7) \\
-      Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-      obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
-      obs\_rate|{C=1} &\sim Logistic(0,.7)
-      \end{aligned}
-      $$
+$$
+\begin{aligned}
+(1-Spc_{X}) &\sim Logistic(logit(.1),.7) \\
+(1-Spc_{X_2}) &\sim Logistic(logit(.01),.7) \\
+(1-Spc_{X_3}) &\sim Logistic(logit(.05),.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 4.  Very strong knowledge for observation rate, weak prior for manifest variables:\
-    $$
-      \begin{aligned}
-      (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
-      Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-      obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
-      obs\_rate|{C=1} &\sim Logistic(0,.7)
-      \end{aligned}
-      $$
+$$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 5.  Very strong knowledge for observation rate and manifest variables:\
-    $$
-      \begin{aligned}
-      (1-Spc_{X}) &\sim Logistic(logit(.1),.2) \\
-      (1-Spc_{X_2}) &\sim Logistic(logit(.01),.2) \\
-      (1-Spc_{X_3}) &\sim Logistic(logit(.05),.2) \\
-      Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
-      obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
-      obs\_rate|{C=1} &\sim Logistic(0,.7)
-      \end{aligned}
-      $$
+$$
+\begin{aligned}
+(1-Spc_{X}) &\sim Logistic(logit(.1),.2) \\
+(1-Spc_{X_2}) &\sim Logistic(logit(.01),.2) \\
+(1-Spc_{X_3}) &\sim Logistic(logit(.05),.2) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
 
 All models were fitted under the probabilistic language \textsf{Stan} version 2.26 [@stan-doc] via \textsf{RStan} inferface [@stan].
 

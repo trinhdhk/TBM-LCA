@@ -6,9 +6,15 @@ data
 doc
 .vscode
 stan/*.rds
+stan/bin/
+export/
+outputs/
 *.cpp
-papers/clinical/_minted-main/
+*.pdf
+*.png
+*.csf
 papers/clinical/code*
+papers/clinical/_minted-main/
 papers/clinical/figures/
 papers/clinical/images/
 papers/clinical/main_cache/
@@ -20,3 +26,5 @@ papers/clinical/*.log
 papers/clinical/*.png
 
 .DS_Store
+desktop.files.json
+papers/clinical/desktop.files.json

@@ -1,0 +1,342 @@
+---
+title: "Update of TBM Latent Class Analysis"
+author: Trinh Dong Huu Khanh
+date: "4/12/2020"
+output: |
+  bookdown::pdf_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(data.table)
+```
+
+# Overview
+
+## Objectives
+
+- Give an improved score table based on Statistics replacing the current, partially expertise-based, TBM definition Consensus Score (2010)
+- Give a predicted probability of TBM at roughly admission time...
+- ...And after confirmation test results (mainly all negative)
+
+## Concept and Terms
+
+- Latent Class Analysis = Finite Bernoulli Mixture Model
+- Manifest variable = (Confirmation) Test = Indicator
+- Predictor = Co-variate
+- Prevalence = Theta = Latent class = Latent variable
+
+```{dot echo=FALSE, out.width="80%", out.height="40%", fig.align="center", fig.cap="Model Concept"}
+digraph Model_Concept{
+  rankdir = LR;
+  resolution=300;
+  compound=true;
+  
+  subgraph cluster_predictor{
+    color=gray;
+    node [style=filled];
+    predictor1; predictor2; predictor3;
+  }
+  
+  subgraph cluster_manifest{
+    node [style=filled];
+    manifest1; manifest2; manifest3;
+  }
+  
+    
+  predictor1[label="Predictor 1", shape="box"];
+  predictor2[label="Predictor 2", shape="box"];
+  predictor3[label="Predictor 3", shape="box"];
+  manifest1[label="Manifest Variable 1", shape="box"];
+  manifest2[label="Manifest Variable 2", shape="box"];
+  manifest3[label="Manifest Variable 3", shape="box"];
+  latent[label="Class", shape="oval"];
+  
+  {predictor1 predictor2 predictor3} -> latent -> {manifest1 manifest2 manifest3};
+  predictor1 -> manifest1
+}
+```
+
+
+# Current approach
+
+## Core model
+
+I use a similar set of clinical and laboratorial signs and symptoms to the TBM definition score as **predictors**. Weakly $\mathrm{t}$ distribution are used.
+
+Continuous predictors are transformed to have a symmetric distribution.
+
+$$
+\begin{aligned}
+  nu \sim \mathcal{\Gamma}(2,0.1) \\
+  a_0 \sim \mathrm{t}(\nu, 0, 2.5) \\
+  a \sim \mathrm{t}(\nu, 0, 1)
+\end{aligned}
+$$
+
+**Three** confirmation tests are chosen as manifest variables. Their **False positive rate (FPR)** and **True positive rate (TPF)** are assumed to follow a *Normal* distribution on the logit scale. 
+
+Informative priors are imposed on **FPR** according to priors knowledge and experience (thanks to Joe and Julie from TB). For **TPR**, a weakly informative was used with sufficient collapse toward .5 after transformation back to normal scale.
+
+$$
+\begin{aligned}
+  TPR \sim \mathcal{N}(0, .6) \\
+  \\
+  FPR_{Smear} \sim \mathcal{N}(logit(.001),\ \ .82)\\
+  FPR_{Mgit} \sim \mathcal{N}(logit(.001),\ \ .82)\\
+  FPR_{Xpert} \sim \mathcal{N}(logit(.005),\ 1.59)
+\end{aligned}
+$$
+**Bacillary burden** was assumed to be a random variable whose mean depends on **HIV** status.
+
+$$
+\begin{aligned}
+  b_{RE} \sim \mathrm{t}(\nu, 0, 1)\\
+  b_{HIV} \sim \mathrm{t}(\nu, 0, 1)\\
+  RE \sim \mathcal{N}(0, 1)\\
+  bac\_load = b_{RE} * RE + b_{HIV} * HIV
+\end{aligned}
+$$
+```{dot CoreModel, echo=FALSE, out.width="80%", fig.align="center", fig.cap="Core model"}
+digraph Model_Core{
+  rankdir = LR;
+  resolution=500;
+  compound=true;
+  
+  subgraph cluster_predictor{
+    color=gray;
+    node [style=filled];
+    HIV; Symptoms; Motor; Nerve; PulTB; MilTB; Age; TBDays; BldGlu; CsfGlu; GluRatio; CsfLymp; CsfPro; CsfLac; GCS;
+    label="Predictors"
+  }
+  
+  subgraph cluster_manifest{
+    color=gray;
+    Xpert[shape="box"]; Mgit[shape="box"]; Smear[shape="box"];
+    label="Confirmation Tests"
+  }
+  
+  subgraph cluster_latent{
+    color=none;
+    latent;bacload;
+  }
+  
+  HIV[label="HIV Status", shape="box"];
+  Symptoms[label="TB symptoms", shape="box"];
+  Motor[label="Motor palsy", shape="box"]; 
+  Nerve[label="Cranial palsy", shape="box"]; 
+  PulTB[label="X-ray Pulmonary TB", shape="box"];
+  MilTB[label="X-ray Miliary TB", shape="box"];
+  Age[label="Age", shape="box"];
+  TBDays[label="Illness days", shape="box"]; 
+  BldGlu[label="Blood Glucose", shape="box"];
+  CsfGlu[label="CSF Glucose", shape="box"]; 
+  GluRatio[label="Glucose Ratio", shape="box"];
+  CsfLymp[label="CSF Lympho", shape="box"];
+  CsfPro[label="CSF Protein", shape="box"];
+  CsfLac[label="CSF Lactate", shape="box"];
+  GCS[label="Glasgow Coma Score", shape="box"];
+  
+  latent[label="TBM Status", shape="oval"];
+  
+  bacload[label="Bacillary Burden", shape="oval", style="filled", color="grey"];
+  
+  # {HIV  Symptoms  Motor  Nerve  PulTB  MilTB  Age  TBDays  BldGlu  CsfGlu  GluRatio  CsfLymp  CsfPro  CsfLac  GCS} -> latent -> {Xpert Mgit Smear};
+  Age -> latent[ltail=cluster_predictor]
+  latent -> Mgit[lhead=cluster_manifest];
+  
+  HIV -> bacload; 
+  bacload -> {Mgit}[lhead=cluster_manifest];
+}
+
+```
+
+## Imputation model
+
+4 cases with missing data in confirmation tests are removed. 
+
+Missing data in predictors are assumed MAR and imputed within the model using _Stan_.
+  
+  - _HIV_ is imputed using **logistic regression** and have the probabilities marginalised.
+  
+$$HIV_{a_0} \sim \mathrm{t}(\nu, 0, 1) \\$$
+  - Those which are compound of several other binary variables, such as _TB Symptoms_ = _Weight Loss_ || _Night Sweats_ || _Coughing_, have there respective compartments imputed and combined: _TB symptoms_, _Motor Palsy_. These compartments are in turn imputed using a **multivariate probit regression**.
+  
+$$
+\begin{aligned}
+  L_{Omega_{cs}} \sim LKJCorrelationCholesky(4) \\
+  cs_{a_0} \sim \mathrm{t}(\nu, 0, 1) \\
+  cs_a \sim \mathrm{t}(\nu, 0, 1) \\
+  cs_z \sim \mathcal{N}(cs_{a_0} + cs_a^{(1)}*HIV + cs_a^{(2)}*TB\_Day, L_{Omega_{cs}});
+\end{aligned}
+$$
+  
+  - Clinical continuous variables, after transformed, are imputed using **linear regression** corrected for **HIV Status**: _Age_, _TB Days_, _GCS_. 
+  
+  
+$$
+\begin{aligned}
+age_{a_0} \sim \mathrm{t}(\nu, 0, 1)\\
+age_{a} \sim \mathrm{t}(\nu, 0, 1)\\
+age \sim \mathcal{N}(age_{a_0} + age_a*HIV, age_{\sigma})
+\end{aligned}
+$$
+  
+  - Lab values are imputed toegether using **seemingly unrelated regression**: _Blood Glucose_, _CSF Glucose_, _CSF Lymphocyte count_, _CSF Protein_, _CSF Lactate_. Formulation similar to those of **multivariate probit regression**.
+  
+  - _GCS_, integer, which is a linear sum of _GCSV_, _GCSM_, _GCSE_, have its only missing value imputed as a continuous variable.
+  
+$$
+\begin{aligned}
+GCSV_{a_0} \sim \mathrm{t}(\nu, 0, 1)\\
+GCSV_{a} \sim \mathrm{t}(\nu, 0, 1)\\
+GCSV_\sigma \sim \mathcal{N}(0,1)\\
+GCSV \sim \mathcal{N}(GCSV_{a_0} *\begin{bmatrix}
+    GCSE\\
+    GCSM
+  \end{bmatrix}, 
+  GCSV_\sigma) \\
+GCS = GCSV + GCSM + GCSE
+\end{aligned}
+$$
+
+```{dot ImpModel, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation model"}
+digraph Model_Imp{
+  rankdir = LR;
+  resolution=500;
+  compound=true;
+  
+  subgraph cluster_clinsymp{
+    Cough[label="Coughing"];
+    Nsweats[label="Night Sweats"];
+    WLoss[label="Weight Loss"];
+  }
+  
+  subgraph cluster_motor{
+    Hemi[label="Hemiplegia"];
+    Para[label="Paraplegia"];
+    Tetra[label="Tetraplegia"];
+  }
+  
+  subgraph cluster_gcs{
+    GCSV; GCSM; GCSE;
+  }
+  
+    
+  HIV[label="HIV Status", shape="box"];
+  Symptoms[label="TB symptoms", shape="box"];
+  Motor[label="Motor palsy", shape="box"];
+  Age[label="Age", shape="box"];
+  TBDays[label="Illness days", shape="box"]; 
+  GluRatio[label="Glucose Ratio", shape="box"];
+  BldGlu[label="Blood Glucose", shape="box"];
+  CsfGlu[label="CSF Glucose", shape="box"]; 
+  CsfLymp[label="CSF Lympho", shape="box"];
+  CsfPro[label="CSF Protein", shape="box"];
+  CsfLac[label="CSF Lactate", shape="box"];
+  GCS[label="Glasgow Coma Score", shape="box"];
+  
+  HIV -> {Symptoms Age TBDays};
+  WLoss -> Symptoms[ltail=cluster_clinsymp];
+  Tetra -> Motor[ltail=cluster_motor];
+  GCSM -> GCS[ltail=cluster_gcs];
+  TBDays -> {Symptoms Age};
+  
+  
+  Cough -> Nsweats[dir=both];
+  Nsweats -> WLoss[dir=both];
+  WLoss -> Cough[dir=both];
+  Hemi -> Para[dir=both];
+  Para -> Tetra[dir=both]; 
+  Tetra -> Hemi[dir=both];
+  BldGlu -> CsfGlu[dir=both];
+  CsfGlu -> CsfLymp[dir=both];
+  CsfLymp -> CsfPro[dir=both];
+  CsfPro -> CsfLac[dir=both];
+  CsfLac -> BldGlu[dir=both];
+  {BldGlu CsfGlu} -> GluRatio;
+
+  GCSV -> GCSE[dir=both];
+  GCSE -> GCSM[dir=both];
+  GCSM -> GCSV[dir=both];
+}  
+```
+
+## Current Results
+
+Below are current fit results for model **m2c** (model with Random Effects and GCS as continuous predictor), **m2cp** (GCS with quadratic effect), and **m2d** (GCS as dichotomous predictor, as used in the original definition score).
+
+```{r load_files, message=FALSE}
+library(ggplot2); library(bayesplot); library(patchwork); library(magrittr)
+m2c_result <- readRDS("../outputs/m2c.RDS")
+m2d_result <- readRDS("../outputs/m2d.RDS")
+m2cp_result <- readRDS("../outputs/m2cp.RDS")
+m2c_draw <- m2c_result$draws(c("a0", "a", "b_HIV", "b_RE", "z_Smear", "z_Mgit", "z_Xpert", "HIV_a0", "X"))
+m2cp_draw <- m2cp_result$draws(c("a0", "a", "b_HIV", "b_RE", "z_Smear", "z_Mgit", "z_Xpert", "HIV_a0", "X"))
+m2d_draw <- m2d_result$draws(c("a0", "a", "b_HIV", "b_RE", "z_Smear", "z_Mgit", "z_Xpert", "HIV_a0", "X"))
+
+source("../r/include/functions.R")
+```
+
+```{r plot_result_a, message=FALSE, warning=FALSE, fig.asp=.8, fig.cap="Coefs in m2c and m2d"}
+coef_plot.m2c <- bayesplot::mcmc_intervals(m2c_draw, 
+                          pars=dplyr::vars(dplyr::starts_with("a")), 
+                          prob_outer = .95,
+                          point_est = "mean") %>% 
+  change_ylabs("Intercept","HIV", "Symptoms", "Motor", "Nerve", "PulTB", "MilTB", 
+              "Age", "TBDays", "sqrt(BldGlu)", "sqrt(CsfGlu)", "log2(CsfLymp)",
+              "log2(CsfPro)", "log2(CsfLac)", "sqrt(GluRatio)", "log2(GCS)")
+
+coef_plot.m2cp <- bayesplot::mcmc_intervals(m2cp_draw, 
+                          pars=dplyr::vars(dplyr::starts_with("a")), 
+                          prob_outer = .95,
+                          point_est = "mean") %>% 
+  change_ylabs("Intercept","HIV", "Symptoms", "Motor", "Nerve", "PulTB", "MilTB", 
+              "Age", "TBDays", "sqrt(BldGlu)", "sqrt(CsfGlu)", "log2(CsfLymp)",
+              "log2(CsfPro)", "log2(CsfLac)", "sqrt(GluRatio)", "log2(GCS)", "log2(GCS)^2")
+
+coef_plot.m2d <- bayesplot::mcmc_intervals(m2d_draw, 
+                          pars=dplyr::vars(dplyr::starts_with("a")), 
+                          prob_outer = .95,
+                          point_est = "mean") %>% 
+  change_ylabs("Intercept","HIV", "Symptoms", "Motor", "Nerve", "PulTB", "MilTB"," 1(GCS<15)", "Age", "TBDays", "sqrt(BldGlu)", "sqrt(CsfGlu)", "log2(CsfLymp)", "log2(CsfPro)", "log2(CsfLac)", "sqrt(GluRatio)")
+
+((coef_plot.m2c + ggtitle("m2c")) + (coef_plot.m2d + ggtitle("m2d")))
+```
+
+```{r plot_result_a2, message=FALSE, warning=FALSE, fig.cap="Coefs in m2c and m2cp"}
+(coef_plot.m2c + ggtitle("m2c")) + (coef_plot.m2cp + ggtitle("m2cp"))
+```
+
+The estimation of sensitivities and specificities are similar for all three models.
+
+```{r plot_result_FPR, message=FALSE, warning=FALSE, fig.cap=paste("False positive rates")}
+FPR_plot_m2c_z <- bayesplot::mcmc_areas(m2c_draw, pars=dplyr::vars(dplyr::matches("^z.+[1]")), prob = .5) %>% change_ylabs("logit(FPR_Smear)", "logit(FPR_Mgit)", "logit(FPR_Xpert)")
+FPR_plot_m2c_q <- bayesplot::mcmc_areas(m2c_draw, pars=dplyr::vars(dplyr::matches("^z.+[1]")), prob = .5, transformations = nimble::ilogit) %>% change_ylabs("FPR_Smear", "FPR_Mgit", "FPR_Xpert")
+
+(FPR_plot_m2c_z + ggtitle("Logit scale")) + (FPR_plot_m2c_q + ggtitle("Normal scale"))
+```
+
+```{r plot_result_TPR, message=FALSE, warning=FALSE, fig.cap=paste("True positive rates") }
+TPR_plot_m2c_z <- bayesplot::mcmc_areas(m2c_draw, pars=dplyr::vars(dplyr::matches("^z.+[2]")), prob = .5) %>% change_ylabs("logit(FPR_Smear)", "logit(FPR_Mgit)", "logit(FPR_Xpert)")
+TPR_plot_m2c_q <- bayesplot::mcmc_areas(m2c_draw, pars=dplyr::vars(dplyr::matches("^z.+[2]")), prob = .5, transformations = nimble::ilogit) %>% change_ylabs("FPR_Smear", "FPR_Mgit", "FPR_Xpert")
+
+(TPR_plot_m2c_z + ggtitle("Logit scale")) + (TPR_plot_m2c_q + ggtitle("Normal scale"))
+```
+
+## Problems
+
+- Very complicated imputation model, especially with **discrete variables** $\Rightarrow$ Prone to errors. 
+- Does illness days capture the effect from HIV? Should I include both?
+- Problems with **Multivariate normal distribution** when doing partial prediction (i.e. imputation of partially missing combinations). **multi\_normal\_(cholesky)\_rng** in _Stan_ yields a whole vector by default $\Rightarrow$ Has to do manually with conditional distribution. Sometimes, case by case.
+- More (missing) problems with new data??
+- Switch to another language? [Pyro](http://pyro.ai/) seems to be a good replacement?
+```{r data}
+data_19EI <- readRDS('../data/cleaned/data_19EI.RDS')
+data_19EI <- na.omit(data_19EI, cols = c('csf_smear', 'csf_mgit', 'csf_xpert'))
+dt_filter <- data_19EI[is.na(csf_glucose) | is.na(BLDGLU) | is.na(csf_lympho) | is.na(csf_protein) | is.na(csf_lactate), .(USUBJID, bld_glucose=BLDGLU, csf_glucose, csf_lympho, csf_protein, csf_lactate)]
+# gt::tab_header(gt::gt(dt_filter), title="Missing CSF lab results")
+ht <- huxtable::set_all_borders(huxtable::set_caption(huxtable::as_hux(dt_filter), "Subset of individuals with missing CSF lab results"))
+huxtable::caption_pos(ht) <- "bottom"
+ht
+```

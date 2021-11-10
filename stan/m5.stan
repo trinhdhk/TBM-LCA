@@ -23,7 +23,7 @@ transformed data{
   
   // * Global variables -------------------------------------------------------
   int nX = nXc + nXd; // Total number of covariates 
-  int nA = nX; // Number of coef
+  int nA = nX + nQ; // Number of coef
 #include includes/cross_validation/transform_data_Y.stan
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
@@ -71,6 +71,7 @@ transformed parameters {
 
 model {
   int nu = 4;
+  
   // Imputation model ---------------------------------------------------------
 #include includes/impute_model/variables_declaration.stan 
 #include includes/impute_model/impute_priors.main_part.stan 
@@ -78,8 +79,8 @@ model {
     // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
 #include includes/main_prior/a.stan
-#include includes/main_prior/b.stan
 #include includes/main_prior/penalty.stan
+
     RE ~ normal(0,1);
     if (nB > 0){
       if (penalty_family == 1){
@@ -109,26 +110,26 @@ model {
     
     if (penalty_family == 0){
       // to_vector(b_raw)  ~ student_t(nu, 0, 1);
-      b_cs_raw  ~ student_t(nu, 0,1);
+      b_cs_raw  ~ student_t(nu, 0,2);
       b_RE_raw ~ student_t(nu, 0, 1);
-      b_HIV_raw ~ student_t(nu, 0,1);
+      b_HIV_raw ~ student_t(nu, 0,2);
     }
     if (penalty_family == 1){
       // to_vector(b_raw)  ~ double_exponential(0, 1);
-      b_cs_raw  ~ double_exponential(0, 1);
+      b_cs_raw  ~ double_exponential(0, 2);
       b_RE_raw ~ double_exponential(0, 1);
-      b_HIV_raw ~ double_exponential(0, 1);
+      b_HIV_raw ~ double_exponential(0, 2);
     }
     if (penalty_family == 2){
       // to_vector(b_raw)  ~ normal(0, 1);
-      b_cs_raw   ~ normal(0, 1);
+      b_cs_raw   ~ normal(0, 2);
       b_RE_raw  ~ normal(0, 1);
-      b_HIV_raw  ~ normal(0, 1);
+      b_HIV_raw  ~ normal(0, 2);
     }
+    
     for (n in 1:N){
       int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);
 #include includes/impute_model/impute_priors.loop_part.stan
-      
       if (N_Xd_miss > 0){ //if there is some discrete variables missing
         int N_pattern = int_power(2, N_Xd_miss);
         vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,:], obs_Xd[n, 1:3], a[1:3]);
@@ -172,7 +173,6 @@ model {
         for (i in 1:N_pattern){
           real logprob_theta = pat_thetas[1,i];
           real theta = inv_logit(pat_thetas[2,i]);
-          
           if (obs_Xd[n,2] == 1){
           
             vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [1]');
@@ -219,7 +219,7 @@ model {
       
     } else {
       // The normal way
-      row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
+      row_vector[nA] X = append_col(Xd_imp[n,:], X_compl[n,:]);
       real theta = inv_logit(a0 + dot_product(a, X));
       
       vector[3] bac_load   = b_HIV*Xd_imp[n, 1] + b_cs* Xd_imp[n,2] + to_vector(Xc_imp[n,B]' * b);

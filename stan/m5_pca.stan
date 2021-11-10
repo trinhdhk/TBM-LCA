@@ -114,21 +114,21 @@ model {
     
     if (penalty_family == 0){
       // to_vector(b_raw)  ~ student_t(nu, 0, 1);
-      b_cs_raw  ~ student_t(nu, 0,1);
+      b_cs_raw  ~ student_t(nu, 0,2);
       b_RE_raw ~ student_t(nu, 0, 1);
-      b_HIV_raw ~ student_t(nu, 0,1);
+      b_HIV_raw ~ student_t(nu, 0,2);
     }
     if (penalty_family == 1){
       // to_vector(b_raw)  ~ double_exponential(0, 1);
-      b_cs_raw  ~ double_exponential(0, 1);
+      b_cs_raw  ~ double_exponential(0, 2);
       b_RE_raw ~ double_exponential(0, 1);
-      b_HIV_raw ~ double_exponential(0, 1);
+      b_HIV_raw ~ double_exponential(0, 2);
     }
     if (penalty_family == 2){
       // to_vector(b_raw)  ~ normal(0, 1);
-      b_cs_raw   ~ normal(0, 1);
+      b_cs_raw   ~ normal(0, 2);
       b_RE_raw  ~ normal(0, 1);
-      b_HIV_raw  ~ normal(0, 1);
+      b_HIV_raw  ~ normal(0, 2);
     }
     for (n in 1:N){
       int N_Xd_miss = 3 - sum(obs_Xd[n, 1:3]);

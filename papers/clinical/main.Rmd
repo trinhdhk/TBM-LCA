@@ -350,7 +350,7 @@ digraph {
 }
 ```
 
-Basic designs for all models is shown in figure \@ref(fig:skeleton-model). We use a stepwise approach where we incrementally added up more flexibility and lifted more constraints. We also include several extensions to explore many possibilities than can improve performance. In the main analysis, only CSF neutrophil count was model via a quadratic effect. A summary of all architectures an extensions are shown in table \@ref(tab:model-archs), whereas technical formulations are detailed in appendix \@ref(appendix-details).
+Basic designs for all models is shown in figure \@ref(fig:skeleton-model). We use a stepwise approach where we incrementally added up more flexibility and lifted more constraints. We also include several extensions to explore many possibilities than can improve performance. In the main analysis, only CSF Total White Cell count was model via a quadratic effect. A summary of all architectures an extensions are shown in table \@ref(tab:model-archs), whereas technical formulations are detailed in appendix \@ref(appendix-details).
 
 ```{r model-archs, tab.cap="Model architectures and extensions", tab.id="model-archs"}
 model_archs <-
@@ -392,7 +392,6 @@ model_archs |>
 By design, most patients with very high chance of and/or evidently diagnosed with different diseases were not tested with TBM confirmation assays (namely ZN Smear, MGIT, and Xpert), unless there were excessive amount of CSF samples. However, as confirmation tests' were all firmly believed to be almost specific [@nhu2013, @heemskerk2018], we assumed that patients who had no TBM confirmation tests are all negative. Apart from one premature death, all patients were tested or diagnosed with a different disease.
 
 #### Predictors
-
 
 In the analysis, most missingness were assumed to be Missing At Random (MAR) and imputed in one step within the main model, unless explicitly stated (table \@ref(tab:missing-handling)). Composite predictors such as *TB-suggested symptoms* and *Glasgow Coma Score (GCS)* were imputed by corresponding compartments; and potentially correlated variables were grouped and imputed together (as in *CSF biomakers*' case). Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Continuous predictors are imputed using Multivariate Linear Regression<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly -->.
 
@@ -562,7 +561,7 @@ b_{continuous} &\sim Normal(0, \frac{s'}{sd*b_{RE}})
 \end{aligned}
 $$
 
-s.t $RE$ is the individidual random effect, $b_{binary}$ and $b_{continuous}$ are the slopes corresponding for binary and continuous features, and $b_{RE}$ is the overall effect of bacillary burden on test results.
+s.t $RE$ is the individual random effect, $b_{binary}$ and $b_{continuous}$ are the slopes corresponding for binary and continuous features, and $b_{RE}$ is the overall effect of bacillary burden on test results.
 
 ```{aligned_formula, fml.lab='eq:priors_response', results='asis'}
 \begin{aligned}
@@ -783,7 +782,7 @@ For a good insight, we also visualised class-wise predicted probability density 
 
 All metrics are combined from 5 repetitions of 20-fold cross validated datasets (i.e. 100 fits, as suggested by [@rms]). Accordingly, we selected three best-performed models and re-estimated their parameters using the full dataset.
 
-We also test for local independence assumption. <!--# clarification needed -->.
+We also test that whether local independence is achieved after correction for different effects. For each step in table \@ref(tab:model-archs), we visualised pair-wise residual correlation [@qu1996, @schumacher2016]. For models 4 and 5, we only did for the most performant feature choices according to all metrics above.
 
 ### Exploratory and sensitivity analysis
 

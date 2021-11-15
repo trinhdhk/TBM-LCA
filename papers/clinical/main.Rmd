@@ -782,7 +782,7 @@ For a good insight, we also visualised class-wise predicted probability density 
 
 All metrics are combined from 5 repetitions of 20-fold cross validated datasets (i.e. 100 fits, as suggested by [@rms]). Accordingly, we selected three best-performed models and re-estimated their parameters using the full dataset.
 
-We also test that whether local independence is achieved after correction for different effects. For each step in table \@ref(tab:model-archs), we visualised pair-wise residual correlation [@qu1996, @schumacher2016]. For models 4 and 5, we only did for the most performant feature choices according to all metrics above.
+We also test that whether local independence is achieved after correction for different effects. For each step in table \@ref(tab:model-archs), we visualised pair-wise residual correlation [@qu1996; @schumacher2016]. For models 4 and 5, we only did for the most performant feature choices according to all metrics above.
 
 ### Exploratory and sensitivity analysis
 

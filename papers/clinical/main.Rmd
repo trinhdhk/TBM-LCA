@@ -871,7 +871,7 @@ All data preparation, cleaning, and processing were performed on statistical pac
 
 # Results
 
-Venn diagram for confirmation test results are demonstrated in \@ref(fig:venn-test)
+Venn diagram for confirmation test results are demonstrated in figure \@ref(fig:venn-test)
 
 ```{r venn-test, out.width='60%', fig.align='center', fig.asp=1, fig.cap = 'Venn diagram for ZN Smear, MGIT, and Xpert'}
 
@@ -943,7 +943,7 @@ bl_tbl <-
            )
     )
   ) |>
-  select(age, hiv_stat, diabetes = ISDIABETE, clin_illness_day, clin_symptoms, clin_contact_tb, clin_motor_palsy, clin_nerve_palsy, clin_gcs, xray_pul_tb, xray_miliary_tb, csf_lympho, csf_neutro, csf_eos, csf_rbc, csf_protein, csf_lactate, csf_glucose, bld_glucose = BLDGLU, csf_crypto, csf_smear, csf_xpert, csf_mgit) |>
+  select(age, hiv_stat, diabetes = ISDIABETE, clin_illness_day, clin_symptoms, clin_contact_tb, clin_motor_palsy, clin_nerve_palsy, clin_gcs, xray_pul_tb, xray_miliary_tb, csf_lympho, csf_wbc, csf_eos, csf_rbc, csf_protein, csf_lactate, csf_glucose, bld_glucose = BLDGLU, csf_crypto, csf_smear, csf_xpert, csf_mgit) |>
   tidyr::pivot_longer(
     c(csf_smear, csf_mgit, csf_xpert),
     names_to = 'Test',
@@ -962,7 +962,8 @@ bl_tbl <-
     xray_pul_tb       = 'X-Ray Pulmonary TB',
     xray_miliary_tb   = 'X-Ray Miliary TB',
     csf_lympho        = 'CSF Lymphocyte Count',
-    csf_neutro        = 'CSF Neutrophil Count',
+    csf_wbc           = 'CSF Total White cell Count',
+    # csf_neutro        = 'CSF Neutrophil Count',
     csf_eos           = 'CSF Oeosinophil Count',
     csf_rbc           = 'CSF Red blood cell Count',
     csf_protein       = 'CSF Protein',
@@ -971,6 +972,7 @@ bl_tbl <-
     bld_glucose       = 'Corresponding Blood Glucose',
     csf_crypto        = 'Cryptococcal Antigen/Indian Ink'
   ) |>
+  # mutate(- csf_neutro) |>
   mutate(
     Test = case_when(
       Test == 'csf_smear' ~ 'ZN Smear',

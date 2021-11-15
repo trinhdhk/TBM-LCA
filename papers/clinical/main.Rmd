@@ -17,13 +17,6 @@ institute:
   - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
   - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
 output: 
-  officedown::rdocx_document:
-    fig_caption: yes
-    reference_docx: includes/styles.docx
-    pandoc_args:
-      - '--lua-filter=includes/scholarly-metadata.lua'
-      - '--lua-filter=includes/author-info-blocks.lua'
-    toc: no
   bookdown::pdf_document2:
     toc: no
     pandoc_args:
@@ -34,6 +27,13 @@ output:
     highlight: pygments
     includes:
       in_header: includes/header.tex
+  officedown::rdocx_document:
+    fig_caption: yes
+    reference_docx: includes/styles.docx
+    pandoc_args:
+      - '--lua-filter=includes/scholarly-metadata.lua'
+      - '--lua-filter=includes/author-info-blocks.lua'
+    toc: no
 bibliography: references.bib
 ---
 
@@ -103,6 +103,14 @@ my_fn$aligned_formula_knit <- \(options){
 }
 knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
 
+
+# Global theming for ggplots
+my_fn$plot_theme <-
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
 ```
 
 ```{r data, include=FALSE}
@@ -122,7 +130,7 @@ Another risk may lay within the fact that scores are based on consensus where a 
 
 *Latent Class Analysis (LCA)* is a statistical technique which has been adopted in settings where a gold standard does not exist, in place of which are a set of mutually independent tests. This model assumes the whole population is separable into different unobserved classes; between them, the chance of positive test results are different. By combining information coming from the aforementioned tests -- or manifest variables -- we can recover prevalence of the hidden classes and the patients' true allocation. Figure \@ref(fig:classic-lca) exemplifies a situation where there are 3 manifest variables representing for two latent classes. The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
 
-```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (1, 2, and 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='70%', fig.id = "classic-lca", , fig.cap.style = "Image Caption"}
+```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (test 1, test 2, and test 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='90%', fig.id = "classic-lca", , fig.cap.style = "Image Caption", fig.align='center'}
 # knitr::include_graphics("includes/graph1.jpg")
 knitr::include_graphics("includes/classicLCA.png")
 ```
@@ -153,7 +161,7 @@ In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and X
 
 ### Data pre-processing
 
-Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* (RGCS = RGCSV + RGCSE + RGCSM) so that a $GCS = 15$ would be equivalent to $RGCS = 0$, while $GCS = 3$ would be translated to $RGCS = 12$ (table \@ref(tab:gcs-tab)).
+Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* (RGCS = RGCSV + RGCSE + RGCSM) so that a $GCS = 15$ would be equivalent to $RGCS = 0$, while $GCS = 3$ would be translated to $RGCS = 12$ (table \@ref(tab:gcs-tab)). Binary variables were dummy-coded into 0 for "Negative"/"No" and 1 for "Positive"/"Yes".
 
 ```{r gcs-tab, out.width='100%', tab.id='gcs-tab', tab.cap='Conversion table from clasic Glasgow Coma Score (GCS) to Reversed GCS (RGCS)'}
 
@@ -183,16 +191,25 @@ tibble::tribble(
   # flextable::theme_zebra()
 ```
 
-Compared to the uniform case definition, we also made a change to **Past TB contact**, in which we hypothesise that by editing the original question into "Past noticeable contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the main study, no brain imaging was taken, hence not included.
-
-Binary variables were dummy coded into 0 for "Negative"/"No" and 1 for "Positive"/"Yes".
+Compared to the uniform case definition, we also made a change to **Past TB contact**, in which we hypothesise that by editing the original question from "Past contact with TB patients within the past recent year" into "Past *noticeable* contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the main study, no brain imaging was taken, hence not included.
 
 ### Latent class regression model
 
 We created two-level model consisting of:
 
-1.  *Prevalence model*: A logistic regression model estimating the prevalence of TBM amongst the study population
-2.  *Latent class analysis*: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. *Latent bacillary burden* is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive.
+1.  *Prevalence model*: A logistic regression model estimating the prevalence of TBM ($\theta$) amongst the study population
+  $$
+    logit(\theta) \sim X^Ta
+  $$
+2.  *Latent class analysis*: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. *Latent bacillary burden* ($B$) is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive.
+
+$$
+\begin{aligned}
+  B &\sim X'^Tb + RE\\
+  logit(\pi(Y)) &\sim Z_0 + b_{RE} * B 
+\end{aligned}
+$$
+where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the *base* positive rate; $b$ is the vector of coefficients of relevant features $X'$ on $B$ and $b_RE$ is the effects of $B$ on $\pi(Y)$.
 
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
@@ -211,7 +228,7 @@ tibble::tribble(
   'Blood Glucose'                  , '-'            , '0'                 ,
   'CSF Glucose'                    , '-'            , '?'                 ,
   'CSF Lymphocyte Count'           , '+'            , '?'                 ,
-  'CSF Neutrophil Count'           , '+/-'          , '?'                 ,
+  'CSF Total While cell Count'     , '+/-'          , '?'                 ,
   'CSF Protein'                    , '+'            , '?'                 ,
   'CSF Lactate'                    , '+'            , '?'                 ,
   'CSF Oeosinophil Count'          , '-'            , '0'                 ,
@@ -307,7 +324,7 @@ digraph {
       BldGlu[label = "Blood Glucose"];
       CsfGlu[label = "CSF Glucose"];
       CsfLym[label = "CSF Lymphocyte"];
-      CsfNeu[label = "CSF Neurophil"];
+      CsfNeu[label = "CSF Total White cell count"];
       CsfPro[label = "CSF Protein"];
       CsfLac[label = "CSF Lactate"];
       CsfRBD[label = "CSF Red blood cell"];
@@ -499,11 +516,11 @@ digraph imp_model{
 
 ### Prior choices
 
-For imputation, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for RGCS (E, V, and M) as their supports were two-sided constained (section \@ref(data-pre-processing)) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations (appendix \@ref(appendix-details)).
+For imputation, $Normal(0,2.5)$ was chosen as prior distributions for all intercepts and coefficients [@prior-choice], except for RGCS (E, V, and M) as their values were two-sided constrained (section \@ref(data-pre-processing)) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations (appendix \@ref(appendix-details)).
 
 Cholesky decomposition of the covariance matrix was sampled from a *LKJ Correlation Cholesky* prior with $\eta = 4$ [@stan-doc].
 
-```{r lkj, out.width='40%', out.height='4cm', fig.cap="Example density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case; 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation; black dot, thick, and thin line are the median, IQR and 95\\% credible interval", fig.align="center", fig.id="lkj"}
+```{r lkj, out.width='40%', out.height='4cm', fig.cap="Example density plot for $LKJCorrelationCholesky(\\eta=4)$ in bivariate case; 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation; black dot, thick, and thin line are the median, IQR and 95\\% inter-percentile range", fig.align="center", fig.id="lkj"}
 
 ggplot() + 
   ggdist::stat_dist_halfeye(aes(y = 0, dist = 'lkjcorr_marginal', arg1=2, arg2=4)) +
@@ -516,16 +533,16 @@ ggplot() +
         axis.ticks.y = element_blank())
 ```
 
-In LCA part, we imposed Student T with 4 degree of freedom ($t_4$) for intercept, in which we fixed scale to 5 as with belief that its norm would not be higher than 10 [@boonstra2019]. For coefficients, we use Normal distribution and multiplied sd by data standard variation for continuous variables, and 2 for binary variables, so that relatively similar penalisation was formed between them [@prior-choice, @vanerp2019, @gelman2007].
+In LCA prevalence part, we imposed Student T with 4 degree of freedom ($t_4$) for intercept, in which we fixed scale to 5 as with belief that its norm would not be higher than 10 [@boonstra2019]. For coefficients, we use Normal distribution whose means were set to 0 [@prior-choice, @vanerp2019] and distribution scales incorporated a penalty term sampled from $Normal(0, 2.5)$. For continuous variables, instead of scaling the imputed data by its posterior standard deviation, we divided the penalty term by that value in favor of numerical stability. For binary variables, 0.5 were chosen as the denominator instead [@gelman2007]. For strongly positive risk factors (marked *++* in table \@ref(tab:predictor-tab)), priors were further left-truncated at 0, reflecting firm expectations.
 
 $$
 \begin{aligned}
 a_0 &\sim t_4(0, 5)\\
-a_{binary} &\sim Normal(0, 2*s)\\
-a_{continuous} &\sim Normal(0, sd * s)
+a_{binary} &\sim Normal(0, \frac{s}{0.5})\\
+a_{continuous} &\sim Normal(0, \frac{s}{sd})
 \end{aligned}
 $$
-s.t: $s \sim Normal(0,\ 2.5)\ \&\ s>0$ and $sd$ = Standard Deviation of corresponding covariates after the imputation
+s.t. $a_0$ is the intercept, $a_{binary} and a_{continuous}$ are slopes for binary and and continuous covariates; $s \sim Normal(0,\ 2.5)\ \&\ s>0$ and $sd$ = Standard Deviation of corresponding covariates after the imputation. 
 
 <!-- -   Weakly informative prior: $t_4(0,\ s * sd)$ -->
 
@@ -533,7 +550,19 @@ s.t: $s \sim Normal(0,\ 2.5)\ \&\ s>0$ and $sd$ = Standard Deviation of correspo
 
 <!-- -   LASSO-equivalent prior: $DoubleExponential(0,\ s * sd)$ -->
 
-For strongly positive risk factors (marked *++* in table \@ref(tab:predictor-tab)), priors were further left-truncated at 0. Individual random effects was sampled from $Normal(0,1)$ distribution.
+For bacillary burden, individual random effects was sampled from $Normal(0,1)$ distribution. The scales corresponding for fixed effects ($b$) were additionally scaled down by the average of overall effect of bacillary burden upon test results ($b_{RE}$) with whom they were later multiplied by, so that we can achieve a fair penalisation prior between bacillary burden parameter set and those of prevalence model ($a$). The overall effects were constrained to positive values to prevent label-switching problem [@schumacher2016].
+
+
+$$
+\begin{aligned}
+RE &\sim Normal(0, 1)\\
+b_{RE} &\sim Normal(0, s')\\
+b_{binary} &\sim Normal(0, \frac{s'}{0.5*b_{RE}})\\
+b_{continuous} &\sim Normal(0, \frac{s'}{sd*b_{RE}})
+\end{aligned}
+$$
+
+s.t $RE$ is the individidual random effect, $b_{binary}$ and $b_{continuous}$ are the slopes corresponding for binary and continuous features, and $b_{RE}$ is the overall effect of bacillary burden on test results.
 
 ```{aligned_formula, fml.lab='eq:priors_response', results='asis'}
 \begin{aligned}
@@ -544,7 +573,7 @@ For strongly positive risk factors (marked *++* in table \@ref(tab:predictor-tab
 \end{aligned}
 ```
 
-For manifest variables, our choices of prior are based on information collected from several previous studies involving Vietnamese cohort (@nhu2013, @thwaites2004, @heemskerk2018). A summarisation of these choices are shown in figure \@ref(fig:mv-priors)), on Logistic and Linear scale, and their relations to corresponding results derived from different studies. As suggested by the prior knowledge, we used highly informative priors for specificity (Spc) and weakly informative priors for sensitivity (Sen) on the logit scale (formula `r my_fn$labEq.docx('eq:priors_response')`), given the discrepancies between different research.
+For manifest variables, our choices of prior are based on information collected from several previous studies involving Vietnamese cohort (@nhu2013, @thwaites2004, @heemskerk2018). A summarisation of these choices are shown in figure \@ref(fig:mv-priors)), on Logistic and Linear scale, and how good they covered corresponding results derived from different studies. As suggested by the literature, we used highly informative priors for False Positive Rate (FPR = 1-Specificity) and weakly informative priors for True Positive Rate (TPC = sensitivity) on the logit scale (formula `r my_fn$labEq.docx('eq:priors_response')`), given the discrepancies between different research.
 
 <!-- Estimated sensitivity and specificity of confirmation tests based on the uniform case definition [@marais2010] are listed in table @ref(tab:confirmation-test-tbl) [@nhu2013]. -->
 
@@ -686,7 +715,7 @@ color_me <- list("#000000", "#E69F00", "#56B4E9", c("#000000", "#E69F00", "#56B4
 withr::with_options(
   list(ggplot2.discrete.colour = color_me),
 
-  plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% credible intervals of our priors') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
+  plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% inter-percentile range') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
 )
 ```
 
@@ -737,7 +766,7 @@ pl <- (pl.7_logistic + pl.7_linear) /
 
 for (i in 1:3) pl[[i]] <- pl[[i]] + plot_layout(tag_level = 'new')
 
-pl + plot_annotation(tag_levels=c('A', 1), tag_prefix = 'Fig.', tag_suffix=':', caption = 'Black dots, thick lines and thin lines are median, IQR, and 95% credible intervals')
+pl + plot_annotation(tag_levels=c('A', 1), tag_prefix = 'Fig.', tag_suffix=':', caption = 'Black dots, thick lines and thin lines are median, IQR, and 95% inter-percentile range')
 ```
 
 ### Model performances

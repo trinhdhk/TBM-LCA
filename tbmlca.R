@@ -223,7 +223,7 @@ with(
     if (model_no >= 3) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
     if (is_pca) pars <- c(pars, "L_csf")
-    if (model_no == 5) pars <- c(pars, "b_cs")
+    # if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     if (include_d) pars <- c(pars, c('d'))
     if (grepl('missing$', model)) pars <- c(pars, 'z_obs') 

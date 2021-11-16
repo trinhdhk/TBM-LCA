@@ -120,7 +120,8 @@ Xc <- data_19EI %$% cbind(
   csflym=scale(log10(csf_lympho_corrected+1), scale=T),                         #5    #13   
   csfpro=scale(log2(csf_protein_corrected), scale=T),                           #6    #14   
   csflac=scale(log2(csf_lactate), scale=T),                           #7    #15   
-  csfneu=scale(log10(csf_neutro_corrected+1), scale=T),   #8.   #16
+  # csfneu=scale(log10(csf_neutro_corrected+1), scale=T),   #8.   #16
+  csfwbc=scale(log10(csf_wbc_corrected+1), scale=T),        #8    #16
   gcs=(15-clin_gcs)/3,                                                    #9    #17
   csfeos=scale(log10(csf_eos_corrected+1), scale=T),                            #10   #18
   csfred=scale(log10(REDCELL+1), scale=T)                             #11   #19

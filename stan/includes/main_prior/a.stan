@@ -7,6 +7,7 @@
     // for (i in 1:nA) a_raw[i] ~ student_t(nu, 0, inv(sd_X[i]));
     a_raw[1:nXd] ~ student_t(nu, 0, 2);
     for (i in 1:(nXc+nQ)){
+      // check for i in B
       a_raw[nXd+i] ~ student_t(nu, 0, inv(sd_X[i]));
     }
   }

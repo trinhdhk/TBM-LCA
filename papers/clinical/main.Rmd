@@ -124,15 +124,16 @@ data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
 
 *Tuberculous meningitis (TBM)* is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of *Mycobacterium tuberculosis* in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for *M. tuberculosis* such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and Mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such characteristics are illustrated in the uniform case definition for TBM [@marais2010] where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of particular clinical, CSF, and imaging findings, or with evidence of non-neurological *M. tuberculosis*.
 
-In the absence of a gold standard for TBM diagnosis, the uniform case definition has been widely adopted, particularly for the evaluation of new index diagnostic tests. However, the uniform case definition was developed as a standardised approach to reporting TBM research, rather than a gold standard for TBM diagnosis. When categorising cases of suspected TBM, the uniform case definition allocates cases to one of four levels; *Definite*, *Probable*, *Possible*, and *Not TBM*, with both *Probable* and *Possible* each encompassing a numerical score range where higher scores increase the probability of a diagnosis of TBM. All *Probable* cases do not therefore have the same probability of having TBM. *Definite TBM* incorporates microbiological tests, which, in the case of mycobacterial culture, may not return a positive result for several weeks. The best combination of these 4 levels that represents TBM, whilst including no cases of *non-TBM*, is not known and probably lies beyond the use of 4 levels. True TBM cases are likely represented by all *Definite* cases, most *Probable* cases, and some *Possible* cases. 
-
-Another risk may lay within the fact that scores are based on consensus where a mere change does need more time and efforts, its flexibility and adaptability to different settings is inferior to a statistical model, in which case several models can be made basing on one same dataset. *(in case this is ambiguous: this closely links to one of our objectives where we build a simplified score table that uses only clinical and demographic data, for resources-limited settings and quick screening)*
+In the absence of a gold standard for TBM diagnosis, the uniform case definition has been widely adopted, particularly for the evaluation of new index diagnostic tests. However, the uniform case definition was developed as a standardised approach to reporting TBM research, rather than a gold standard for TBM diagnosis. When categorising cases of suspected TBM, the uniform case definition allocates cases to one of four levels; *Definite*, *Probable*, *Possible*, and *Not TBM*, with both *Probable* and *Possible* each encompassing a numerical score range where higher scores increase the probability of a diagnosis of TBM. All *Probable* cases do not therefore have the same probability of having TBM. *Definite TBM* incorporates microbiological tests, which, in the case of mycobacterial culture, may not return a positive result for several weeks. The best combination of these 4 levels that represents TBM, whilst including no cases of *non-TBM*, is not known and probably lies beyond the use of 4 levels. True TBM cases are likely represented by all *Definite* cases, most *Probable* cases, and some *Possible* cases. On the other hands, due to not being developed upon discussions consensuses where a mere change does need more time and efforts, several statistical models can be re-fitted basing on one same dataset with different covariables, hence have more flexibility and adaptability in different scenarios. *(in case this is ambiguous: this closely links to one of our objectives where we build a simplified score table that uses only clinical and demographic data, for resources-limited settings and quick screening)*
 
 *Latent Class Analysis (LCA)* is a statistical technique which has been adopted in settings where a gold standard does not exist, in place of which are a set of mutually independent tests. This model assumes the whole population is separable into different unobserved classes; between them, the chance of positive test results are different. By combining information coming from the aforementioned tests -- or manifest variables -- we can recover prevalence of the hidden classes and the patients' true allocation. Figure \@ref(fig:classic-lca) exemplifies a situation where there are 3 manifest variables representing for two latent classes. The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
 
 ```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (test 1, test 2, and test 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='90%', fig.id = "classic-lca", , fig.cap.style = "Image Caption", fig.align='center'}
 # knitr::include_graphics("includes/graph1.jpg")
-knitr::include_graphics("includes/classicLCA.png")
+# knitr::include_graphics('includes/classicLCA.svg')
+fig_svg <- cowplot::ggdraw() + 
+  cowplot::draw_image("includes/classicLCA.svg")
+plot(fig_svg)
 ```
 
 This analysis's main objective are to *(1)* re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; *(2)* make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
@@ -187,8 +188,6 @@ tibble::tribble(
   flextable::merge_v(j = 1) |>  
   flextable::width(j=1, width=2) |>
   flextable::width(j=2, width=2)
-# |>
-  # flextable::theme_zebra()
 ```
 
 Compared to the uniform case definition, we also made a change to **Past TB contact**, in which we hypothesise that by editing the original question from "Past contact with TB patients within the past recent year" into "Past *noticeable* contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the main study, no brain imaging was taken, hence not included.
@@ -197,42 +196,42 @@ Compared to the uniform case definition, we also made a change to **Past TB cont
 
 We created two-level model consisting of:
 
-1.  *Prevalence model*: A logistic regression model estimating the prevalence of TBM ($\theta$) amongst the study population
+1.  *Prevalence model*: A logistic regression model estimating the prevalence of TBM ($\theta$) in the study population
   $$
     logit(\theta) \sim X^Ta
   $$
-2.  *Latent class analysis*: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016], we also corrected for individual bacillary burden and noise coming from the procedures themselves. *Latent bacillary burden* ($B$) is regressed by a Gaussian random variable and fixed effects coming from relevant bio-markers. We hypothesised that amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive.
+2.  *Latent class analysis*: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications [@qu1996; @hadgu2002; @schumacher2016]. These estimations were corrected for individual latent bacillary burden and systematic noise of the procedures (denoted as $B$), each of which were regressed by relevant bio-markers ($X'$) and an unknown random effect. We assumed that, amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive.
 
 $$
 \begin{aligned}
   B &\sim X'^Tb + RE\\
-  logit(\pi(Y)) &\sim Z_0 + b_{RE} * B 
+  logit(\pi(Y)) &\sim Z_0 + B^T * b_{RE}
 \end{aligned}
 $$
-where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the *base* positive rate; $b$ is the vector of coefficients of relevant features $X'$ on $B$ and $b_RE$ is the effects of $B$ on $\pi(Y)$.
+*where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the average positive rate; $b$ and $b_RE$ are the effects of $X'$ to $B$ and of $B$ to $\pi(Y)$, respectively.*
 
-```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model", tab.id = "predictor-tab", label='tab0'}
+```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model in \\@ref(tab:model-archs)", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
-  ~ 'Predictor'                    , ~ 'Risk of TBM', ~ 'Bacillary Burden',
-  'Age'                            , '+'            , '0'                 ,
-  'HIV Status'                     , '++'           , '+'                 ,
-  'Past TB contact'                , '+'            , '0'                 ,
-  'TB-suggested symptoms'          , '+'            , '0'                 ,
-  'Local motor deficit'            , '+'            , '0'                 ,
-  'Cranial nerve palsy'            , '+'            , '0'                 ,
-  'Days from onset'                , '+'            , '0'                 ,
-  'PTB/X-Ray'                      , '+'            , '0'                 ,
-  'MTB/X-Ray'                      , '++'           , '0'                 ,
-  'GCS'                            , '+'            , '0'                 ,
-  'Cryptococcus Antigen/Indian Ink', '-'            , '0'                 ,
-  'Blood Glucose'                  , '-'            , '0'                 ,
-  'CSF Glucose'                    , '-'            , '?'                 ,
-  'CSF Lymphocyte Count'           , '+'            , '?'                 ,
-  'CSF Total While cell Count'     , '+/-'          , '?'                 ,
-  'CSF Protein'                    , '+'            , '?'                 ,
-  'CSF Lactate'                    , '+'            , '?'                 ,
-  'CSF Oeosinophil Count'          , '-'            , '0'                 ,
-  'CSF RBC Count'                  , '-'            , '0'                 
+  ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
+  'Age'                            , 'Positive, weak'  , ''                  ,
+  'HIV Status'                     , 'Positive, strong', 'Positive, weak'    ,
+  'Past TB contact'                , 'Positive, weak'  , ''                  ,
+  'TB-suggested symptoms'          , 'Positive, weak'  , ''                  ,
+  'Local motor deficit'            , 'Positive, weak'  , ''                  ,         
+  'Cranial nerve palsy'            , 'Positive, weak'  , ''                  ,
+  'Days from onset'                , 'Positive, weak'  , ''                  ,
+  'PTB/X-Ray'                      , 'Positive, weak'  , ''                  ,
+  'MTB/X-Ray'                      , 'Positive, strong', ''                  ,
+  'GCS'                            , 'Positive, weak'  , ''                  ,
+  'Cryptococcus Antigen/Indian Ink', 'Negative, strong', ''                  ,
+  'Blood Glucose'                  , 'Negative, weak'  , ''                  ,
+  'CSF Glucose'                    , 'Negative, weak'  , 'Unknown, weak'     ,
+  'CSF Lymphocyte Count'           , 'Positive, weak'  , 'Negative, weak'    ,
+  'CSF Total While cell Count'     , 'Quadratic, weak' , 'Positive, weak'    ,
+  'CSF Protein'                    , 'Positive, weak'  , 'Positive, weak'   ,
+  'CSF Lactate'                    , 'Positive, weak'  , 'Positive, weak'     ,
+  'CSF Oeosinophil Count'          , 'Negative, strong', ''                 ,
+  'CSF RBC Count'                  , 'Unknown, weak'   , ''                 
 ) |>
   flextable::flextable() |>
   flextable::add_footer_row(values='"?" predictors were included in some models', colwidths = 3) |>
@@ -1105,11 +1104,12 @@ RE was imposed a standard normal distribution as priors. To prevent sign-switchi
 
 $$
 \begin{aligned}
-RE &\sim Normal(0,1)\\
+RE &\sim Normal(0,1)\\r4
 b_{RE} &\sim Dist(0, sd_2)\  s.t.\ b_{RE} > 0
 \end{aligned}
 $$
-*where $sd_2$ is the penalised scale and $Dist$ one of is $Normal$, $DoubleExponential$, or $StudentT_4$.
+
+*where $sd_2$ is the penalised scale and $Dist$ one of is $Normal$, $DoubleExponential$, or $StudentT_4$.*
 
 Due to the set-up of model 3 and 4, penalisation on fixed effects was tricky as they were all subsequently multiply by *b_RE*. The prior scales were hence divided by $b_RE$ in model 3, and by the average of the three $b_RE$ in model 4.
 
@@ -1163,19 +1163,23 @@ obs_rate = c(.1, .95)
 obs3     = generate_Y(C, obs_rate)
 ```
 
-The likelihood function of the model shall be $$
-P(Y_1,Y_2,Y_3,obs_3|X,X_2,X_3) = \prod_{n=1}^N \sum_{c=0}^1 (P_n(Y_1,Y_2,Y_3,obs_3|C=1)P(C=c|X,X_2,X_3)
-$$ Consider an individual $n$: If $obs3=1$: $$
+The likelihood function of the model shall be
+$$
+Pr(Y_1,Y_2,Y_3,obs_3|X,X_2,X_3) = \prod_{n=1}^N \sum_{c=0}^1 (Pr_n(Y_1,Y_2,Y_3,obs_3|C=1)Pr(C=c|X,X_2,X_3)
+$$ 
+Consider an individual $n$: If $obs3=1$: 
+$$
 \begin{aligned}
-P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},y_3=Y_3^{(n)},obs_3=1|X_n,X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|obs_3=1,C=c)P(obs_3=1)P(C=c)\\
-&= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|C=c)P(obs_3=1)P(C=c)\\
+Pr(y_1=Y_1^{(n)},y_2=Y_2^{(n)},y_3=Y_3^{(n)},obs_3=1|X_n,X_2^{(n)},X_3^{(n)}) &= \sum_{c=0}^1 \prod_{i=1}^3 Pr(y_i=Y_i^{(n)}|obs_3=1,C=c)Pr(obs_3=1)Pr(C=c)\\
+&= \sum_{c=0}^1 \prod_{i=1}^3 Pr(y_i=Y_i^{(n)}|C=c)Pr(obs_3=1)Pr(C=c)
 \end{aligned}
-$$ (as $Y_1, Y_2, Y_3, obs_3$ are conditionally independent on $C$).
+$$
+(as $Y_1, Y_2, Y_3, obs_3$ are conditionally independent on $C$).
 
 Similarly, for those whose $obs_3=0$: $$
 \begin{aligned}
-P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|obs_3=0,C=c)P(obs_3=0)P(C=c)\\
-&= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|C=c)P(obs_3=0)P(C=c)\\
+Pr(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^2 Pr(y_i=Y_i^{(n)}|obs_3=0,C=c)Pr(obs_3=0)Pr(C=c)\\
+&= \sum_{c=0}^1 \prod_{i=1}^2 Pr(y_i=Y_i^{(n)}|C=c)Pr(obs_3=0)Pr(C=c)
 \end{aligned}
 $$
 

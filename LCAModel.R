@@ -43,6 +43,16 @@ LCAModel <- R6::R6Class(
     extract = function(...){
       rstan::extract(self$model_cmb, ...)
     },
+    get_metrics = function(file = NULL){
+      s <- list(
+        model_name = self$model_name,
+        p = self$p,
+        p_rep = self$p_rep,
+        elpd = self$elpd
+      )
+      if (!length(file)) return(s) 
+      saveRDS(s, file)
+    },
     export_to_Shiny = function(file = NULL){
       pars <- self$meta$params
       pars <- grep('^[ab]', pars, value = TRUE)
@@ -190,13 +200,16 @@ LCAModel <- R6::R6Class(
       resamps = 2000,
       force_bootstrap = NULL,
       est = c("mean", "median"),
+      plot_rep = FALSE,
       theme = ggplot2::theme_bw
     ){
       which <- match.arg(which)
       require(ggplot2)
       require(patchwork)
       est <- match.arg(est)
+      
       p_summary <- self$p
+      p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
       
       if (which == "Y"){
         Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
@@ -204,12 +217,16 @@ LCAModel <- R6::R6Class(
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
         suppressMessages(
-          classifierplots::roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Smear") + scale_x_continuous(name="") +
-          classifierplots::roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] , resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Mgit") + scale_y_continuous(name="") +  
-          classifierplots::roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Xpert") + scale_x_continuous(name="") + scale_y_continuous(name="")
+          patch <-
+            private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Smear") + ggplot2::theme(axis.title = element_blank()) + # + scale_x_continuous(name="") +
+            private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Mgit") + ggplot2::theme(axis.title = element_blank()) + #+ scale_y_continuous(name="") +  
+            private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Xpert") + ggplot2::theme(axis.title = element_blank())#+ scale_x_continuous(name="") + scale_y_continuous(name="")
         )
+        
+        gt <- patchwork::patchworkGrob(patch)
+        gridExtra::grid.arrange(gt, left = "True Positive Rate (%)    (Sensitivity)", bottom = "False Positive Rate (%)    (1-Specificity)")
       } else 
-        classifierplots::roc_plot(C, p_summary$theta[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Positive TBM")
+        private$.misc$my_roc_plot(C, p_summary$theta[[est]], lapply(p_rep, function(.) .$theta[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Positive TBM")
     }
   ),
   private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL, .p_rep = NULL, .META = list()),

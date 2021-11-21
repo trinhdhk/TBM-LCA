@@ -415,6 +415,128 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,
   setNames(extract_holdout, extract_pars)
 }
 
+my_roc_plot <- 
+  function(obs, pred, pred_rep = NULL, resamps = 2000, force_bootstrap = NULL){
+    require(ggplot2)
+    require(data.table)
+    
+    plt <- ggplot()
+    for (.pred_rep in pred_rep)
+      plt <- ._add_roc_plot(plt, obs, .pred_rep, resamps, force_bootstrap, .rep = TRUE)
+    plt <- ._add_roc_plot(plt, obs, pred, resamps, force_bootstrap, .rep = FALSE, .has_rep = length(pred_rep))
+    plt # + coord_cartesian(xlim=c(0, 100, ylim=c(0,100)))
+  }
+._add_roc_plot <- 
+  function (plt, obs, pred, resamps = 2000, force_bootstrap = NULL, .rep = FALSE, .has_rep = FALSE) 
+  {
+    # browser()
+    maincolor <- "#CD113B"
+    subcolor1 <- "#111111"
+    subcolor2 <- "#999999"
+    n <- length(obs)
+    obs.bin <- obs == 1
+    nbins <- min(50, n)
+    npositives <- sum(obs.bin)
+    nnegatives <- n - npositives
+    negative_steps <- floor(nnegatives/50)
+    negative_steps <- floor(nnegatives/nbins)
+    auc <- classifierplots:::calculate_auc(obs, pred)
+    writeLines(paste("AUC:", auc))
+    big_data_cutoff <- 50000
+    if (!is.null(force_bootstrap)) {
+      bootstrap <- force_bootstrap
+    }
+    else {
+      bootstrap <- n <= big_data_cutoff
+    }
+    pos_pred_probs <- -pred[obs.bin]
+    neg_pred_probs <- -pred[!obs.bin]
+    if (bootstrap) {
+      writeLines("Bootstrapping ROC curves")
+      pos_pred_boots <- pos_pred_probs[c(caret::createResample(pos_pred_probs, 
+                                                               times = resamps, list = F))]
+      neg_pred_boots <- neg_pred_probs[c(caret::createResample(neg_pred_probs, 
+                                                               times = resamps, list = F))]
+      roc_tbl <- data.table(preds = c(pos_pred_boots, neg_pred_boots), 
+                            y = c(rep(T, length(pos_pred_boots)), rep(F, length(neg_pred_boots))), 
+                            resample = c(rep(1:resamps, each = length(pos_pred_probs)), 
+                                         rep(1:resamps, each = length(neg_pred_probs))))
+      setkey(roc_tbl, "resample", "preds")
+      roc_tbl[, `:=`(tp, cumsum(y)), by = resample]
+      roc_tbl[, `:=`(fp, cumsum(!y)), by = resample]
+      roc_tbl[, `:=`(fpr_step, ((fp%%negative_steps) == 0)), 
+              by = resample]
+      substeps_tbl <- roc_tbl[fpr_step == T, ]
+      subind <- substeps_tbl[, .I[.N], by = c("resample", 
+                                              "fp")]
+      roc_tbl_sub <- substeps_tbl[subind$V1]
+      roc_tbl_sub_stats <- roc_tbl_sub[, as.list(quantile(tp, 
+                                                          c(0.025, 0.5, 0.975))), keyby = fp]
+      writeLines("Eval AUC")
+      roc_tbl[, `:=`(rank, mean(.I)), by = c("resample", "preds")]
+      r1 <- roc_tbl[y == T, sum(rank) - .N * n * (resample - 
+                                                    1), keyby = "resample"]$V1
+      u1 <- r1 - (npositives * (npositives + 1))/2
+      aucs <- 1 - u1/(npositives * nnegatives)
+      auc_bounds <- 100 * quantile(aucs, c(0.025, 0.5, 0.975))
+      digits_use <- 3
+      if (format(auc_bounds[1], digits = digits_use) == format(auc_bounds[3], 
+                                                               digits = digits_use)) {
+        digits_use <- 5
+      }
+    }
+    else {
+      roc_tbl <- data.table(preds = c(pos_pred_probs, neg_pred_probs), 
+                            y = c(rep(T, length(pos_pred_probs)), rep(F, length(neg_pred_probs))))
+      setkey(roc_tbl, "preds")
+      roc_tbl[, `:=`(tp, cumsum(y))]
+      roc_tbl[, `:=`(fp, cumsum(!y))]
+      roc_tbl[, `:=`(fpr_step, ((fp%%negative_steps) == 0))]
+      substeps_tbl <- roc_tbl[fpr_step == T, ]
+      subind <- substeps_tbl[, .I[.N], by = c("fp")]
+      roc_tbl_sub_stats <- substeps_tbl[subind$V1]
+      roc_tbl_sub_stats[, `:=`(`50%`, tp)]
+    }
+    writeLines("Producing ROC plot")
+    
+    # plt <- ggplot()
+    plt <- plt + geom_line(data=roc_tbl_sub_stats, 
+                     mapping=aes(x = 100 * fp/nnegatives, 
+                                 y = 100 * `50%`/npositives),
+                     color = if (!.rep) classifierplots:::green_str else subcolor2, 
+                     size = if (!.rep) 1 else .5,
+                     alpha =  if (!.rep) 1 else .5) + 
+      geom_abline(slope = 1, intercept = 0, linetype = "dotted") 
+    
+    if (!.rep) 
+      plt <- plt + 
+      annotate("text", x = 62.5, y = 22.5, label = paste0("AUC ", format(auc, digits = 3), "%"),
+               parse = F, size = 6, colour = classifierplots:::fontgrey_str) + 
+      scale_x_continuous(name = "False Positive Rate (%)    (1-Specificity)", 
+                         limits = c(0, 100), expand = c(0.05, 0.05)) + 
+      scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
+                         limits = c(0, 100), expand = c(0.05, 0.05))
+    
+    if (bootstrap) {
+      plt <- plt + geom_ribbon(mapping = aes(x = 100 * fp/nnegatives, 
+                                             ymin = 100 * `2.5%`/npositives, 
+                                             ymax = 100 * `97.5%`/npositives), 
+                               data=roc_tbl_sub_stats, 
+                               # fill = if (!.rep) classifierplots:::green_str else subcolor2, 
+                               fill = classifierplots:::green_str, 
+                               alpha = if (.has_rep) .1 else .2) 
+      if (!.rep)
+        plt <- plt +
+          annotate("text", x = 62.5, y = 15, 
+                   label = paste0("95% CI: ", 
+                                  format(auc_bounds[1], digits = digits_use),
+                                  "% - ", format(auc_bounds[3], digits = digits_use), "%"), 
+                   parse = F, size = 3.8, colour = classifierplots:::fontgrey_str)
+    }
+    return(plt)
+  }
+
+
  # Thin histogram
 thinhist_subplot <- function(x, normalize.factor = NULL, digits = 2, yscale = 1, zero_y = 0, plot = TRUE){
   round_factor = 10^digits
@@ -449,7 +571,7 @@ thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale =
 }
 
 # Function to draw the calibration curve
-calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, hist = TRUE, hist.normalize = TRUE, ..., theme = ggplot2::theme_bw){
+calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, hist = TRUE, hist.normalize = TRUE, yscale=.1, ..., theme = ggplot2::theme_bw){
   require(ggplot2)
   maincolor <- "#CD113B"
   subcolor1 <- "#111111"
@@ -475,7 +597,7 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
 	  p <- p + geom_smooth(aes( y = as.numeric(obs)), color=maincolor, fill = subcolor2, se = se, size=.9, alpha=.3, method = method, ...)
   }
   else {
-    p <- p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(x,knots), color = maincolor, fill = subcolor2, size=.9, alpha = .6/length(pred_rep), se = se,...) 
+    p <- p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="lm", formula=y~splines::ns(x,knots), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
   }
   p <- p + 
     geom_line(aes(y = pred), color = "#000000") + 
@@ -485,11 +607,35 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
     ggtitle(title)
   
   if (hist){
-    p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = .1, plot = FALSE)
+    p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = yscale, plot = FALSE)
     p <- p + p0[[1]] + p0[[2]]
   }
   
-  p + theme()
+  # Find average calibration
+  obs_p <- sum(obs)/length(obs)
+  pred_p <- mean(pred)
+  
+  # Find minimum calibration
+  # browser()
+  calib.fit <- lm(as.numeric(obs)~splines::ns(pred,1))
+  
+  # browser()
+  p + 
+    # ggplot2::annotate(
+    #   "text", x = .625, y = .18, 
+    #   label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',
+    #                  'Predicted prevalence: ', format(pred_p, digits=2)), 
+    #   parse = F, size = 2.8, colour = classifierplots:::fontgrey_str
+    # ) + 
+    ggplot2::annotate(
+      "text", x = .99, y = .05, hjust='right', vjust='bottom',
+      label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',
+                    'Predicted prevalence: ', format(pred_p, digits=2), '\n',
+                    "Calibration intercept: ", format(coef(calib.fit)[['(Intercept)']], digits = 2),'\n',
+                    'Calibation slope: ', format(coef(calib.fit)[['splines::ns(pred, 1)']], digits=2)), 
+      parse = F, size = 2.8, colour = classifierplots:::fontgrey_str
+    ) +
+    theme()
 }
 
 

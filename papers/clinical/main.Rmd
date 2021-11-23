@@ -208,7 +208,7 @@ $$
   logit(\pi(Y)) &\sim Z_0 + B^T * b_{RE}
 \end{aligned}
 $$
-*where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the average positive rate; $b$ and $b_RE$ are the effects of $X'$ to $B$ and of $B$ to $\pi(Y)$, respectively.*
+*where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the average positive rate; $b$ and $b_{RE}$ are the effects of $X'$ to $B$ and of $B$ to $\pi(Y)$, respectively.*
 
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different variables in each model in \\@ref(tab:model-archs)", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
@@ -392,14 +392,23 @@ By design, most patients with very high chance of and/or evidently diagnosed wit
 
 #### Predictors
 
-In the analysis, most missingness were assumed to be Missing At Random (MAR) and imputed in one step within the main model, unless explicitly stated (table \@ref(tab:missing-handling)). Composite predictors such as *TB-suggested symptoms* and *Glasgow Coma Score (GCS)* were imputed by corresponding compartments; and potentially correlated variables were grouped and imputed together (as in *CSF biomakers*' case). Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Continuous predictors are imputed using Multivariate Linear Regression<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly -->.
+We assumed predictors are Missing At Random (MAR) and performed a model-based imputation in one step together with the main model, unless explicitly stated in table \@ref(tab:missing-handling). Composite variables (*TB-suggested symptoms* and *Glasgow Coma Score (GCS)*) were imputed per corresponding compartments. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Numeric predictors are imputed using Multivariate Linear Regression.<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly --> 
 
-As HIV tests were not mandatory in the main study, HIV status itself was also incomplete, but their chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are also MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as donors.
+$$
+\begin{aligned}
+ X_{cont} &\sim \mathcal{N}(U_{X_{cont}}^TG, \Sigma) \\
+ Probit(X_{binary}) &\sim \mathcal{N}(U_{X_{binary}}^TG, I)
+\end{aligned}
+$$
+
+where $X_{cont}$ and $X_{binary}$ are vectors of continuous and binary variables to be imputed, and $U^T_{X_{cont}}$ and $U^T_{X_{binary}}$ are vector of auxiliary covariates used in the respective imputation model, with coefficients $G$. $\mathcal{N}$ is the *Normal* distribution in univariate case and *Multivariate Normal* distribution otherwise with $\Sigma$ as the variance-covariance matrix; in binary case, $\Sigma$ is the identity matrix $I$ [@albert1993].
+
+Our imputation algorithm were summarised in figure \@ref(fig:impute-model), together with their auxiliary covariables. Note that due to technical limitation, imputed RGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
+
+<!-- As HIV tests were not mandatory in the main study, HIV status' chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are at least MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as auxiliary variables. -->
 
 
-In the case where missing values were imputed, figure \@ref(fig:impute-model) depicts how those were sampled, together with their potential donors. Note that due to technical limitation, imputed RGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
-
-```{dot impute-model, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Clustered covariables were imputed together in a multivariate regression. Arrows demonstrate a donor $\\rightarrow$ response correlation.", fig.id="impute-model"}
+```{dot impute-model, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Covariables clustered in the same boxes were imputed together by a multivariate regression. Arrows demonstrate a covariate $\\rightarrow$ X response relation.", fig.id="impute-model"}
 
 digraph imp_model{
   rankdir = TB;
@@ -448,8 +457,8 @@ digraph imp_model{
     rank=same;
     node[style="filled,dashed" fillcolor=white];
     subgraph zz{
-      BldLymp[label="Blood Lymphocytes"];
-      BldNeu[label="Blood Neutrophils"];
+      BldLymp[label=<Blood<BR/>Lymphocytes>];
+      BldNeu[label=<Blood<BR/>Neutrophils>];
     }
   }
   

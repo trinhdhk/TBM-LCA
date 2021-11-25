@@ -208,7 +208,7 @@ $$
   logit(Pr(Y)) &\sim Z_0 + B^T * b_{RE}
 \end{aligned}
 $$
-*where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $Z_0$ is the average test positive rates; $b$ and $b_RE$ are the effects of $V$ to $B$ and of $B$ to $\pi(Y)$, respectively.*
+*where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the average test positive rate; $b$ and $b_{RE}$ are the effects of $X'$ to $B$ and of $B$ to $\pi(Y)$, respectively.*
 
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different features to TBM prevalence and patients' mycobacillary burden for each model mentioned in table \\@ref(tab:model-archs), based on background knowledge. Cell values are the expected association and how firm that expectation is; empty cells imply no association", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
@@ -391,9 +391,25 @@ model_archs |>
 
 By design, most patients with very high chance of and/or evidently diagnosed with different diseases were not tested with TBM confirmation assays (namely ZN Smear, MGIT, and Xpert), unless there were excessive amount of CSF samples. However, as confirmation tests' were all firmly believed to be almost specific [@nhu2013, @heemskerk2018], we assumed that patients who had no TBM confirmation tests are all negative. Apart from one premature death, all patients were tested or diagnosed with a different disease.
 
-\newpage
+#### Predictors
 
-```{dot impute-model, echo=FALSE, out.width="99%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Clustered covariables were imputed together in a multivariate regression. Arrows demonstrate a donor $\\rightarrow$ response correlation.", fig.id="impute-model"}
+We assumed predictors are Missing At Random (MAR) and performed a model-based imputation in one step together with the main model, unless explicitly stated in table \@ref(tab:missing-handling). Composite variables (*TB-suggested symptoms* and *Glasgow Coma Score (GCS)*) were imputed per corresponding compartments. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Numeric predictors are imputed using Multivariate Linear Regression.<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly --> 
+
+$$
+\begin{aligned}
+ X_{cont} &\sim \mathcal{N}(U_{X_{cont}}^TG, \Sigma) \\
+ Probit(X_{binary}) &\sim \mathcal{N}(U_{X_{binary}}^TG, I)
+\end{aligned}
+$$
+
+where $X_{cont}$ and $X_{binary}$ are vectors of continuous and binary variables to be imputed, and $U^T_{X_{cont}}$ and $U^T_{X_{binary}}$ are vector of auxiliary covariates used in the respective imputation model, with coefficients $G$. $\mathcal{N}$ is the *Normal* distribution in univariate case and *Multivariate Normal* distribution otherwise with $\Sigma$ as the variance-covariance matrix; in binary case, $\Sigma$ is the identity matrix $I$ [@albert1993].
+
+Our imputation algorithm were summarised in figure \@ref(fig:impute-model), together with their auxiliary covariables. Note that due to technical limitation, imputed RGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
+
+<!-- As HIV tests were not mandatory in the main study, HIV status' chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are at least MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as auxiliary variables. -->
+
+
+```{dot impute-model, echo=FALSE, out.width="100%", out.height="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Covariables clustered in the same boxes were imputed together by a multivariate regression. Arrows demonstrate a covariate $\\rightarrow$ X response relation.", fig.id="impute-model"}
 
 digraph imp_model{
   rankdir = TB;
@@ -442,8 +458,8 @@ digraph imp_model{
     rank=same;
     node[style="filled,dashed" fillcolor=white];
     subgraph zz{
-      BldLymp[label="Blood Lymphocytes"];
-      BldNeu[label="Blood Neutrophils"];
+      BldLymp[label=<Blood<BR/>Lymphocytes>];
+      BldNeu[label=<Blood<BR/>Neutrophils>];
     }
   }
   

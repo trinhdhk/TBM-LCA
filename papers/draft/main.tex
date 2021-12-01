@@ -1,0 +1,1632 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\title{In search of a novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach}
+\author{Trinh Dong Huu Khanh\textsuperscript{1,2,*} \and Joseph Donovan\textsuperscript{1,3} \and Guy Thwaites\textsuperscript{1,4} \and Ronald Geskus\textsuperscript{1,4}}
+\date{}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={In search of a novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach},
+  pdfauthor={Trinh Dong Huu Khanh1,2,; Joseph Donovan1,3; Guy Thwaites1,4; Ronald Geskus1,4},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\usepackage{pdflscape}
+\usepackage{minted}
+\newcommand{\blandscape}{\begin{landscape}}
+\newcommand{\elandscape}{\end{landscape}}
+% \setmonofont[Contextuals={Alternate}]{Cascadia Code Regular}
+\usepackage{fontspec}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{colortbl}
+\usepackage{hhline}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+\maketitle
+
+\textsuperscript{1} Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam\\
+\textsuperscript{2} King's College London, London, United Kingdom\\
+\textsuperscript{3} London School of Hygiene and Tropical Medicine, London, United Kingdom\\
+\textsuperscript{4} Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom
+
+\textsuperscript{*} Correspondence: \href{mailto:trinhdhk@oucru.org}{Trinh Dong Huu Khanh \textless{}\href{mailto:trinhdhk@oucru.org}{\nolinkurl{trinhdhk@oucru.org}}\textgreater{}}
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+\emph{Tuberculous meningitis (TBM)} is the most severe form of tuberculosis. Diagnosing TBM is notoriously challenging, with microbiological confirmation requiring identification of \emph{Mycobacterium tuberculosis} in paucibacillary cerebrospinal fluid (CSF). In addition to widely used confirmatory methods of CSF testing for \emph{M. tuberculosis} such as Ziehl-Neelsen (ZN) staining, GeneXpert MTB/RIF (Xpert), and Mycobacterial culture, additional parameters may increase the likelihood of a diagnosis of TBM. Such characteristics are illustrated in the uniform case definition for TBM (Marais et al. 2010) where, in the absence of positive microbiological tests, an increased certainty of TBM is assigned in the presence of particular clinical, CSF, and imaging findings, or with evidence of non-neurological \emph{M. tuberculosis}.
+
+In the absence of a gold standard for TBM diagnosis, the uniform case definition has been widely adopted, particularly for the evaluation of new index diagnostic tests. However, the uniform case definition was developed as a standardised approach to reporting TBM research, rather than a gold standard for TBM diagnosis. When categorising cases of suspected TBM, the uniform case definition allocates cases to one of four levels; \emph{Definite}, \emph{Probable}, \emph{Possible}, and \emph{Not TBM}, with both \emph{Probable} and \emph{Possible} each encompassing a numerical score range where higher scores increase the probability of a diagnosis of TBM. All \emph{Probable} cases do not therefore have the same probability of having TBM. \emph{Definite TBM} incorporates microbiological tests, which, in the case of mycobacterial culture, may not return a positive result for several weeks. The best combination of these 4 levels that represents TBM, whilst including no cases of \emph{non-TBM}, is not known and probably lies beyond the use of 4 levels. True TBM cases are likely represented by all \emph{Definite} cases, most \emph{Probable} cases, and some \emph{Possible} cases. On the other hands, due to not being developed upon discussions consensuses where a mere change does need more time and efforts, several statistical models can be re-fitted basing on one same dataset with different covariables, hence have more flexibility and adaptability in different scenarios. \emph{(in case this is ambiguous: this closely links to one of our objectives where we build a simplified score table that uses only clinical and demographic data, for resources-limited settings and quick screening)}
+
+\emph{Latent Class Analysis (LCA)} is a statistical technique which has been adopted in settings where a gold standard does not exist, in place of which are a set of mutually independent tests. This model assumes the whole population is separable into different unobserved classes; between them, the chance of positive test results are different. By combining information coming from the aforementioned tests -- or manifest variables -- we can recover prevalence of the hidden classes and the patients' true allocation. Figure \ref{fig:classic-lca} exemplifies a situation where there are 3 manifest variables representing for two latent classes. The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis (Stout et al. 2018; Adams et al. 2019; Schumacher et al. 2016; Lahuerta-Marin et al. 2018) given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach has brought more flexibility to the model (Qu, Tan, and Kutner 1996; Toft, Jørgensen, and Højsgaard 2005; Menten, Boelaert, and Lesaffre 2008).
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{main_files/figure-latex/classic-lca-1} 
+
+}
+
+\caption{Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (test 1, test 2, and test 3). Distributions of manifest variables in both classes are generated for demonstration only}\label{fig:classic-lca}
+\end{figure}
+
+This analysis's main objective are to \emph{(1)} re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; \emph{(2)} make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
+
+As secondary objectives, our analysis also aim to build a simplified scoring system which only needs clinical and demographic information but has the capacity to approximate the full system's output - so that TBM risk can be calculated at admission. We also estimate a latent representation of individual bacillary burden given that they get TBM which may impact the tests results.
+
+\hypertarget{methods}{%
+\section{Methods}\label{methods}}
+
+\hypertarget{population-to-analyse}{%
+\subsection{Population to analyse}\label{population-to-analyse}}
+
+Data used for this analysis were extracted from an observational study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections (G. Thwaites et al. 2002). Participants for this analysis were enrolled between 29th August 2017 and 22nd January 2021. Enrolled participants to the prospective observational study were at least 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee (Donovan et al. 2020). Specifically for the analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission.
+
+\hypertarget{data-collection-and-testing-procedures}{%
+\subsection{Data collection and testing procedures}\label{data-collection-and-testing-procedures}}
+
+Demographic data and relevant medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. However, all patients that were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD were tested for HIV. Patients with either a known HIV positive status, or a positive HIV test result, were considered HIV positive. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. CSF was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were Ziehl--Neelsen staining and smear (ZN Smear), mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT), and Xpert or Xpert MTB/RIF Ultra (XpertUltra). Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data (Donovan et al. 2020), Xpert and XpertUltra were considered the same in this analysis. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
+
+Methods of CSF processing have been described elsewhere Donovan et al. (2020), however, briefly; CSF samples were centrifuged at 3000g for 15 minutes, and most of the CSF supernatant was removed. The CSF deposit was resuspended in 500µL of remaining supernatant, with this resuspended pellet then used for ZN smear (100µL), MGIT (200µL), and either Xpert or XpertUltra (200 µL).
+
+All patients received appropriate anti-TB chemotherapy regimens according to national and local guidelines, depending on the diagnosis, without any interference from the study. At the time of discharge or death, all patients received a final diagnosis. If at least one of ZN Smear, Xpert, Xpert Ultra, or MGIT, was positive at any time during the follow-up, the patient would be considered confirmed TBM; otherwise, if TBM was clinically suspected and treated, with confirmatory microbiological tests negative, the patient would be considered suspected TBM. If the patient recovered without anti-TB chemotherapy they would be reassigned to another diagnosis (i.e.~not TBM).
+
+In the instance of repeat CSF sampling (performed based on clinical need), only the first samples with at least 3mls of collect CSF collected not later than the first week since admission were used. Results of haematological and biochemical parameters, and of ZN Smear, Xpert, Xpert Ultra, and MGIT, were taken from one same CSF samples (in addition to the paired blood glucose).
+
+\hypertarget{statistical-model}{%
+\subsection{Statistical Model}\label{statistical-model}}
+
+In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. Linear predictors for the latent class prevalence were \emph{history and demographic information} (HIV status, Age, Past noticeable TB contact), \emph{clinical signs and symptoms} (Days from onset to admission, Systemic symptoms suggestive of tuberculosis, Focal neurological deficit, Cranial nerve palsy, Glasgow Coma Score - GCS), \emph{Imaging chest data} (Pulmonary TB, Miliary TB), \emph{CSF criteria} (lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and \emph{Cryptococcus Antigen/Indian Ink} in combination.
+
+\hypertarget{data-pre-processing}{%
+\subsubsection{Data pre-processing}\label{data-pre-processing}}
+
+Most continuous variables were transformed to logarithmic scale and subsequently centred and scaled by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to \emph{Reversed GCS} (RGCS = RGCSV + RGCSE + RGCSM) so that a \(GCS = 15\) would be equivalent to \(RGCS = 0\), while \(GCS = 3\) would be translated to \(RGCS = 12\) (table \ref{tab:gcs-tab}). Binary variables were dummy-coded into 0 for ``Negative''/``No'' and 1 for ``Positive''/``Yes.''
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{2.00in}|p{2.00in}|p{0.75in}|p{0.75in}}
+
+\caption{Conversion table from clasic Glasgow Coma Score (GCS) to Reversed GCS (RGCS)
+}\label{tab:gcs-tab}\\
+
+\hhline{>{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Feature}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Response}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{GCS}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{RGCS}}} \\
+
+\hhline{>{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}-}
+
+\endfirsthead
+
+\hhline{>{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Feature}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Response}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{GCS}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{RGCS}}} \\
+
+\hhline{>{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}-}\endhead
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Open\ sponatenously}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Open\ to\ voice\ command}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Open\ to\ pain}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\multirow[c]{-4}{*}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Eye\ response}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{No\ eye\ open}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Orientated}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{5}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Confused}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Inappopriate\ words}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Incomprehensible\ sounds}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\multirow[c]{-5}{*}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Verbal\ response}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{No\ verbal\ response}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{4}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Obey\ command}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{6}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Localising\ pain}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{5}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Withdrawal\ from\ pain}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Flexing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Extending}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{4}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\multirow[c]{-6}{*}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Motor\ response}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{No\ motor\ response}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{5}}} \\
+
+\hhline{>{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}->{\arrayrulecolor[HTML]{666666}\global\arrayrulewidth=2pt}-}
+
+
+
+\end{longtable}
+
+Compared to the uniform case definition, we also made a change to \textbf{Past TB contact}, in which we hypothesise that by editing the original question from ``Past contact with TB patients within the past recent year'' into ``Past \emph{noticeable} contact with TB patients within the past recent year,'' we would be able to imply all ``Unknown'' answer as a ``No.'' In the main study, no brain imaging was taken, hence not included.
+
+\hypertarget{latent-class-regression-model}{%
+\subsubsection{Latent class regression model}\label{latent-class-regression-model}}
+
+We created bi-component model consisting of:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \emph{Prevalence model}: A logistic regression model estimating the prevalence of TBM (\(\theta\)) in the population
+  \[
+  logit(\theta) \sim X^Ta
+    \]
+\item
+  \emph{Latent class analysis}: estimating the probabilities of having positive results from three tests in each class. Similar to previous applications (Qu, Tan, and Kutner 1996; Hadgu and Qu 2002; Schumacher et al. 2016). These estimations were corrected for individual latent bacillary burden and systematic noise of the procedures (denoted as \(B\)), each of which were in turn regressed by relevant bio-markers (denoted as \(V\)) and an unknown random effect. We assumed that, amongst TBM-positive patients, those who have lower bacillary burden would be less likely to be tested positive.
+\end{enumerate}
+
+\[
+\begin{aligned}
+  B &\sim V^Tb + RE\\
+  logit(Pr(Y)) &\sim Z_0 + B^T * b_{RE}
+\end{aligned}
+\]
+\emph{where \(Y\) is the observed test results whose prevalence is \(\pi(Y)\), \(Z_0\) is the average test positive rates; \(b\) and \(b_RE\) are the effects of \(V\) to \(B\) and of \(B\) to \(\pi(Y)\), respectively.}
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{2.00in}|p{1.20in}|p{1.20in}}
+
+\caption{Contribution of different features to TBM prevalence and patients\textquotesingle{} mycobacillary burden for each model mentioned in table \ref{tab:model-archs}, based on background knowledge. Cell values are the expected association and how firm that expectation is; empty cells imply no association
+}\label{tab:predictor-tab}\\
+
+\hhline{~~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Predictor}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{TBM\ prevalence}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Bacillary\ Burden}}}} \\
+
+
+
+\endfirsthead
+
+\hhline{~~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Predictor}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{TBM\ prevalence}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Bacillary\ Burden}}}} \\
+
+\endhead
+
+
+
+\multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 4.4in+4\tabcolsep+2\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textit{}}}}\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textit{1}}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{Risk}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{of}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{TBM}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{increases}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{if}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{White}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{Cell}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{count}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{is}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{intermidiately}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{\ }}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{high}}}} \\
+
+\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Age}}\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{HIV\ Status}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{strong}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,\ weak}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Past\ TB\ contact}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{TB-suggested\ symptoms}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Local\ motor\ deficit}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Cranial\ nerve\ palsy}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Days\ from\ onset}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{PTB/X-Ray}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MTB/X-Ray}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{strong}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{GCS}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Cryptococcus\ Antigen/Indian\ Ink}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Negative,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{strong}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Blood\ Glucose}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Negative,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ Glucose}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Negative,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unknown,\ weak}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ Lymphocyte\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Negative,\ weak}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ Total\ While\ cell\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Concave}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{quadratic}}\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{1}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,\ weak}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ Protein}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,\ weak}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ Lactate}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Positive,\ weak}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ Oeosinophil\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Negative,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{strong}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ RBC\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unknown,}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\ }}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{weak}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.2in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+
+
+
+
+\end{longtable}
+
+The inclusion of covariates was done according to prior knowledge of potential risk factors (Marais et al. 2010) that share association with the infection and test results, summarised in table \ref{tab:predictor-tab}). CSF oeosinophil count was additionally included as it is a strong bio-marker for oeosinophilic meningitis, a condition usually caused by parasitic helminths. CSF erythrocyte count was added as an independent marker for traumatic lumbar puncture, in which case we also made correction to white cell counts and biochemical features, as suggested by (Greenberg et al. 2008; Nigrovic, Shah, and Neuman 2011; Mehl 1986).
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth,height=5cm]{main_files/figure-latex/skeleton-model-1} 
+
+}
+
+\caption{Model skeleton. Bacillary Burden is only available in model 2+}\label{fig:skeleton-model}
+\end{figure}
+
+Basic designs for all models is shown in figure \ref{fig:skeleton-model}. We use a stepwise approach where we incrementally added up more flexibility and lifted more constraints. We also include several extensions to explore many possibilities than can improve performance. In the main analysis, only CSF Total White Cell count was model via a quadratic effect. A summary of all architectures an extensions are shown in table \ref{tab:model-archs}, whereas technical formulations are detailed in appendix \ref{appendix-details}.
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{0.50in}|p{5.00in}}
+
+\caption{Model architectures and extensions
+}\label{tab:model-archs}\\
+
+\hhline{~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Model}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Base\ definition\ (compared\ to\ the\ lower\ one)}}}} \\
+
+
+
+\endfirsthead
+
+\hhline{~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Model}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Base\ definition\ (compared\ to\ the\ lower\ one)}}}} \\
+
+\endhead
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{No\ bacillary\ burden;\ everyone\ in\ the\ same\ class\ has\ equal\ risk\ of\ tested\ positive}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Added\ individual\ bacillary\ burden;\ impacts\ of\ bacillary\ burden\ on\ test\ results\ are\ the\ same}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Impacts\ of\ bacillary\ burden\ are\ different\ for\ different\ tests}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Added\ technical\ fluctuation\ as\ a\ second\ random\ effect;\ fixed\ effects\ only\ contributes\ to\ bacillary\ burden}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 0.5in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{5}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 5in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Added\ fixed\ effects\ for\ technical\ fluctuation}}} \\
+
+
+
+
+
+\end{longtable}
+
+\hypertarget{missing-data-handling}{%
+\subsubsection{Missing data handling}\label{missing-data-handling}}
+
+\hypertarget{manifest-variables}{%
+\paragraph{Manifest variables}\label{manifest-variables}}
+
+By design, most patients with very high chance of and/or evidently diagnosed with different diseases were not tested with TBM confirmation assays (namely ZN Smear, MGIT, and Xpert), unless there were excessive amount of CSF samples. However, as confirmation tests' were all firmly believed to be almost specific Heemskerk et al. (2018), we assumed that patients who had no TBM confirmation tests are all negative. Apart from one premature death, all patients were tested or diagnosed with a different disease.
+
+\newpage
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.99\linewidth]{main_files/figure-latex/impute-model-1} 
+
+}
+
+\caption{Imputation strategy for predictors. Variables in rectangular solid boxes were used in the model, in oval dashed were only contributed in the imputation model as donors and were not directly included in the main model. Clustered covariables were imputed together in a multivariate regression. Arrows demonstrate a donor $\rightarrow$ response correlation.}\label{fig:impute-model}
+\end{figure}
+
+\hypertarget{predictors}{%
+\paragraph{Predictors}\label{predictors}}
+
+In the analysis, most missingness were assumed to be Missing At Random (MAR) and imputed in one step within the main model, unless explicitly stated (table \ref{tab:missing-handling}). Composite predictors such as \emph{TB-suggested symptoms} and \emph{Glasgow Coma Score (GCS)} were imputed by corresponding compartments; and potentially correlated variables were grouped and imputed together (as in \emph{CSF biomakers}' case). Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead (Albert and Chib 1993). Continuous predictors are imputed using Multivariate Linear Regression.
+
+As HIV tests were not mandatory in the main study, HIV status itself was also incomplete, but their chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are also MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as donors.
+
+In the case where missing values were imputed, figure \ref{fig:impute-model} depicts how those were sampled, together with their potential donors. Note that due to technical limitation, imputed RGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
+
+\hypertarget{prior-choices}{%
+\subsubsection{Prior choices}\label{prior-choices}}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.5\linewidth]{main_files/figure-latex/lkj-1} 
+
+}
+
+\caption{Example density plot for $LKJCorrelationCholesky$ with $\eta=4$ in bivariate case; $x$ axis is the correlation between two variables: 1 is perfect positive correlation, 0 is no correlation, and -1 is perfect negative correlation; black dot, thick, and thin line are the median, IQR and 95\% inter-percentile range}\label{fig:lkj}
+\end{figure}
+
+For imputation, \(Normal(0,2.5)\) was chosen as prior distributions for all intercepts and coefficients (Stan Development Team n.d.), except for RGCS (E, V, and M) as their domains were two-sided constrained (section \ref{data-pre-processing}) - in which case, suitable Uniform distributions were chosen for the means, and Normal for standard deviations (appendix \ref{appendix-details}).
+
+Cholesky decomposition of the covariance matrix was sampled from a \emph{LKJ Correlation Cholesky} prior with \(\eta = 4\) (Stan Development Team 2021b).
+
+In LCA prevalence part, we imposed Student T with 4 degree of freedom (\(t_4\)) for intercept, in which we fixed scale to 5 as with belief that its norm would not be higher than 10 (Boonstra, Barbaro, and Sen 2019). For coefficients, we use Normal distribution whose means were set to 0 van Erp, Oberski, and Mulder (2019) and distribution scales incorporated a penalty term sampled from \(Normal(0, 2.5)\). For continuous variables, instead of scaling the imputed data by its posterior standard deviation, we divided the penalty term by that value in favour of numerical stability. For binary variables, 0.5 were chosen as the denominator instead (Andrew Gelman 2007). For strongly positive and negative risk factors (marked accordingly in table \ref{tab:predictor-tab}), priors were further half-truncated at 0, so that values on the undesirable side were rejected.
+
+\[
+\begin{aligned}
+a_0 &\sim t_4(0, 5)\\
+a_{binary} &\sim Normal(0, \frac{s}{0.5})\\
+a_{continuous} &\sim Normal(0, \frac{s}{sd})
+\end{aligned}
+\]
+s.t. \(a_0\) is the intercept, \(a_{binary}\) and \(a_{continuous}\) are slopes for binary and and continuous covariates; \(s \sim Normal(0,\ 2.5)\ \&\ s>0\) and \(sd\) = Standard Deviation of corresponding covariates after the imputation.
+
+For bacillary burden, individual random effects was sampled from \(Normal(0,1)\) distribution. The scales corresponding for fixed effects (\(b\)) were additionally scaled down by the average of overall effect of bacillary burden upon test results (\(b_{RE}\)) with whom they were later multiplied by, so that we can achieve a fair penalisation prior between bacillary burden parameter set and those of prevalence model (\(a\)). The overall effects were constrained to positive values to prevent label-switching problem (Schumacher et al. 2016).
+
+\[
+\begin{aligned}
+RE &\sim Normal(0, 1)\\
+b_{RE} &\sim Normal(0, s')\\
+b_{binary} &\sim Normal(0, \frac{s'}{0.5*b_{RE}})\\
+b_{continuous} &\sim Normal(0, \frac{s'}{sd*b_{RE}})
+\end{aligned}
+\]
+
+s.t \(RE\) is the individual random effect, \(b_{binary}\) and \(b_{continuous}\) are the slopes corresponding for binary and continuous features, and \(b_{RE}\) is the overall effect of bacillary burden on test results.
+
+\[
+\begin{aligned}
+  1-Spc_{Xpert} &\sim Logistic(logit(0.005), .7) \\
+  1-Spc_{MGIT}  &\sim Logistic(logit(0.001), 1) \\
+  1-Spc_{ZN\ Smear} &\sim Logistic(logit(0.001), 1) \\ 
+  Sen_{Xpert,\ MGIT,\ ZN\ Smear} &\sim Logistic(0,.5)
+\end{aligned}
+\;\;\;\;(
+1
+)
+\]
+
+For manifest variables, our choices of prior are based on information collected from several previous studies involving Vietnamese cohort (Nhu et al. (2013), G. E. Thwaites, Chau, and Farrar (2004), Heemskerk et al. (2018)). A summarisation of these choices are shown in figure \ref{fig:mv-priors}), on Logistic and Linear scale, and how good they covered corresponding results derived from different studies. As suggested by the literature, we used highly informative priors for False Positive Rate (FPR = 1-Specificity) and weakly informative priors for True Positive Rate (TPC = Sensitivity) on the logit scale (formula (1)), given the discrepancies between different research.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{main_files/figure-latex/mv-priors-1} 
+
+}
+
+\caption{Density plots for prior distributions and their adherence to prior knowledge of sensitvity and specifity for TBM confirmation tests, against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval}\label{fig:mv-priors}
+\end{figure}
+
+\hypertarget{model-performances}{%
+\subsubsection{Model performances}\label{model-performances}}
+
+Models performances were estimated and compared by three metrics:
+
+\begin{itemize}
+\item
+  Expected log point-wise predictive density (\emph{elpd}) of held-out observations: Models with higher \emph{elpd} are supposed to have more predictive values for untrained observations (Vehtari, Gelman, and Gabry 2016).
+\item
+  Model calibration between estimated predicted and observed probabilities of positive confirmation tests. \emph{Moderate calibration} (Van Calster et al. 2019) was visualised using a non-parametric loess fit (Harrell Jr 2021). Calibration intercept and slope was estimated using a logistic regression with test result as the response variable and predicted value on the logit scale as the covariate (Harrell Jr 2021). According to Van Calster et al. (2019), a model with good calibration would predict the average prevalence similar to the observed prevalence, has the \(intercept = 0\), \(slope = 1\), and the non-parametric as near to the identical line as possible.
+\item
+  Receiver Operating Characteristic (ROC) curve and corresponding Areas Under the Curve (AUC). Confidence interval for AUC was estimated by a 2000-time bootstrapped samples of the held-out dataset. A model with good discriminative value would be better to distinguish between two class.
+\end{itemize}
+
+For a good insight, we also visualised class-wise predicted probability density plots. This demonstrates how separable predicted values are between two classes. We also used the diagnosis at discharge as a pseudo-gold standard to visualise the correlation of model-based and clinical diagnosis.
+
+All metrics are estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation (i.e.~100 fits, as suggested by Harrell Jr (2021)). Accordingly, we selected three best-performed models and re-estimated their parameters using the full dataset.
+
+We also test for the validity of the local independence assumption after correction for different effects. For each model in table \ref{tab:model-archs}, we visualised pair-wise residual correlation (Qu, Tan, and Kutner 1996; Schumacher et al. 2016).
+
+\hypertarget{exploratory-and-sensitivity-analysis}{%
+\subsubsection{Exploratory and sensitivity analysis}\label{exploratory-and-sensitivity-analysis}}
+
+\hypertarget{complete-case-analysis-and-imputation-under-mnar-assumption}{%
+\paragraph{Complete-case analysis and imputation under MNAR assumption}\label{complete-case-analysis-and-imputation-under-mnar-assumption}}
+
+To check the level of impact from our imputation method, we did a complete-case analysis. Suspected MNAR variables as listed in table \ref{tab:missing-handling} were also tested for MNAR where we randomly allocated values based on experts' opinions. Under MNAR assumption, we did a pattern-mixture method (Mason et al. 2017; White et al. 2007), where we inquired prediction offsets \(\delta\). \(\delta\) represents the difference between unobserved part and observed part of each variables, after correction for all hyper-predictors listed in \ref{fig:impute-model}. Offsets were collected from interviews with experts working at the Viet Anh Ward at HTD, where they were supposed to provide an estimation and 95\% confidence intervals (95\% CI), based on which \(\delta\)s were then sampled from.
+
+\[
+\delta \sim Normal(\mu_{expert}, sd_{expert})
+\]
+where \(\mu_{expert}\) and \(sd_{xpert}\) are estimation and \(\frac{1}{2}\) of 95\% CI provided by interviewed experts.
+
+The main model underwent a relief of strict priors for test specificities in formula (1), the lifted model used the same prior for all three tests which cover specificity from at least 90\%:
+
+\[
+1-Spc_{lifted} \sim Logistic(\mu, 1)
+\]
+where \(\mu = logit(0.001)\) for ZN Smear and MGIT, \(\mu = logit(0.005)\) for Xpert.
+
+Lastly, as recent studies suggested a sup-optimal specificity of Xpert test on CSF samples(Nhu et al. 2013; Chen et al. 2020), our assumptions made in table \ref{tab:missing-handling} might not completely valid. To handle this, we considered a MAR scenario, where observation chance of confirmation tests depend on the unknown TBM status and locally independent to the value of confirmation tests. The observation status was then included in the model as a separated manifest variables. The validity of this method was depicted in a simulation study in \ref{appendix-simulation-study}.
+
+In this analysis, we expected the chance in which at least one confirmation test was done are 95\% for TBM-positive patients, and 50\% for TBM-negative, hence led to two conservative priors:
+
+\[
+\begin{aligned}
+obs_{TBM-} &\sim Logistic(logit(.5), .7) \\
+obs_{TBM+} &\sim Logistic(logit(.95), 1)
+\end{aligned}
+\]
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth,height=8cm]{main_files/figure-latex/liftes-priors-1} 
+
+}
+
+\caption{Lifted prior for ZN Smear and MGIT specificities, compared to the old one (dark grey). 1: logit scale, 2: linear scale}\label{fig:liftes-priors}
+\end{figure}
+
+\hypertarget{prior-families}{%
+\paragraph{Prior families}\label{prior-families}}
+
+Considering our prior family might have affected the estimation, we also consider different families of priors for coefficients in the best model. Scales were automatically selected and adjusted using the same technique mentioned in \ref{prior-choices}..
+
+\begin{itemize}
+\item
+  Weakly informative prior: \(t_4(0,\ \frac{s}{sd})\)
+\item
+  LASSO-equivalent prior: \(DoubleExponential(0,\ \frac{s}{sd})\)
+\end{itemize}
+
+s.t: \(s \sim Normal(0,\ 2.5)\ \&\ s>0\) and \(sd\) = Standard Deviation of corresponding covariates after the imputation for continuous variables and \(0.5\) for binary variables.
+
+\hypertarget{non-linearity-and-additional-features}{%
+\paragraph{Non-linearity and additional features}\label{non-linearity-and-additional-features}}
+
+As part of the exploratory analysis, we considered two models:
+
+\begin{itemize}
+\item
+  Non-linearity for all CSF bio-markers: We added quadratic effects for all CSF bio-markers in the prevalence model. Laplace priors was used for this analysis.
+\item
+  Non-linearity for Glasgow coma scores: As GCS is not a continuous variable but rather an ordinal one de facto, it is possible that there is non-linear correlation between GCS and TBM risk. In this analysis, we employed a quadratic effect for GCS to capture this potential of non-linearity.
+\end{itemize}
+
+\begin{itemize}
+\tightlist
+\item
+  Impact of CSF volume: By including the volume of sample collected, we can further investigate the effect size of CSF volumes on the sensitivity of each confirmation test.
+\end{itemize}
+
+\hypertarget{simplified-approximation-of-tbm-risk}{%
+\subsubsection{Simplified approximation of TBM risk}\label{simplified-approximation-of-tbm-risk}}
+
+As the full model requires a plethora of predictors and measurements, it might not be pragmatic in some limited contexts. We hence developed a simplified version of the prevalence sub-model which exclude all laboratorial features. The aim of this exploratory analysis is to provide a decent approximation of TBM risk yet needs only a minimal amount of information. We took out the analytic forms of posterior distributions from the best-performed model, on the logit scale, fed them into subsequent model where the number of predictors were reduced. The error term follows Logistic distribution with \(scale = 1\).
+
+\[
+z_{approx} \sim Logistic(z, 1);
+\]
+
+\emph{s.t.} \(z\) is the full model's output and \(z_{approx}\) is an approximation of \(z\).
+
+All data preparation, cleaning, and processing were performed on statistical package R, version 4.1.0 (R Core Team 2021). The model was developed on the probabilistic language Stan via the interface Rstan , version 2.27 (Stan Development Team 2021a). Plotting was done using package bayesplot (Gabry et al. 2019), classifierplots (Defazio and Campbell 2020), and ggvenn (Yan 2021). Some other packages used include: R6 (Chang 2020), rms (Harrell Jr 2021).
+
+\hypertarget{results}{%
+\section{Results}\label{results}}
+
+Venn diagram for confirmation test results are demonstrated in figure \ref{fig:venn-test}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{main_files/figure-latex/venn-test-1} 
+
+}
+
+\caption{Venn diagram for ZN Smear, MGIT, and Xpert}\label{fig:venn-test}
+\end{figure}
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{1.25in}|p{1.25in}|p{1.25in}|p{1.25in}|p{1.25in}}
+
+\caption{Rationales and measures to handle missing values
+}\label{tab:missing-handling}\\
+
+\hhline{~~~~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Variable}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{N\linebreak \ missing}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Expected\ Reason\ of\ Missingness}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Mechanism}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Handling\ method}}}} \\
+
+
+
+\endfirsthead
+
+\hhline{~~~~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Variable}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{N\linebreak \ missing}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Expected\ Reason\ of\ Missingness}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Mechanism}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textbf{Handling\ method}}}} \\
+
+\endhead
+
+
+
+\multicolumn{5}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 6.25in+8\tabcolsep+4\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textit{1}}}}\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{\textit{CSF\ Cell\ counts\ =\ CSF\ white-cell\ count\ x\ Pct\ of\ Cell\ Type\ /\ 100;\ if\ very\ low,\ then\ either\ lymphocytes\ or\ neutrophils\ had\ values,\ the\ other\ were\ left\ missing}}}} \\
+
+\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{ZN\ Smear}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{311}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Not\ suspected\ TBM}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MNAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Set\ =\ 0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MGIT}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{314}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Not\ suspected\ TBM}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MNAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Set\ =\ 0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Xpert}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{305}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Not\ suspected\ TBM}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MNAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Set\ =\ 0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{HIV\ Status}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{215}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Test\ not\ mandatory}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MCAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{TB-suggested\ symptoms}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{273}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unmeasured\ /\ Unnoticed\ /\ Unconscious}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MNAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Local\ neuro-deficit}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{17}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unconscious}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MNAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Glasgow\ Coma\ Score}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{21}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unconscious\ (GCSV)\ /\ Blinded\ (GCSE)\ /\ Unmeasured}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Age}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Input\ error}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MCAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Illness\ days}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{29}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Patients\ forget\ /\ Unconscious}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Blood\ Lymphocyte}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Blood\ Neutrophil}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Blood\ Glucose}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{7}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Most\ likely\ input\ error\ /\ Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MCAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ glucose}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MCAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ lymphocyte\ count}}\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{1}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Very\ low\ or\ zero\ /\ Input\ error\ /\ Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MNAR/MAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Manually\ set/Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ neutrophil\ count}}\fontsize{9}{9}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{1}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{21}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Very\ low\ or\ zero\ /\ Input\ error\ /\ Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MNAR/MAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Manually\ set/Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ protein}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Data\ input\ error\ /\ Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MCAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{CSF\ lactate}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedleft}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Unmeasured\ (premature\ death)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{MAR/MCAR}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{9}{9}\selectfont{\textcolor[HTML]{000000}{Imputation}}} \\
+
+
+
+
+
+\end{longtable}
+
+\newpage
+
+\blandscape
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{1.25in}|p{1.25in}|p{1.25in}|p{1.25in}|p{1.25in}|p{1.25in}|p{1.25in}}
+
+\caption{History and baseline information
+}\label{tab:test-bl-tbl}\\
+
+\hhline{~~~~~~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{\ }}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{MGIT}}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Xpert\ (Ultra)\ MTB/RIF}}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2.5in+2\tabcolsep+1\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{ZN\ Smear}}}} \\
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Characteristic}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Negative,\ N\ =\ 596}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Positive,\ N\ =\ 91}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Negative,\ N\ =\ 613}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Positive,\ N\ =\ 74}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Negative,\ N\ =\ 554}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Positive,\ N\ =\ 133}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} \\
+
+
+
+\endfirsthead
+
+\hhline{~~~~~~~}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{\ }}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{MGIT}}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Xpert\ (Ultra)\ MTB/RIF}}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 2.5in+2\tabcolsep+1\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{ZN\ Smear}}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Characteristic}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Negative,\ N\ =\ 596}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Positive,\ N\ =\ 91}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Negative,\ N\ =\ 613}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Positive,\ N\ =\ 74}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Negative,\ N\ =\ 554}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Positive,\ N\ =\ 133}}}\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}} \\
+
+\endhead
+
+
+
+\multicolumn{7}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{CFCFCF}\raggedright}p{\dimexpr 8.75in+12\tabcolsep+6\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textsuperscript{\textcolor[HTML]{000000}{\textbf{1}}}}\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\textbf{Mean\ (1st,\ 3rd\ quartiles)\ for\ numeric\ variables;\ n\ (\%)\ for\ for\ categorical\ variables}}}} \\
+
+\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Age}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{42\ (27,\ 56)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{41\ (30,\ 50)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{42\ (27,\ 56)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{40\ (29,\ 48)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{42\ (26,\ 56)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{42\ (29,\ 53)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{HIV\ Positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{26\ (6.7\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{25\ (29\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{27\ (6.7\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{24\ (34\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{18\ (5.1\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{33\ (27\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{208}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{211}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{202}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{12}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Diabetes}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{37\ (6.2\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2\ (2.2\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{39\ (6.4\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0\ (0\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{35\ (6.3\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{4\ (3.0\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Day\ from\ onset}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{10\ (4,\ 11)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19\ (10,\ 20)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{10\ (4,\ 11)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{20\ (11,\ 22)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{10\ (4,\ 11)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{16\ (8,\ 17)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{21}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{8}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{22}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{7}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{10}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{TB-suggested\ symptoms}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{82\ (23\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{39\ (67\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{86\ (24\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{35\ (71\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{66\ (20\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{55\ (64\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{240}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{33}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{248}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{25}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{226}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{47}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Past\ noticeable\ contact\ TB\ within\ 12\ months}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{7\ (1.2\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3\ (3.3\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6\ (1.0\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{4\ (5.4\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{4\ (0.7\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6\ (4.5\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Focal\ neurological\ deficit}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{64\ (11\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{20\ (22\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{67\ (11\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{17\ (23\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{59\ (11\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{25\ (19\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{15}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{16}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{13}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{4}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Crain\ nerve\ palsy}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{61\ (10\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{26\ (29\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{64\ (10\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{23\ (31\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{58\ (10\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{29\ (22\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Glasgow\ Coma\ Score}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{12\ (10,\ 14)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{11\ (10,\ 14)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{12\ (10,\ 14)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{11\ (9,\ 14)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{12\ (10,\ 14)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{12\ (10,\ 15)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{X-Ray\ Pulmonary\ TB}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{18\ (3.0\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19\ (21\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{18\ (2.9\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19\ (26\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{13\ (2.3\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{24\ (18\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{X-Ray\ Miliary\ TB}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2\ (0.3\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3\ (3.3\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2\ (0.3\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3\ (4.1\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2\ (0.4\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3\ (2.3\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Lymphocyte\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{283\ (9,\ 274)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{225\ (77,\ 305)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{284\ (10,\ 289)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{201\ (54,\ 236)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{291\ (8,\ 286)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{210\ (65,\ 271)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Total\ White\ cell\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,399\ (15,\ 565)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{466\ (182,\ 502)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,372\ (16,\ 546)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{471\ (185,\ 571)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,470\ (12,\ 563)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{466\ (153,\ 503)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Oeosinophil\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{8\ (0,\ 0)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0\ (0,\ 0)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{8\ (0,\ 0)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0\ (0,\ 0)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{8\ (0,\ 0)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0\ (0,\ 0)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Red\ blood\ cell\ Count}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,649\ (0,\ 700)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,439\ (0,\ 132)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,721\ (0,\ 700)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{787\ (0,\ 87)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1,861\ (0,\ 1,000)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{620\ (2,\ 80)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Protein}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1.74\ (0.42,\ 1.97)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2.39\ (1.34,\ 2.43)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1.69\ (0.43,\ 1.99)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3.00\ (1.52,\ 2.35)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1.65\ (0.41,\ 1.90)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2.57\ (1.21,\ 2.43)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Lactate}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{5.0\ (2.3,\ 5.4)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6.5\ (4.5,\ 8.1)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{5.0\ (2.3,\ 5.4)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6.9\ (5.2,\ 8.3)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{5.0\ (2.2,\ 5.4)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{5.9\ (3.9,\ 7.8)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{CSF\ Glucose}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3.43\ (2.51,\ 4.30)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2.04\ (1.23,\ 2.46)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3.42\ (2.49,\ 4.30)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1.77\ (1.12,\ 2.16)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{3.51\ (2.60,\ 4.42)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{2.13\ (1.27,\ 2.81)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Corresponding\ Blood\ Glucose}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{7.01\ (5.46,\ 7.72)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{7.01\ (5.74,\ 7.47)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{7.03\ (5.47,\ 7.80)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6.87\ (5.70,\ 7.10)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{7.06\ (5.44,\ 7.91)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6.81\ (5.72,\ 7.26)}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{\ \ -\ Missing}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{6}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\cellcolor[HTML]{EFEFEF}\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{Cryptococcal\ Antigen/Indian\ Ink}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19\ (3.2\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1\ (1.1\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19\ (3.1\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1\ (1.4\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{19\ (3.4\%)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 1.25in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{10}{10}\selectfont{\textcolor[HTML]{000000}{1\ (0.8\%)}}} \\
+
+
+
+
+
+\end{longtable}
+
+\elandscape
+
+\newpage
+
+\hypertarget{discussion}{%
+\section{Discussion}\label{discussion}}
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-adams2019}{}}%
+Adams, Shahieda, Rodney Ehrlich, Roslynn Baatjies, Nandini Dendukuri, Zhuoyu Wang, and Keertan Dheda. 2019. {``Evaluating Latent Tuberculosis Infection Test Performance Using Latent Class Analysis in a TB and HIV Endemic Setting.''} \emph{International Journal of Environmental Research and Public Health} 16 (16): 2912. \url{https://doi.org/10.3390/ijerph16162912}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-albert1993}{}}%
+Albert, James H., and Siddhartha Chib. 1993. {``Bayesian Analysis of Binary and Polychotomous Response Data.''} \emph{Journal of the American Statistical Association} 88 (422): 669--79. \url{https://doi.org/10.1080/01621459.1993.10476321}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-gelman2007}{}}%
+Andrew Gelman, Jennifer Hill. 2007. \emph{Data Analysis Using Regression and Multilevel/Hierarchical Models}. 1st ed. Cambridge University Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-boonstra2019}{}}%
+Boonstra, Philip S., Ryan P. Barbaro, and Ananda Sen. 2019. {``Default Priors for the Intercept Parameter in Logistic Regressions.''} \emph{Computational Statistics \& Data Analysis} 133 (May): 245--56. \url{https://doi.org/10.1016/j.csda.2018.10.014}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-r6}{}}%
+Chang, Winston. 2020. \emph{R6: Encapsulated Classes with Reference Semantics}. \url{https://CRAN.R-project.org/package=R6}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-chen2020}{}}%
+Chen, Yuan-Zhi, Li-Chang Sun, Yao-Hong Wen, Zhong-Wei Li, Shu-Jin Fan, Hong-Kun Tan, Min Qiu, et al. 2020. {``Pooled Analysis of the Xpert MTB/RIF Assay for Diagnosing Tuberculous Meningitis.''} \emph{Bioscience Reports} 40 (1). \url{https://doi.org/10.1042/bsr20191312}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-classifierplots}{}}%
+Defazio, Aaron, and Huw Campbell. 2020. \emph{Classifierplots: Generates a Visualization of Classifier Performance as a Grid of Diagnostic Plots}. \url{https://CRAN.R-project.org/package=classifierplots}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-donovan2020}{}}%
+Donovan, Joseph, Do Dang Anh Thu, Nguyen Hoan Phu, Vu Thi Mong Dung, Tran Phu Quang, Ho Dang Trung Nghia, Pham Kieu Nguyet Oanh, et al. 2020. {``Xpert MTB/RIF Ultra Versus Xpert MTB/RIF for the Diagnosis of Tuberculous Meningitis: A Prospective, Randomised, Diagnostic Accuracy Study.''} \emph{The Lancet Infectious Diseases} 20 (3): 299--307. \url{https://doi.org/10.1016/s1473-3099(19)30649-8}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-bayesplot}{}}%
+Gabry, Jonah, Daniel Simpson, Aki Vehtari, Michael Betancourt, and Andrew Gelman. 2019. {``Visualization in Bayesian Workflow.''} \emph{J. R. Stat. Soc. A} 182: 389--402. \url{https://doi.org/10.1111/rssa.12378}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-greenberg2008}{}}%
+Greenberg, Rachel G., P Brian Smith, C Michael Cotten, M Anthony Moody, Reese H. Clark, and Daniel K. Benjamin. 2008. {``Traumatic Lumbar Punctures in Neonates.''} \emph{Pediatric Infectious Disease Journal} 27 (12): 1047--51. \url{https://doi.org/10.1097/inf.0b013e31817e519b}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-hadgu2002}{}}%
+Hadgu, A., and Y. Qu. 2002. {``A Biomedical Application of Latent Class Models with Random Effects.''} \emph{Journal of the Royal Statistical Society: Series C (Applied Statistics)} 47 (4): 603--16. \url{https://doi.org/10.1111/1467-9876.00131}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-rms}{}}%
+Harrell Jr, Frank E. 2021. \emph{Rms: Regression Modeling Strategies}. \url{https://CRAN.R-project.org/package=rms}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-heemskerk2018}{}}%
+Heemskerk, A. Dorothee, Joseph Donovan, Do Dang Anh Thu, Suzaan Marais, Lidya Chaidir, Vu Thi Mong Dung, Chad M. Centner, et al. 2018. {``Improving the Microbiological Diagnosis of Tuberculous Meningitis: A Prospective, International, Multicentre Comparison of Conventional and Modified Ziehl{\textendash}Neelsen Stain, GeneXpert, and Culture of Cerebrospinal Fluid.''} \emph{Journal of Infection} 77 (6): 509--15. \url{https://doi.org/10.1016/j.jinf.2018.09.003}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-lahuerta-marin2018}{}}%
+Lahuerta-Marin, A., M.G. Milne, J. McNair, R.A. Skuce, S.H. McBride, F.D. Menzies, S.J.W. McDowell, A.W. Byrne, I.G. Handel, and B.M. de C. Bronsvoort. 2018. {``Bayesian Latent Class Estimation of Sensitivity and Specificity Parameters of Diagnostic Tests for Bovine Tuberculosis in Chronically Infected Herds in Northern Ireland.''} \emph{The Veterinary Journal} 238 (August): 15--21. \url{https://doi.org/10.1016/j.tvjl.2018.04.019}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-marais2010}{}}%
+Marais, Suzaan, Guy Thwaites, Johan F Schoeman, M Estée Török, Usha K Misra, Kameshwar Prasad, Peter R Donald, Robert J Wilkinson, and Ben J Marais. 2010. {``Tuberculous Meningitis: A Uniform Case Definition for Use in Clinical Research.''} \emph{The Lancet Infectious Diseases} 10 (11): 803--12. \url{https://doi.org/10.1016/s1473-3099(10)70138-9}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-mason2017}{}}%
+Mason, Alexina J, Manuel Gomes, Richard Grieve, Pinar Ulug, Janet T Powell, and James Carpenter. 2017. {``Development of a Practical Approach to Expert Elicitation for Randomised Controlled Trials with Missing Health Outcomes: Application to the IMPROVE Trial.''} \emph{Clinical Trials} 14 (4): 357--67. \url{https://doi.org/10.1177/1740774517711442}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-mehl1986}{}}%
+Mehl, Albert L. 1986. {``Interpretation of Traumatic Lumbar Puncture.''} \emph{Clinical Pediatrics} 25 (10): 523--26. \url{https://doi.org/10.1177/000992288602501008}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-menten2008}{}}%
+Menten, Joris, Marleen Boelaert, and Emmanuel Lesaffre. 2008. {``Bayesian Latent Class Models with Conditionally Dependent Diagnostic Tests: A Case Study.''} \emph{Statistics in Medicine} 27 (22): 4469--88. \url{https://doi.org/10.1002/sim.3317}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-nhu2013}{}}%
+Nhu, N. T. Q., D. Heemskerk, D. D. A. Thu, T. T. H. Chau, N. T. H. Mai, H. D. T. Nghia, P. P. Loc, et al. 2013. {``Evaluation of GeneXpert MTB/RIF for Diagnosis of Tuberculous Meningitis.''} \emph{Journal of Clinical Microbiology} 52 (1): 226--33. \url{https://doi.org/10.1128/jcm.01834-13}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-nigrovic2011}{}}%
+Nigrovic, Lise E., Samir S. Shah, and Mark I. Neuman. 2011. {``Correction of Cerebrospinal Fluid Protein for the Presence of Red Blood Cells in Children with a Traumatic Lumbar Puncture.''} \emph{The Journal of Pediatrics} 159 (1): 158--59. \url{https://doi.org/10.1016/j.jpeds.2011.02.038}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-qu1996}{}}%
+Qu, Yinsheng, Ming Tan, and Michael H. Kutner. 1996. {``Random Effects Models in Latent Class Analysis for Evaluating Accuracy of Diagnostic Tests.''} \emph{Biometrics} 52 (3): 797. \url{https://doi.org/10.2307/2533043}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-rcoreteam}{}}%
+R Core Team. 2021. \emph{R: A Language and Environment for Statistical Computing}. Vienna, Austria: R Foundation for Statistical Computing. \url{https://www.R-project.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-schumacher2016}{}}%
+Schumacher, Samuel G., Maarten van Smeden, Nandini Dendukuri, Lawrence Joseph, Mark P. Nicol, Madhukar Pai, and Heather J. Zar. 2016. {``Diagnostic Test Accuracy in Childhood Pulmonary Tuberculosis: A Bayesian Latent Class Analysis.''} \emph{American Journal of Epidemiology} 184 (9): 690--700. \url{https://doi.org/10.1093/aje/kww094}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-stan}{}}%
+Stan Development Team. 2021a. {``{RStan}: The {R} Interface to {Stan}.''} \url{https://mc-stan.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-stan-doc}{}}%
+---------. 2021b. \emph{Stan Modeling Language Users Guide and Reference Manual}. \url{https://mc-stan.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-prior-choice}{}}%
+---------. n.d. {``{Prior Choice Recommendations {\textperiodcentered} stan-dev/stan Wiki {\textperiodcentered} GitHub}.''} Accessed August 12, 2021. \url{https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-stout2018}{}}%
+Stout, Jason E, Yanjue Wu, Christine S Ho, April C Pettit, Pei-Jean Feng, Dolly J Katz, Smita Ghosh, Thara Venkatappa, and Ruiyan Luo. 2018. {``Evaluating Latent Tuberculosis Infection Diagnostics Using Latent Class Analysis.''} \emph{Thorax} 73 (11): 1062--70. \url{https://doi.org/10.1136/thoraxjnl-2018-211715}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-thwaites2002}{}}%
+Thwaites, GE, TTH Chau, K Stepniewska, NH Phu, LV Chuong, DX Sinh, NJ White, CM Parry, and JJ Farrar. 2002. {``Diagnosis of Adult Tuberculous Meningitis by Use of Clinical and Laboratory Features.''} \emph{The Lancet} 360 (9342): 1287--92. \url{https://doi.org/10.1016/s0140-6736(02)11318-3}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-thwaites2004}{}}%
+Thwaites, Guy E., Tran Thi Hong Chau, and Jeremy J. Farrar. 2004. {``Improving the Bacteriological Diagnosis of Tuberculous Meningitis.''} \emph{Journal of Clinical Microbiology} 42 (1): 378--79. \url{https://doi.org/10.1128/jcm.42.1.378-379.2004}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-toft2005}{}}%
+Toft, Nils, Erik Jørgensen, and Søren Højsgaard. 2005. {``Diagnosing Diagnostic Tests: Evaluating the Assumptions Underlying the Estimation of Sensitivity and Specificity in the Absence of a Gold Standard.''} \emph{Preventive Veterinary Medicine} 68 (1): 19--33. \url{https://doi.org/10.1016/j.prevetmed.2005.01.006}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-vanerp2019}{}}%
+van Erp, Sara, Daniel L. Oberski, and Joris Mulder. 2019. {``Shrinkage Priors for Bayesian Penalized Regression.''} \emph{Journal of Mathematical Psychology} 89 (April): 31--50. \url{https://doi.org/10.1016/j.jmp.2018.12.004}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-VanCalster2019}{}}%
+Van Calster, Ben, David J. McLernon, Maarten Van Smeden, Laure Wynants, Ewout W. Steyerberg, Patrick Bossuyt, Gary S. Collins, et al. 2019. {``{Calibration: The Achilles heel of predictive analytics}.''} \emph{BMC Medicine} 17 (1): 1--7. \url{https://doi.org/10.1186/S12916-019-1466-7/TABLES/1}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-vehtari2016}{}}%
+Vehtari, Aki, Andrew Gelman, and Jonah Gabry. 2016. {``Practical Bayesian Model Evaluation Using Leave-One-Out Cross-Validation and WAIC.''} \emph{Statistics and Computing} 27 (5): 1413--32. \url{https://doi.org/10.1007/s11222-016-9696-4}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-white2007}{}}%
+White, Ian R, James Carpenter, Stephen Evans, and Sara Schroter. 2007. {``Eliciting and Using Expert Opinions about Dropout Bias in Randomized Controlled Trials.''} \emph{Clinical Trials} 4 (2): 125--39. \url{https://doi.org/10.1177/1740774507077849}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-ggvenn}{}}%
+Yan, Linlin. 2021. \emph{Ggvenn: Draw Venn Diagram by 'Ggplot2'}. \url{https://CRAN.R-project.org/package=ggvenn}.
+
+\end{CSLReferences}
+
+\hypertarget{appendix-appendix}{%
+\appendix}
+
+
+\hypertarget{appendix-details}{%
+\section{Model Specification Details}\label{appendix-details}}
+
+\hypertarget{latent-class-model}{%
+\subsection{Latent Class Model}\label{latent-class-model}}
+
+For \(1 \leq i \leq 678\), \{\(C \in {0,1}\), \(\theta_i\)\} is the \emph{latent class} and \emph{individual risk of TBM}; \(y^{Smear}_i\), \(y^{Mgit}_i\), and \(y^{Xpert}_i\)\} are the \emph{observed value} for ZN Smear, Culturing, and Xpert, respectively. The marginal joint distribution of observations is as follow:
+
+\[
+\begin{aligned}
+P_i = P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) &= \theta_i * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=1)\\ 
+&\ \ \ \ + (1-\theta_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=0) \\
+&= \theta_i * P(y^{Smear}_i | C=1) * P(y^{Mgit}_i | C=1) * P(y^{Xpert}_i | C=1) \\
+&\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
+\end{aligned} 
+\;\;\;\;(
+2
+)
+\]
+
+Under the assumption of local independence (model 0 and 1), the probabilities of positive test within class only depend on the latent class itself, thus \(P(y^{Smear}_i, y^{Mgit}_i, y^{Xpert}_i|C = c) = P(y^{Smear}_j, y^{Mgit}_j, y^{Xpert}_j|C = c) = const\) for \(c \in {0, 1}\).
+
+For model and 2 and 3, we hypothesised that in the TBM positive class (C=1), test results are additionally dependent and only dependent on latent bacillary burden as in (Schumacher et al. 2016), shared between the three tests and in turn regressed on a set of covariables (denoted as \(X^{(t)}_i\)) using a mixed-effect logistic regression so that formula (2) becomes:
+
+\[
+\begin{aligned}
+P_i = P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) &= \theta_i * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=1, X^{(t)}_i)\\ 
+&\ \ \ \ + (1-\theta_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=0) \\
+&= \theta_i * P(y^{Smear}_i | C=1,X^{(t)}_i) * P(y^{Mgit}_i | C=1,X^{(t)}_i * P(y^{Xpert}_i | C=1, X^{(t)}_i \\
+&\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
+\end{aligned} 
+\;\;\;\;(
+3
+)
+\]
+
+s.t.
+
+\[
+\begin{aligned}
+logit(P^Y_i) &= z^Y_0 + BD_i * b_{BD} \\
+&= z^Y_0 + (X^{(t)}_i)^T * B + RE_i * b_{BD}
+\end{aligned} 
+\;\;\;\;(
+4
+)
+\]
+
+where \(Y=Smear|Mgit|Xpert\) \(z_0\) is the intercept, \(b_BD\) is the coefficient of bacillary burden on test results, \(B\) is the vector of coefficients, and \(RE\) is the individual random effect.
+
+In model 4, we additionally captured the sample-wise fluctuation that cannot be explained by the bacillary burden alone. This fluctuation is regressed by one extra random effect not shared between tests. For numerical stability, we combined the random effect in (4) with this, so that:
+
+\[
+\begin{aligned}
+logit(P(y^{Smear}_i)) &= z^{Smear}_0 + BD_i * b_{BD} + RE2^{Smear}_i * b_{RE2}\\
+&= z^{Smear}_0 + ((X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Smear}_i * b_{RE2} \\
+&= z^{Smear}_0 + ((X^{(t)}_i)^T * B) * b_{BD} + RE^{Smear}_i * b_{RE} \\
+logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + BD_i * b_{BD} + RE2^{Mgit}_i * b_{RE2}\\
+&= z^{Mgit}_0 + ((X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Mgit}_i * b_{RE2} \\
+&= z^{Mgit}_0 + ((X^{(t)}_i)^T * B) * b_{BD} + RE^{Mgit}_i * b_{RE} \\
+logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + BD_i * b_{BD} + RE2^{Xpert}_i * b_{RE2}\\
+&= z^{Xpert}_0 + ((X^{(t)}_i)^T * B + RE_i) * b_{BD} + RE2^{Xpert}_i * b_{RE2}\\
+&= z^{Xpert}_0 + ((X^{(t)}_i)^T * B) * b_{BD} + RE^{Xpert}_i * b_{RE}
+\end{aligned} 
+\;\;\;\;(
+5
+)
+\]
+
+Lastly, for model 5, as an exploratory model, we explored all potential impacts of \(X_t\) on the sample level.
+
+\[
+\begin{aligned}
+logit(P(y^{Smear}_i)) &= z^{Smear}_0 + X^{(t)}_i)^T * B + RE^{Smear}_i * b_{RE} \\
+logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + X^{(t)}_i)^T * B + RE^{Mgit}_i * b_{RE} \\
+logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + X^{(t)}_i)^T * B + RE^{Xpert}_i * b_{RE}
+\end{aligned} 
+\;\;\;\;(
+6
+)
+\]
+
+\(\theta\) was a linear combination of potential predictors, which implies a logistic regression for latent binary outcome.
+
+\[
+logit(\theta) = a_0 + X^T A
+\;\;\;\;(
+7
+)
+\]
+\emph{where X and A are vector of covariates and coefficients.}
+
+\(StudentT\) with \(df=4\) was used as a prior for \(a_0\) as we believed that the intercept is bounded by \([-10,10]\). Let \(A = [a_1,...a_M]^T\) in which M is the number of covariates:
+
+\[
+\begin{aligned}
+a_0 &\sim t_4(0, 6)\\
+a_i &\sim Dist(0, sd_1)
+\end{aligned}
+\]
+*where \(sd_1\) is the penalised scale and \(Dist\) one of is \(Normal\), \(DoubleExponential\), or \(StudentT_4\).
+
+RE was imposed a standard normal distribution as priors. To prevent sign-switching problem (i.e \(RE*b_{RE} = (-RE)*(-b_{RE})\), \(b_RE\) was left-truncated at 0)
+
+\[
+\begin{aligned}
+RE &\sim Normal(0,1)\\r4
+b_{RE} &\sim Dist(0, sd_2)\  s.t.\ b_{RE} > 0
+\end{aligned}
+\]
+
+\emph{where \(sd_2\) is the penalised scale and \(Dist\) one of is \(Normal\), \(DoubleExponential\), or \(StudentT_4\).}
+
+Due to the set-up of model 3 and 4, penalisation on fixed effects was tricky as they were all subsequently multiply by \emph{b\_RE}. The prior scales were hence divided by \(b_RE\) in model 3, and by the average of the three \(b_RE\) in model 4.
+
+\[
+\begin{aligned}
+b_i \sim Dist(0, \frac{sd_2}{b_{RE}})
+\end{aligned}
+\]
+\emph{in which \(B=[b_1, b_2, ..., b_L]\) where L is the number of features contributed to the bacillary burden model.}
+
+We used separated penalty term (represented by separated penalised scale \(sd_1\) and \(sd_2\)) for the prevalence model and bacillary burden model. \(Normal(0, 2.5)\) was used as the prior for both, however.
+
+\[
+sd_{(1,2)} \sim Normal(0, 2.5)
+\]
+
+\hypertarget{appendix-simulation-study}{%
+\section{Simulation study}\label{appendix-simulation-study}}
+
+The purpose of this study is to estimate the perfomance an LCA model in the scenario where manifest variables were partially missing.
+
+In this study, we created \(X, X_2, X_3\) as three covariates for latent class \(C\). For simplicity, \(Y_1, Y_2\), and \(Y_3\) were three manifest variables whose data generation processes are locally independent w.r.t. \(C\). \(Y_3\), however were not completely observed; its observation rate (represented by the binary variable obs\_rate) are different for \(C=0\) and \(C=1\).
+
+The data generation process was done in \textbf{R} version 4.1 (R Core Team 2021) as below:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Misc function}
+\NormalTok{generate\_Y }\OtherTok{=}\NormalTok{ \textbackslash{}(C, probs)\{}
+\NormalTok{  Cs }\OtherTok{=} \FunctionTok{sort}\NormalTok{(}\FunctionTok{unique}\NormalTok{(C))}
+  \FunctionTok{sapply}\NormalTok{(C, \textbackslash{}(c) }\FunctionTok{rbinom}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{, probs[Cs}\SpecialCharTok{==}\NormalTok{c]))}
+\NormalTok{\}}
+
+\CommentTok{\# Sample size}
+\NormalTok{N        }\OtherTok{=} \DecValTok{1000} 
+
+\CommentTok{\# Create data with 3 predictors, X, X2, and X3}
+\NormalTok{X        }\OtherTok{=}  \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{ )}
+\NormalTok{X2       }\OtherTok{=}  \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{ )}
+\NormalTok{X3       }\OtherTok{=} \FunctionTok{rbinom}\NormalTok{(N, }\DecValTok{1}\NormalTok{, .}\DecValTok{3}\NormalTok{)}
+
+\CommentTok{\# Create latent class}
+\NormalTok{probs    }\OtherTok{=} \FunctionTok{plogis}\NormalTok{(}\DecValTok{3}\SpecialCharTok{*}\NormalTok{X}\SpecialCharTok{+}\NormalTok{X2}\SpecialCharTok{+}\DecValTok{5}\SpecialCharTok{*}\NormalTok{X3}\DecValTok{{-}1}\NormalTok{)}
+\NormalTok{C        }\OtherTok{=} \FunctionTok{sapply}\NormalTok{(probs, \textbackslash{}(p) }\FunctionTok{rbinom}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{,p))}
+
+\CommentTok{\# Manifest variables}
+\NormalTok{Y1       }\OtherTok{=} \FunctionTok{generate\_Y}\NormalTok{(C, }\FunctionTok{c}\NormalTok{(.}\DecValTok{1}\NormalTok{ ,.}\DecValTok{3}\NormalTok{))}
+\NormalTok{Y2       }\OtherTok{=} \FunctionTok{generate\_Y}\NormalTok{(C, }\FunctionTok{c}\NormalTok{(.}\DecValTok{01}\NormalTok{,.}\DecValTok{5}\NormalTok{))}
+\NormalTok{Y3       }\OtherTok{=} \FunctionTok{generate\_Y}\NormalTok{(C, }\FunctionTok{c}\NormalTok{(.}\DecValTok{05}\NormalTok{,.}\DecValTok{8}\NormalTok{))}
+
+\CommentTok{\# Simulate class{-}aware missing data for Y3. If obs3==1, Y3 is observed}
+\NormalTok{obs\_rate }\OtherTok{=} \FunctionTok{c}\NormalTok{(.}\DecValTok{1}\NormalTok{, .}\DecValTok{95}\NormalTok{)}
+\NormalTok{obs3     }\OtherTok{=} \FunctionTok{generate\_Y}\NormalTok{(C, obs\_rate)}
+\end{Highlighting}
+\end{Shaded}
+
+The likelihood function of the model shall be
+\[
+Pr(Y_1,Y_2,Y_3,obs_3|X,X_2,X_3) = \prod_{n=1}^N \sum_{c=0}^1 (Pr_n(Y_1,Y_2,Y_3,obs_3|C=1)Pr(C=c|X,X_2,X_3)
+\]
+Consider an individual \(n\): If \(obs3=1\):
+\[
+\begin{aligned}
+Pr(y_1=Y_1^{(n)},y_2=Y_2^{(n)},y_3=Y_3^{(n)},obs_3=1|X_n,X_2^{(n)},X_3^{(n)}) &= \sum_{c=0}^1 \prod_{i=1}^3 Pr(y_i=Y_i^{(n)}|obs_3=1,C=c)Pr(obs_3=1)Pr(C=c)\\
+&= \sum_{c=0}^1 \prod_{i=1}^3 Pr(y_i=Y_i^{(n)}|C=c)Pr(obs_3=1)Pr(C=c)
+\end{aligned}
+\]
+(as \(Y_1, Y_2, Y_3, obs_3\) are conditionally independent on \(C\)).
+
+Similarly, for those whose \(obs_3=0\): \[
+\begin{aligned}
+Pr(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^2 Pr(y_i=Y_i^{(n)}|obs_3=0,C=c)Pr(obs_3=0)Pr(C=c)\\
+&= \sum_{c=0}^1 \prod_{i=1}^2 Pr(y_i=Y_i^{(n)}|C=c)Pr(obs_3=0)Pr(C=c)
+\end{aligned}
+\]
+
+We considered five sets of prior distribution for \(X, X_2, X_3, Y_1, Y_2, Y_3\), and \(obs_3\) corresponding for the level of prior knowledge. The formulation of priors follow the syntax in formula (1).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Weak prior:
+\end{enumerate}
+
+\[
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(0,.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+\]
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Good but conservative knowledge for observation rate, weak prior for manifest variables:
+\end{enumerate}
+
+\[
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+\]
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\item
+  Good but conservative knowledge for observation rate and manifest variables:\\
+  \[
+  \begin{aligned}
+  (1-Spc_{X}) &\sim Logistic(logit(.1),.7) \\
+  (1-Spc_{X_2}) &\sim Logistic(logit(.01),.7) \\
+  (1-Spc_{X_3}) &\sim Logistic(logit(.05),.7) \\
+  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+  obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+  obs\_rate|{C=1} &\sim Logistic(0,.7)
+  \end{aligned}
+  \]
+\item
+  Very strong knowledge for observation rate, weak prior for manifest variables:\\
+  \[
+  \begin{aligned}
+  (1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+  obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+  obs\_rate|{C=1} &\sim Logistic(0,.7)
+  \end{aligned}
+  \]
+\item
+  Very strong knowledge for observation rate and manifest variables:\\
+  \[
+  \begin{aligned}
+  (1-Spc_{X}) &\sim Logistic(logit(.1),.2) \\
+  (1-Spc_{X_2}) &\sim Logistic(logit(.01),.2) \\
+  (1-Spc_{X_3}) &\sim Logistic(logit(.05),.2) \\
+  Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+  obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+  obs\_rate|{C=1} &\sim Logistic(0,.7)
+  \end{aligned}
+  \]
+\end{enumerate}
+
+All models were fitted under the probabilistic language \textsf{Stan} version 2.26 (Stan Development Team 2021b) via \textsf{RStan} inferface (Stan Development Team 2021a).
+
+\begin{Shaded}
+\begin{minted}{stan}
+data {
+  int<lower=1> N;
+  int<lower=0> nX;
+  matrix[N,nX] X;
+  int<lower=0, upper=1> Y1[N];
+  int<lower=0, upper=1> Y2[N];
+  int<lower=0, upper=1> Y3[N];
+  int<lower=0, upper=1> obs3[N];
+  int<lower=0, upper=2> good_prior[2]; 
+  //0: weak, 1:moderate, 2: strong. First position is for obs_rate, second is for tests
+}
+
+parameters {
+  ordered[2] z1;
+  ordered[2] z2;
+  ordered[2] z3;
+  ordered[2] zo;
+  vector[nX] a;
+  real a0;
+}
+
+model{
+  
+  if (good_prior[1]==0){
+    zo[1] ~ logistic(0, .7);
+    zo[2] ~ logistic(0, .7);
+  } else if (good_prior[1]==1) {
+    zo[1] ~ logistic(logit(0.01), .7);
+    zo[2] ~ logistic(logit(0.95), .7);
+  } else {
+    zo[1] ~ logistic(logit(0.01), .25);
+    zo[2] ~ logistic(logit(0.95), .25);
+  }
+  
+  if (good_prior[2]==0){
+    z1    ~ logistic(0,.7);
+    z2    ~ logistic(0,.7);
+    z3    ~ logistic(0,.7);
+  } else if (good_prior[2]==1){
+    z1[1] ~ logistic(-2.19,.7);
+    z2[1] ~ logistic(-4.59,.7);
+    z3[1] ~ logistic(-2.94,.7);
+    z1[2] ~ logistic(0,.7);
+    z2[2] ~ logistic(0,.7);
+    z3[2] ~ logistic(0,.7);
+  } else {
+    z1[1] ~ logistic(-2.19,.2);
+    z2[1] ~ logistic(-4.59,.2);
+    z3[1] ~ logistic(-2.94,.2);
+    z1[2] ~ logistic(0,.7);
+    z2[2] ~ logistic(0,.7);
+    z3[2] ~ logistic(0,.7);
+  }
+  for (n in 1:N){
+      real z = a0 + X[n,:]*a;
+      real p = inv_logit(z);
+      real ll3[2] = 
+        obs3[n] == 1 ? 
+        {bernoulli_logit_lpmf(Y3[n]|z3[1]), bernoulli_logit_lpmf(Y3[n]|z3[2])} :
+        {0, 0};
+      target += log_mix(p,
+        bernoulli_logit_lpmf(obs3[n]|zo[2]) + 
+        bernoulli_logit_lpmf(Y1[n]|z1[2]) + bernoulli_logit_lpmf(Y2[n]|z2[2])+ll3[2],
+        bernoulli_logit_lpmf(obs3[n]|zo[1]) + 
+        bernoulli_logit_lpmf(Y1[n]|z1[1]) + bernoulli_logit_lpmf(Y2[n]|z2[1])+ll3[1]);
+  }
+}
+\end{minted}
+\end{Shaded}
+
+\end{document}

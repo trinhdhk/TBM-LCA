@@ -1,0 +1,109 @@
+digraph imp_model{
+  rankdir = TB;
+  resolution=500;
+  compound=true;
+  graph[fontname="CMU Serif", concentrate=true];
+  node[fontname = "CMU Serif"];
+  edge[fontname = "CMU Serif"];
+  
+  subgraph cluster_clinsymp{
+    rank=same;
+    label = "TB-suggested symptoms";
+    bgcolor = lightgrey;
+    node[style="filled,dashed" fillcolor=white];
+    Cough[label="Coughing"];
+    subgraph lowerz{
+      peripheries=0;
+      Nsweats[label="Night Sweats"];
+      WLoss[label="Weight Loss"];
+    }
+  }
+  
+  subgraph cluster_motor{
+    rank=same;
+    label = "Local motor deficit";
+    bgcolor = lightgrey;
+    node[style="filled,dashed" fillcolor=white];
+    Hemi[label="Hemiplegia"];
+    subgraph lowerz{
+      peripheries=0;
+      Para[label="Paraplegia"];
+      Tetra[label="Tetraplegia"];
+    }
+  }
+  
+  subgraph cluster_gcs{
+    label = "Loss of Glagow Coma Score";
+    bgcolor = lightgrey;
+    node[style="filled,dashed" fillcolor=white];
+    LoGCSV; LoGCSM; LoGCSE;
+  }
+  
+  subgraph cluster_bld{
+    # peripheries=0;
+    bgcolor = lightgrey;
+    rank=same;
+    node[style="filled,dashed" fillcolor=white];
+    subgraph zz{
+      BldLymp[label="Blood Lymphocytes"];
+      BldNeu[label="Blood Neutrophils"];
+    }
+  }
+  
+  subgraph cluster_csf{
+    rank=same;
+    bgcolor = lightgrey;
+    node[style=filled fillcolor=white];
+    subgraph glu{
+      peripheries=0;
+      CsfGlu;
+      CsfLymp;
+    }
+    BldGlu;
+    CsfNeu;
+    subgraph bio{
+      peripheries=0;
+      CsfPro;
+      CsfLac;
+    }
+  }
+    
+  HIV[label="HIV Status", shape="box"];
+  Age[label="Age", shape="box"];
+  TBDays[label="Illness days", shape="box"]; 
+  BldGlu[label="Blood Glucose", shape="box"];
+  CsfGlu[label="CSF Glucose", shape="box"]; 
+  CsfLymp[label="CSF Lymphocytes", shape="box"];
+  CsfNeu[label="CSF Neutrophils", shape="box"];
+  CsfPro[label="CSF Protein", shape="box"];
+  CsfLac[label="CSF Lactate", shape="box"];
+  # GCS[label="Glasgow Coma Score", shape="box"];
+  
+  HIV -> {Age TBDays};
+  HIV -> Hemi[lhead=cluster_motor];
+  HIV -> Cough[lhead=cluster_clinsymp];
+  BldNeu -> HIV;
+  BldLymp -> HIV;
+  
+  BldLymp -> BldNeu[dir=both];
+  
+  TBDays -> Cough[lhead=cluster_clinsymp];
+  TBDays -> Hemi[lhead=cluster_motor];
+  
+  Cough -> Nsweats[dir=both];
+  Nsweats -> WLoss[dir=both];
+  WLoss -> Cough[dir=both];
+  Hemi -> Para[dir=both];
+  Para -> Tetra[dir=both]; 
+  Tetra -> Hemi[dir=both];
+  CsfGlu -> BldGlu[dir=both];
+  CsfGlu -> CsfLymp[dir=both];
+  CsfLymp -> CsfNeu[dir=both];
+  CsfNeu ->CsfPro[dir=both];
+  CsfPro -> CsfLac[dir=both];
+  BldGlu -> CsfLac[dir=both];
+
+  LoGCSV -> LoGCSE[dir=both];
+  LoGCSE -> LoGCSM[dir=both];
+  LoGCSM -> LoGCSV[dir=both];
+}  

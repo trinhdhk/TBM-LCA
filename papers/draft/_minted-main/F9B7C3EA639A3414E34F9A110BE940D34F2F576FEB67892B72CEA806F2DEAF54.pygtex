@@ -1,0 +1,66 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{data} \PYG{p}{\PYGZob{}}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{1}\PYG{o}{\PYGZgt{}} \PYG{n}{N}\PYG{p}{;}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{0}\PYG{o}{\PYGZgt{}} \PYG{n}{nX}\PYG{p}{;}
+  \PYG{k+kt}{matrix}\PYG{p}{[}\PYG{n}{N}\PYG{p}{,}\PYG{n}{nX}\PYG{p}{]} \PYG{n}{X}\PYG{p}{;}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{upper}\PYG{p}{=}\PYG{l+m+mf}{1}\PYG{o}{\PYGZgt{}} \PYG{n}{Y1}\PYG{p}{[}\PYG{n}{N}\PYG{p}{];}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{upper}\PYG{p}{=}\PYG{l+m+mf}{1}\PYG{o}{\PYGZgt{}} \PYG{n}{Y2}\PYG{p}{[}\PYG{n}{N}\PYG{p}{];}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{upper}\PYG{p}{=}\PYG{l+m+mf}{1}\PYG{o}{\PYGZgt{}} \PYG{n}{Y3}\PYG{p}{[}\PYG{n}{N}\PYG{p}{];}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{upper}\PYG{p}{=}\PYG{l+m+mf}{1}\PYG{o}{\PYGZgt{}} \PYG{n}{obs3}\PYG{p}{[}\PYG{n}{N}\PYG{p}{];}
+  \PYG{k+kt}{int}\PYG{o}{\PYGZlt{}}\PYG{k}{lower}\PYG{p}{=}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{k}{upper}\PYG{p}{=}\PYG{l+m+mf}{2}\PYG{o}{\PYGZgt{}} \PYG{n}{good\PYGZus{}prior}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{];}
+  \PYG{c+c1}{//1: weak, 2:moderate, 3: strong. First position is for obs\PYGZus{}rate, second is for tests}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kn}{parameters} \PYG{p}{\PYGZob{}}
+  \PYG{k+kt}{ordered}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{n}{z1}\PYG{p}{;}
+  \PYG{k+kt}{ordered}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{n}{z2}\PYG{p}{;}
+  \PYG{k+kt}{ordered}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{n}{z3}\PYG{p}{;}
+  \PYG{k+kt}{vector}\PYG{p}{[}\PYG{n}{nX}\PYG{p}{]} \PYG{n}{a}\PYG{p}{;}
+  \PYG{k+kt}{real} \PYG{n}{a0}\PYG{p}{;}
+  \PYG{k+kt}{ordered}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{n}{zo}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+\PYG{k+kn}{model}\PYG{p}{\PYGZob{}}
+
+  \PYG{k}{if} \PYG{p}{(}\PYG{n}{good\PYGZus{}prior}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]}\PYG{o}{==}\PYG{l+m+mf}{0}\PYG{p}{)\PYGZob{}}
+    \PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,} \PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,} \PYG{l+m+mf}{.7}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{good\PYGZus{}prior}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]}\PYG{o}{==}\PYG{l+m+mf}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{n+nb}{logit}\PYG{p}{(}\PYG{l+m+mf}{0.01}\PYG{p}{),} \PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{n+nb}{logit}\PYG{p}{(}\PYG{l+m+mf}{0.95}\PYG{p}{),} \PYG{l+m+mf}{.7}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+    \PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{n+nb}{logit}\PYG{p}{(}\PYG{l+m+mf}{0.01}\PYG{p}{),} \PYG{l+m+mf}{.25}\PYG{p}{);}
+    \PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{n+nb}{logit}\PYG{p}{(}\PYG{l+m+mf}{0.95}\PYG{p}{),} \PYG{l+m+mf}{.25}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{k}{if} \PYG{p}{(}\PYG{n}{good\PYGZus{}prior}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]}\PYG{o}{==}\PYG{l+m+mf}{0}\PYG{p}{)\PYGZob{}}
+    \PYG{n}{z1} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z2} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z3} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{good\PYGZus{}prior}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]}\PYG{o}{==}\PYG{l+m+mf}{1}\PYG{p}{)\PYGZob{}}
+    \PYG{n}{z1}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{2.19}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z2}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{4.59}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z3}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{2.94}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z1}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z2}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z3}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+    \PYG{n}{z1}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{2.19}\PYG{p}{,}\PYG{l+m+mf}{.2}\PYG{p}{);}
+    \PYG{n}{z2}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{4.59}\PYG{p}{,}\PYG{l+m+mf}{.2}\PYG{p}{);}
+    \PYG{n}{z3}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{2.94}\PYG{p}{,}\PYG{l+m+mf}{.2}\PYG{p}{);}
+    \PYG{n}{z1}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z2}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+    \PYG{n}{z3}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{\PYGZti{}}\PYG{+w}{ }\PYG{n+nb}{logistic}\PYG{p}{(}\PYG{l+m+mf}{0}\PYG{p}{,}\PYG{l+m+mf}{.7}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+  \PYG{k}{for} \PYG{p}{(}\PYG{n}{n} \PYG{k}{in} \PYG{l+m+mf}{1}\PYG{o}{:}\PYG{n}{N}\PYG{p}{)\PYGZob{}}
+      \PYG{k+kt}{real} \PYG{n}{z} \PYG{o}{=} \PYG{n}{a0} \PYG{o}{+} \PYG{n}{X}\PYG{p}{[}\PYG{n}{n}\PYG{p}{,}\PYG{o}{:}\PYG{p}{]}\PYG{o}{*}\PYG{n}{a}\PYG{p}{;}
+      \PYG{k+kt}{real} \PYG{n}{p} \PYG{o}{=} \PYG{n+nb}{inv\PYGZus{}logit}\PYG{p}{(}\PYG{n}{z}\PYG{p}{);}
+      \PYG{k+kt}{real} \PYG{n}{ll3}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{obs3}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mf}{1} \PYG{o}{?} \PYG{p}{\PYGZob{}}\PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{Y3}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{z3}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]),} \PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{Y3}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{z3}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{])\PYGZcb{}} \PYG{o}{:} \PYG{p}{\PYGZob{}}\PYG{l+m+mf}{0}\PYG{p}{,} \PYG{l+m+mf}{0}\PYG{p}{\PYGZcb{};}
+      \PYG{k}{target +=} \PYG{n+nb}{log\PYGZus{}mix}\PYG{p}{(}\PYG{n}{p}\PYG{p}{,}
+      \PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{obs3}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{])} \PYG{o}{+} \PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{Y1}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{z1}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{])}\PYG{o}{+}\PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{Y2}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{z2}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{])}\PYG{o}{+}\PYG{n}{ll3}\PYG{p}{[}\PYG{l+m+mf}{2}\PYG{p}{],}
+      \PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{obs3}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{zo}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{])} \PYG{o}{+} \PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{Y1}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{z1}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{])}\PYG{o}{+}\PYG{n+nb}{bernoulli\PYGZus{}logit\PYGZus{}lpmf}\PYG{p}{(}\PYG{n}{Y2}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]|}\PYG{n}{z2}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{])}\PYG{o}{+}\PYG{n}{ll3}\PYG{p}{[}\PYG{l+m+mf}{1}\PYG{p}{]);}
+
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

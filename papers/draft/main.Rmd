@@ -136,29 +136,29 @@ fig_svg <- cowplot::ggdraw() +
 plot(fig_svg)
 ```
 
-This analysis's main objective are to *(1)* re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; *(2)* make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
+To address the aforementioned problem, this analysis's main objective are to *(1)* re-estimate the latent performances, namely sensitivities and specificities, of current TBM confirmatory methods - ZN Smear, Xpert, and mycobacterial culture - against actual TBM status, taking into account the imperfection in current diagnosis; *(2)* make a re-adjustment to the the diagnosis scoring system, basing on statistical model, providing estimations of individual chance of having TBM.
 
 As secondary objectives, our analysis also aim to build a simplified scoring system which only needs clinical and demographic information but has the capacity to approximate the full system's output - so that TBM risk can be calculated at admission. We also estimate a latent representation of individual bacillary burden given that they get TBM which may impact the tests results.
 
 # Methods
 
-## Population to analyse
+## Participants
 
-Data used for this analysis were extracted from an observational study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections [@thwaites2002]. Participants for this analysis were enrolled between 29th August 2017 and 22nd January 2021. Enrolled participants to the prospective observational study were at least 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee [@donovan2020]. Specifically for the analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission.
+Data used for this analysis were extracted from an observational study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections [@thwaites2002]. This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee [@donovan2020]. All participants were enrolled between 29th August 2017 and 22nd January 2021. Inclusion criteria included a minimum age of 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). Specifically for this analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission. Overall patient characteristics, with respects to test results, are shown in \@ref(tab:test-bl-tbl). 
 
 ## Data collection and testing procedures
 
-Demographic data and relevant medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. However, all patients that were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD were tested for HIV. Patients with either a known HIV positive status, or a positive HIV test result, were considered HIV positive. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. CSF was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were Ziehl--Neelsen staining and smear (ZN Smear), mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT), and Xpert or Xpert MTB/RIF Ultra (XpertUltra). Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data [@donovan2020], Xpert and XpertUltra were considered the same in this analysis. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
+For all participants, demographic data and medical history were recorded. HIV testing was performed on a case-by-case basis by the treating clinician. However, patients that were to enrol in a subsequent Tuberculous meningitis randomised controlled trial also conducted at HTD were all tested for HIV. Patients with either a known HIV positive status, or a positive HIV test result, were considered HIV positive. Patients underwent clinical examination and laboratorial investigations according to main study protocol, including: blood test, sputum, and lumbar puncture, unless contra-indicated. Cerebro-spinal fluid (CSF) was obtained by lumbar puncture, with CSF white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate routinely measured. Optimally 6mls CSF was used for mycobacterial testing unless less CSF was available (in which case mycobacterial testing was still performed). Confirmatory tests for TBM performed on CSF and used for this analysis were Ziehl--Neelsen staining and smear (ZN Smear), mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT), and Xpert or Xpert MTB/RIF Ultra (XpertUltra). Given Xpert and XpertUltra were considered diagnostically comparable in a recent comparative study from this centre using a subgroup of these data [@donovan2020], Xpert and XpertUltra were considered the same in this analysis and, are both denoted as Xpert. Confirmatory mycobacterial testing was performed if TBM was suspected by the treating clinician.
 
 Methods of CSF processing have been described elsewhere [@nhu2013, @donovan2020], however, briefly; CSF samples were centrifuged at 3000g for 15 minutes, and most of the CSF supernatant was removed. The CSF deposit was resuspended in 500µL of remaining supernatant, with this resuspended pellet then used for ZN smear (100µL), MGIT (200µL), and either Xpert or XpertUltra (200 µL).
 
-All patients received appropriate anti-TB chemotherapy regimens according to national and local guidelines, depending on the diagnosis, without any interference from the study. At the time of discharge or death, all patients received a final diagnosis. If at least one of ZN Smear, Xpert, Xpert Ultra, or MGIT, was positive at any time during the follow-up, the patient would be considered confirmed TBM; otherwise, if TBM was clinically suspected and treated, with confirmatory microbiological tests negative, the patient would be considered suspected TBM. If the patient recovered without anti-TB chemotherapy they would be reassigned to another diagnosis (i.e. not TBM).
+All patients received appropriate anti-TB chemotherapy regimens according to national and local treatment guidelines, depending on the diagnosis, without any interference from the study. At the time of discharge or death, all patients received a final diagnosis. If at least one of ZN Smear, Xpert, Xpert Ultra, or MGIT, was positive at any time during the follow-up, the patient would be considered confirmed TBM; otherwise, if TBM was clinically suspected and treated, with confirmatory microbiological tests negative, the patient would be considered suspected TBM. If the patient recovered without anti-TB chemotherapy they would be reassigned to another diagnosis (i.e. not TBM).
 
 In the instance of repeat CSF sampling (performed based on clinical need), only the first samples with at least 3mls of collect CSF collected not later than the first week since admission were used. Results of haematological and biochemical parameters, and of ZN Smear, Xpert, Xpert Ultra, and MGIT, were taken from one same CSF samples (in addition to the paired blood glucose).
 
-## Statistical Model
+## Statistical model
 
-In the model, three aforementioned TBM confirmation tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. Linear predictors for the latent class prevalence were *history and demographic information* (HIV status, Age, Past noticeable TB contact), *clinical signs and symptoms* (Days from onset to admission, Systemic symptoms suggestive of tuberculosis, Focal neurological deficit, Cranial nerve palsy, Glasgow Coma Score - GCS), *Imaging chest data* (Pulmonary TB, Miliary TB), *CSF criteria* (lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and *Cryptococcus Antigen/Indian Ink* in combination.
+In the model, three aforementioned TBM confirmatory tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. The target latent condition is the actual disease status (TBM or not TBM). All three tests are detection tool via direct visualisation under microscope (ZN Smear), via their DNA (Xpert), or via grown culture (MGIT). Linear predictors for the latent class were *history and demographic information* (HIV status, Age, Past noticeable TB contact), *clinical signs and symptoms* (days from onset to admission, systemic symptoms suggestive of tuberculosis, focal neurological deficit, cranial nerve palsy, Glasgow Coma Scale - GCS), *Imaging chest data* (Pulmonary TB, Miliary TB), *CSF criteria* (lymphocyte count, neutrophil count, oeosinophil count, erythrocyte count, glucose - with corresponding blood glucose, protein, lactate), and *Cryptococcus Antigen/Indian Ink* in combination.
 
 ### Data pre-processing
 
@@ -213,24 +213,24 @@ $$
 ```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different features to TBM prevalence and patients' mycobacillary burden for each model mentioned in table \\@ref(tab:model-archs), based on background knowledge. Cell values are the expected association and how firm that expectation is; empty cells imply no association", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
   ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
-  'Age'                            , 'Positive, weak'  , ''                  ,
-  'HIV Status'                     , 'Positive, strong', 'Positive, weak'    ,
-  'Past TB contact'                , 'Positive, weak'  , ''                  ,
-  'TB-suggested symptoms'          , 'Positive, weak'  , ''                  ,
-  'Local motor deficit'            , 'Positive, weak'  , ''                  ,         
-  'Cranial nerve palsy'            , 'Positive, weak'  , ''                  ,
-  'Days from onset'                , 'Positive, weak'  , ''                  ,
-  'PTB/X-Ray'                      , 'Positive, weak'  , ''                  ,
-  'MTB/X-Ray'                      , 'Positive, strong', ''                  ,
-  'GCS'                            , 'Positive, weak'  , ''                  ,
-  'Cryptococcus Antigen/Indian Ink', 'Negative, strong', ''                  ,
-  'Blood Glucose'                  , 'Negative, weak'  , ''                  ,
-  'CSF Glucose'                    , 'Negative, weak'  , 'Unknown, weak'     ,
-  'CSF Lymphocyte Count'           , 'Positive, weak'  , 'Negative, weak'    ,
-  'CSF Total While cell Count'     , 'Concave quadratic^[Risk of TBM increases if White Cell count is intermidiately high], weak' , 'Positive, weak'    ,
-  'CSF Protein'                    , 'Positive, weak'  , 'Positive, weak'    ,
-  'CSF Lactate'                    , 'Positive, weak'  , 'Positive, weak'    ,
-  'CSF Oeosinophil Count'          , 'Negative, strong', ''                  ,
+  'Age'                            , '+, weak'  , ''                  ,
+  'HIV Status'                     , '+, strong', '+, weak'    ,
+  'Past TB contact'                , '+, weak'  , ''                  ,
+  'TB-suggested symptoms'          , '+, weak'  , ''                  ,
+  'Local motor deficit'            , '+, weak'  , ''                  ,         
+  'Cranial nerve palsy'            , '+, weak'  , ''                  ,
+  'Days from onset'                , '+, weak'  , ''                  ,
+  'PTB/X-Ray'                      , '+, weak'  , ''                  ,
+  'MTB/X-Ray'                      , '+, strong', ''                  ,
+  'GCS'                            , '+, weak'  , ''                  ,
+  'Cryptococcus Antigen/Indian Ink', '-, strong', ''                  ,
+  'Blood Glucose'                  , '-, weak'  , ''                  ,
+  'CSF Glucose'                    , '-, weak'  , 'Unknown, weak'     ,
+  'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
+  'CSF Total While cell Count'     , 'ᴖ^[Risk of TBM increases if White Cell count is in a bounded range], weak' , '+, weak'    ,
+  'CSF Protein'                    , '+, weak'  , '+, weak'    ,
+  'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
+  'CSF Oeosinophil Count'          , '-, strong', ''                  ,
   'CSF RBC Count'                  , 'Unknown, weak'   , ''                 
 ) |>
   flextable::flextable() |>

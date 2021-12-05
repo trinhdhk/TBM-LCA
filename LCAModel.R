@@ -145,7 +145,7 @@ LCAModel <- R6::R6Class(
       method = c("loess", "splines"),
       C = !self$recipe$data_19EI$other_dis_dx,
       span = .75,
-      knots = 5,
+      knots = 3,
       est = c("mean", "median"),
       plot_rep = FALSE, theme = ggplot2::theme_bw,
       ...

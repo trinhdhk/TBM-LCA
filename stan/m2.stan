@@ -38,7 +38,7 @@ parameters {
 #include includes/parameters/a.stan
   real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
-  real<lower=0> b_RE_raw;
+  vector<lower=0>[1] b_RE_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 
@@ -53,7 +53,7 @@ transformed parameters {
 #include includes/transform_parameters/a_variable_declaration.stan
   real b_HIV;
   vector[nB] b;
-  real<lower=0> b_RE;
+  vector<lower=0>[1] b_RE;
 #include includes/impute_model/transform_parameters.stan
   {
     #include includes/transform_parameters/penalty.stan
@@ -93,9 +93,9 @@ model {
           real theta = inv_logit(pat_thetas[2,i]);
           
           real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b, Xc_imp[n, B]);
-          real z_Smear_RE = z_Smear[2] + b_RE*(bac_load + RE[n]);
-          real z_Mgit_RE  = z_Mgit[2]  + b_RE*(bac_load + RE[n]);
-          real z_Xpert_RE = z_Xpert[2] + b_RE*(bac_load + RE[n]);
+          real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
+          real z_Mgit_RE  = z_Mgit[2]  + b_RE[1]*(bac_load + RE[n]);
+          real z_Xpert_RE = z_Xpert[2] + b_RE[1]*(bac_load + RE[n]);
           
           log_liks[i] = logprob_theta + log_mix(theta, 
             bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
@@ -110,9 +110,9 @@ model {
           vector[2] logprob_Y = pat_bac_load[1];
           vector[2] bac_load = pat_bac_load[2] + dot_product(b, Xc_imp[n, B]);
           
-          vector[2] z_Smear_RE = z_Smear[2] + b_RE*(bac_load + RE[n]);
-          vector[2] z_Mgit_RE  = z_Mgit[2]  + b_RE*(bac_load + RE[n]);
-          vector[2] z_Xpert_RE = z_Xpert[2] + b_RE*(bac_load + RE[n]);
+          vector[2] z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
+          vector[2] z_Mgit_RE  = z_Mgit[2]  + b_RE[1]*(bac_load + RE[n]);
+          vector[2] z_Xpert_RE = z_Xpert[2] + b_RE[1]*(bac_load + RE[n]);
           
           log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
             logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
@@ -130,9 +130,9 @@ model {
       real theta = inv_logit(a0 + dot_product(a, X));
       
       real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, Xc_imp[n, B]);
-      real z_Smear_RE = z_Smear[2] + b_RE*(bac_load + RE[n]);
-      real z_Mgit_RE  = z_Mgit [2] + b_RE*(bac_load + RE[n]);
-      real z_Xpert_RE = z_Xpert[2] + b_RE*(bac_load + RE[n]);
+      real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
+      real z_Mgit_RE  = z_Mgit [2] + b_RE[1]*(bac_load + RE[n]);
+      real z_Xpert_RE = z_Xpert[2] + b_RE[1]*(bac_load + RE[n]);
       
       target += log_mix(theta, 
       bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
@@ -162,9 +162,9 @@ generated quantities {
       RE_all[which(keptin)] = RE;
       for (n in which_not(keptin)) RE_all[n] = normal_rng(0, 1);
       bac_load = b_HIV*X[:,1] + X[:, B2]*b + RE_all;
-      vector[N_all] z_Smear_RE = z_Smear[2] + b_RE*bac_load;
-      vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_RE*bac_load;
-      vector[N_all] z_Xpert_RE = z_Xpert[2] + b_RE*bac_load;
+      vector[N_all] z_Smear_RE = z_Smear[2] + b_RE[1]*bac_load;
+      vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_RE[1]*bac_load;
+      vector[N_all] z_Xpert_RE = z_Xpert[2] + b_RE[1]*bac_load;
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
       p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);

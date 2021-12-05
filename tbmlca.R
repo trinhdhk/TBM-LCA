@@ -42,7 +42,8 @@ args <-
   add_argument("--quad-RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
-  add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf)
+  add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf) %>%
+  add_argument("--sensitivity-case", help = "Case to perform sensitivity analysis, 1 is Joe, 2 is Dr.Nghia, 3 is Guy", default=NA_integer_, nargs=1)
 argparser <- parse_args(args)
 
 # Functions to create folds
@@ -146,6 +147,11 @@ with(
     recipe$penalty_family = penalty_family
     # Create results env
     # results <- new.env()
+    # If sensitivity case = 2 (Dr. Nghia), impute HIV = 0
+    if (isTRUE(sensitivity_case==2)){
+      recipe$Xd[,1] = ifelse(is.na(recipe$Xd[,1]), 0, recipe$Xd[,1])
+      recipe$obs_Xd[,1] = 1
+    }
     
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
@@ -220,7 +226,7 @@ with(
       "id_a0", "id_a", "id_sigma",
       if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
-    if (model_no >= 3) pars <- c(pars, "b")
+    if (model_no > 1) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
     if (is_pca) pars <- c(pars, "L_csf")
     # if (model_no == 5) pars <- c(pars, "b_cs")

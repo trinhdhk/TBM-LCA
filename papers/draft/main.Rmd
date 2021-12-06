@@ -522,11 +522,11 @@ digraph imp_model{
 }  
 ```
 
-#### Predictors
+<!-- #### Predictors -->
 
-In the analysis, most missingness were assumed to be Missing At Random (MAR) and imputed in one step within the main model, unless explicitly stated (table \@ref(tab:missing-handling)). Composite predictors such as *TB-suggested symptoms* and *Glasgow Coma Score (GCS)* were imputed by corresponding compartments; and potentially correlated variables were grouped and imputed together (as in *CSF biomakers*' case). Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Continuous predictors are imputed using Multivariate Linear Regression<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly -->.
+<!-- In the analysis, most missingness were assumed to be Missing At Random (MAR) and imputed in one step within the main model, unless explicitly stated (table \@ref(tab:missing-handling)). Composite predictors such as *TB-suggested symptoms* and *Glasgow Coma Score (GCS)* were imputed by corresponding compartments; and potentially correlated variables were grouped and imputed together (as in *CSF biomakers*' case). Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Continuous predictors are imputed using Multivariate Linear Regression<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly -->. -->
 
-As HIV tests were not mandatory in the main study, HIV status itself was also incomplete, but their chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are also MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as donors.
+<!-- As HIV tests were not mandatory in the main study, HIV status itself was also incomplete, but their chance of missingness were mostly dependent on whether or not the patients were to enrol in a TBM study. Hence, it is safely to assume that HIV status are also MAR. Accordingly, we imputed HIV using probit regression, with Blood Lymphocyte and Blood Neutrophil counts as donors. -->
 
 In the case where missing values were imputed, figure \@ref(fig:impute-model) depicts how those were sampled, together with their potential donors. Note that due to technical limitation, imputed RGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
 

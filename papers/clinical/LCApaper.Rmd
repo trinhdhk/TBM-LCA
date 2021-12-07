@@ -155,11 +155,13 @@ All patients received appropriate anti-TB chemotherapy regimens according to nat
 
 In the instance of repeat CSF sampling (performed based on clinical need), only the first samples with at least 3mls of collect CSF collected not later than the first week since admission were used. Results of haematological and biochemical parameters, and of ZN Smear, Xpert, Xpert Ultra, and MGIT, were taken from one same CSF samples (in addition to the paired blood glucose).
 
-## Statistical model
+## Statistical analysis
 
-We conducted a Bayesian Latent Class Model in which three aforementioned TBM confirmatory tests (ZN Smear, MGIT, and Xpert) were used as manifest variables and target latent condition is the actual disease status (TBM or not TBM). All three tests are detection tool via direct visualisation under microscope (ZN Smear), via their DNA (Xpert), or via grown culture (MGIT). Linear predictors for the latent class were chosen according to background knowledge of potential risk factors [@marais2010] and are summarised in table \@ref(tab:predictor-tab). We added three extra counter-predictors: (1) CSF oeosinophil count - a strong bio-marker for oeosinophilic meningitis, a condition usually caused by parasitic helminths; (2) Cryptococcus Antigen/Indian Ink - a confirmatory test for parasitic infection; and (3) CSF erythrocyte count - an independent marker for traumatic lumbar puncture, in which case we also made correction to white cell counts and biochemical features, as suggested by [@greenberg2008; @nigrovic2011; @mehl1986]. Details of model design were summarised in appendix \@ref(appendix-model).
+### Latent class regression model
 
-```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different features to TBM prevalence and patients' mycobacillary burden for each model mentioned in table \\@ref(tab:model-archs), based on background knowledge. Cell values are the expected association and how firm that expectation is; empty cells imply no association", tab.id = "predictor-tab", label='tab0'}
+We conducted a Bayesian Latent Class Model in which three aforementioned TBM confirmatory tests (ZN Smear, MGIT, and Xpert) were used as manifest variables and target latent condition is the actual disease status (TBM or not TBM). All three tests are detection tool via direct visualisation under microscope (ZN Smear), via their DNA (Xpert), or via grown culture (MGIT). Linear predictors for the latent class were chosen according to background knowledge of potential risk factors [@marais2010] and are summarised in table \@ref(tab:predictor-tab). We added three extra counter-predictors: (1) CSF oeosinophil count - a strong bio-marker for oeosinophilic meningitis, a condition usually caused by parasitic helminths; (2) Cryptococcus Antigen/Indian Ink - a confirmatory test for parasitic infection; and (3) CSF erythrocyte count - an independent marker for traumatic lumbar puncture, in which case we also made correction to white cell counts and biochemical features, as suggested by [@greenberg2008; @nigrovic2011; @mehl1986]. Details of model design were summarised in the supplementary document.
+
+```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different features to TBM prevalence and patients' mycobacillary burden for each model mentioned in table \\@ref(tab:model-archs), based on background knowledge. Cell values are the expected association and level of confidence is; empty cells imply no association", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
   ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
   'Age'                            , '+, weak'  , ''                  ,
@@ -174,23 +176,18 @@ tibble::tribble(
   'GCS'                            , '+, weak'  , ''                  ,
   'Cryptococcus Antigen/Indian Ink', '-, strong', ''                  ,
   'Blood Glucose'                  , '-, weak'  , ''                  ,
-  'CSF Glucose'                    , '-, weak'  , 'Unknown, weak'     ,
+  'CSF Glucose'                    , '-, weak'  , '?, weak'     ,
   'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
-  'CSF Total While cell Count'     , '^^[Risk of TBM increases if White Cell count is in a bounded range], weak' , '+, weak'    ,
+  'CSF Total While cell Count'     , '+-^[Risk of TBM peaks with intermediate CSF white cell count], weak' , '+, weak'    ,
   'CSF Protein'                    , '+, weak'  , '+, weak'    ,
   'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
   'CSF Oeosinophil Count'          , '-, strong', ''                  ,
-  'CSF RBC Count'                  , 'Unknown, weak'   , ''                 
+  'CSF RBC Count'                  , '?, weak'   , ''                 
 ) |>
   flextable::flextable() |>
   ftExtra::colformat_md(2) |>
-  # flextable::add_footer_row(values='"?" predictors were included in some models', colwidths = 3) |>
-  # flextable::add_footer_row(values='"0" predictors were not included in any model', colwidths = 3) |>
-  # flextable::add_footer_row(values='"++" predictors were strongly believed to be positive risk factors', colwidths=3) |>
-  # 
-  # flextable::add_footer_row(values='"+", "+/-", and "-" reflects prior believes, but no difference was imposed in the model', colwidths=3) |>
-  # flextable::merge_at(j = 1:3, part = "footer") |>
-  # flextable::set_caption('Contribution of different variables in each model') |>
+  # flextable::footnote(i=16, j=2, 
+    # value=flextable::as_paragraph('')) |>
   flextable::width(j=1, width=2) |>
   flextable::width(j=2:3, width=1.2) |>
   flextable::theme_zebra() |>
@@ -226,7 +223,7 @@ tibble::tribble(
   flextable::width(j=2, width=2)
 ```
 
-Compared to the uniform case definition, we also made a change to **Past TB contact**, in which we hypothesise that by editing the original question from "Past contact with TB patients within the past recent year" into "Past *noticeable* contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the analysed data, no brain imaging was taken, hence not included.
+Compared to the uniform case definition, we also made a change to *Past TB contact*, in which we hypothesise that by editing the original question from "Past contact with TB patients within the past recent year" into "Past *noticeable* contact with TB patients within the past recent year", we would be able to imply all "Unknown" answer as a "No". In the analysed data, no brain imaging was taken, hence not included.
 
 ```{r model-archs, tab.cap="Model architectures and extensions", tab.id="model-archs"}
 model_archs <-
@@ -252,7 +249,7 @@ model_archs |>
   flextable::theme_zebra()
 ```
 
-Basic desgins for all models is shown in figure \@ref(fig:skeleton-model). Similar to @schumacher2016, we used a stepwise approach where we incrementally added up more flexibility and lifted more constraints (\@ref(tab:model-archs)), whereas technical formulations are detailed in appendix \@ref(appendix-details). Note that only CSF White Cell count was modeled via a quadratic effect, as suggested by @marais2010.
+Basic desgins for all models is shown in figure \@ref(fig:skeleton-model). Similar to @schumacher2016, we used a stepwise approach where we incrementally added up more flexibility and lifted more constraints (\@ref(tab:model-archs)). Note that only CSF White Cell count was modeled via a quadratic effect, as suggested by @marais2010.
 
 ```{dot skeleton-model, fig.show="hold", out.width="100%", out.height="5cm",  fig.align="center", fig.cap="Model skeleton. Bacillary Burden is only available in model 2+", fig.id="skeleton-model"}
 
@@ -297,15 +294,11 @@ digraph m1{
 
 ```
 
-By protocol, most patients with very high chance of or evidently diagnosed with different diseases were not tested with TBM confirmation assays,wWe assumed that patients who had no TBM confirmation tests are all negative, because these tests are assumed to have high specificity [@nhu2013, @heemskerk2018]. Missing predictors were handled case by case basing on their expected missing mechanisms (table \@ref(tab:missing-handling)). In case they were expected to be Missing At Random (MAR), we performed a model-based imputation. We detailed of our imputation strategy in append \ref(appendix-imputation).
+By protocol, most patients with very high chance of or evidently diagnosed with different diseases were not tested with TBM confirmation assays, we assumed that patients who had no TBM confirmation tests are all negative, because these tests are assumed to have high specificity [@nhu2013, @heemskerk2018]. Missing predictors were handled case by case basing on their expected missing mechanisms (table \@ref(tab:missing-handling)). In case they were expected to be Missing At Random (MAR), we performed a model-based imputation.
 
-For TBM confirmatory tests sensitivity and specificity, we chose priors so that they could cover past estimations from different studies involving Vietnamese cohort [@thwaites2004; @nhu2013; @heemskerk2018] (figure \@ref(fig:mv-priors)). Positive Rate (FPR = 1-Specificity) and weakly informative priors for True Positive Rate (TPC = Sensitivity) on the logit scale, given the discrepancies between different research. 
+*Normal* distribution with appropriate means and standard deviations were chosen for TBM confirmatory tests sensitivity and specificity, on the logit scale, so that they could cover past estimations from different studies involving Vietnamese cohort [@thwaites2004; @nhu2013; @heemskerk2018] (figure \@ref(fig:mv-priors)). Weakly informative priors for True Positive Rate (TPC = Sensitivity) given the discrepancies between different research. We also used *Normal* distribution for other linear covariates, but with weakly informative configurations.
 
-All model performances were estimated and compared by (1) expected log point-wise predictive density (elpd, @vehtari2016), (2) calibration [@rms, @VanCalster2019], and (3) Receiver Operating Characteristic (ROC) curve and corresponding Area Under the Curve (AUC). All metrics were estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation. Results from best performed model were report. Validity of our assumptions with respects to imputation and prior choices were separately checked by sensitivity analyses. Pair-wise residual correlation were plotted to validate the local indepence assumption, after correction for local effects [@qu1996; @schumacher2016]. For demonstration, we visualised class-wise predicted probability density plots. This depicts how separable predicted values are between two classes. We also used the diagnosis at discharge or as a pseudo-gold standard to visualise the correlation of our model-based prediction and delayed clinical diagnosis. 
-
-To explore hidden effects, we added quadratic terms for all five CSF bio-markers and RGCS; CSF volume was additionally included to capture its potential impact on test sensitivity.
-
-We lastly developed a simplified model recovering the information without laboratorial features. To achieve this, we transferred the analytic forms of posterior distributions from the best performant model, on the logit scale to a different linear system where the number of predictors were reduced.
+All model performances were estimated and compared by (1) expected log point-wise predictive density (elpd, @vehtari2016), (2) calibration [@rms; @VanCalster2019], and (3) Receiver Operating Characteristic (ROC) curve and corresponding Area Under the Curve (AUC). All metrics were estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation. Results from best performed model were reported. Pair-wise residual correlation were plotted to validate the local indepence assumption, after correction for local effects [@qu1996; @schumacher2016]. For demonstration, we visualised class-wise predicted probability density plots depicting how separable predicted values are between two classes. We also used the diagnosis at discharge (if available at time) as a pseudo-gold standard to visualise the correlation of our model-based prediction and delayed clinical diagnosis. 
 
 ```{r mv-priors, fig.cap="Density plots for prior distributions and their adherence to prior knowledge of sensitvity and specifity for TBM confirmation tests, against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval", warning=FALSE,  fig.align='center', out.width='90%', fig.id="mv-priors", fig.height=8, dpi=300 }
 sen_tbl <-
@@ -347,7 +340,7 @@ spc_rng = rbind(
     linear = rlogis(1000000,qlogis(.005),.7) |> plogis()
   )
 ) |>
-  filter(linear<.07)
+  filter(linear<.05)
   # |> 
   # tidyr::pivot_longer(cols=c(logit, linear), names_to = 'scale.name', values_to = 'scale.value')
 
@@ -376,7 +369,7 @@ spc_linear_plt <- ggplot() +
   ggdist::stat_halfeye(mapping=aes(y=linear), data=spc_rng) +
   geom_point(aes(y= est, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2), shape=18, size=3) + 
   geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2)) +
-  coord_flip(ylim=c(0,.07))+
+  coord_flip(ylim=c(0,.05))+
   facet_grid(Test~.)+
   xlab('') + ylab('') +
   scale_color_discrete(drop=FALSE)+
@@ -390,7 +383,7 @@ spc_logit_plt <- ggplot() +
   ggdist::stat_halfeye(mapping=aes(y=logit), data=spc_rng) +
   facet_grid(Test~.)+
   xlab('') + ylab('') +
-  coord_flip() +
+  coord_flip(ylim=c(-15, 2.5)) +
   theme_minimal() +
   theme(text = element_text('serif', size = 9), 
         plot.tag = element_text('serif', size = 9),
@@ -434,15 +427,25 @@ withr::with_options(
 )
 ```
 
-All data preparation, cleaning, and processing were performed on statistical package R, version 4.1.0 [@rcoreteam]. The model was developed on the probabilistic language Stan via the interface Rstan , version 2.27 [@stan]. Plotting was done using package bayesplot [@bayesplot], classifierplots [@classifierplots], and ggvenn [@ggvenn]. Some other packages used include: R6 [@r6] and rms [@rms].
+### Sensitivity and exploratory analysis
+
+Given that our estimation might be impacted by our decisions, we conducted sensitivity analyses where some made assumptions were lifted or changed. We first increased the standard deviation of our prior for specificity so that every value the range of 90%-100% were accepted. We also changed the family of our covariates prior distribution from *Normal* to a less skeptical one *Student's t* with 4 degrees of freedom; means and scales, however, were kept as-is, from which we then compared the corresponding *elpd* between the original and lifted one. Thirdly, as recent studies suggested a sup-optimal specificity of Xpert test on CSF samples [@nhu2013; @chen2020], our assumptions made in table \@ref(tab:missing-handling) might not completely hold. To validate this, we considered a Missing-At-Random scenario, where observation chance of confirmation tests depend on the unknown TBM status and locally independent to the value of confirmation tests. Observation status was then included in the model as a separated manifest variables. We visualised the estimations of this model with the best performant one in our main analysis.
+
+Furthermore, to explore hidden effects, we added quadratic terms for all five CSF bio-markers and RGCS; CSF volume was additionally included to capture its potential impact on test sensitivity. *Laplace* priors were utilised instead of *Normal* for all linear covariates. Posteriors and performance metrics of this model were reported.
+
+### Simplified classification model
+
+We lastly developed a simplified linear model approximating the previously estimated latent probablities but without laboratorial features. To achieve this, we transferred the analytic forms of posteriors outputted by the best performant model, on the logit scale, to a separated linear regression where the number of predictors were reduced and error terms were assumed to follow Standard *Logistic* distribution.
+
+All data preparation, cleaning, and processing were performed on statistical package R, version 4.1.1 [@rcoreteam]. The model was developed on the probabilistic language Stan via the interface RStan , version 2.27 [@stan]. Plotting was done using package bayesplot [@bayesplot], classifierplots [@classifierplots]<!--, and ggvenn [@ggvenn]-->. Some other packages used include: R6 [@r6] and rms [@rms]. All estimations came from 8000 effective iterations of 4 MCMC chains. Mathematical formulations and technical adjustments were detailed in the supplementary documents. All code were published on [project's github repo](github.com/TBM-LCA).
 
 # Results
 
 ## Clinical characteristics
 
-From 29th August 2017 to 22nd January 2021, there were 689 patients enrolled in the main study, amongst them `r nrow(data_19EI)` were included in the analysis. Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl); ZN Smear returned positive for `r sum(data_19EI$csf_smear, na.rm=TRUE)` individuals, MGIT Culturing for `r sum(data_19EI$csf_mgit, na.rm=TRUE)` and Xpert for `r sum(data_19EI$csf_xpert, na.rm=TRUE)` (figure \@ref(fig:venn-test)).
+From 29th August 2017 to 22nd January 2021, there were 689 patients enrolled in the main study, amongst them `r nrow(data_19EI)` were included in the analysis. Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). In general, there were `r sum(data_19EI$csf_smear, na.rm=TRUE)` ZN Smear, `r sum(data_19EI$csf_mgit, na.rm=TRUE)` MGIT Culturing, and `r sum(data_19EI$csf_xpert, na.rm=TRUE)` Xpert samples got positive result <!--(figure \@ref(fig:venn-test))-->.
 
-```{r venn-test, out.width='60%', fig.align='center', fig.asp=1, fig.cap = 'Venn diagram for ZN Smear, MGIT, and Xpert'}
+```{r venn-test, out.width='60%', fig.align='center', fig.asp=1, fig.cap = 'Venn diagram for ZN Smear, MGIT, and Xpert', include=FALSE}
 
 data_19EI |>
   mutate(across(c(csf_smear, csf_mgit, csf_xpert), as.logical)) |>
@@ -455,57 +458,6 @@ data_19EI |>
   theme_void()
 
 ```
-
-## Missing data mechanisms
-
-To be scrutinised
-
-```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling"}
-na = \(x) sum(is.na(x))
-data_dirty$csf_neutro <- data_dirty$NEUPER * data_dirty$csf_wbc / 100
-data_dirty %$%
-  tibble::tribble(
-     ~ 'Variable'           , ~ 'N\n missing'     ,  ~ 'Expected Reason of Missingness'                      , ~ 'Mechanism',        ~ 'Handling method' ,
-    'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'HIV Status'            , na(hiv_stat)        , 'Test not mandatory'                                     , 'MAR/MNAR'           , 'Imputation'       ,
-    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR/MNAR'           , 'Imputation'       ,
-    'Local neuro-deficit'   , na(clin_motor_palsy), 'Unconscious'                                            , 'MAR/MNAR'           , 'Imputation'       ,
-    'Glasgow Coma Score'    , na(clin_gcs)        , 'Intubated / Unmeasured'       , 'MAR'                , 'Imputation'       ,
-    'Age'                   , na(age)             , 'Input error'                                            , 'MCAR'              , 'Imputation'       ,
-    'Illness days'          , na(clin_illness_day), 'Patients forget / Unconscious'                          , 'MAR'                , 'Imputation'       ,
-    'Blood Lymphocyte'      , na(LYMP)            , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
-    'Blood Neutrophil'      , na(NEUTRO)          , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
-    'Blood Glucose'         , na(BLDGLU)          , 'Most likely input error / Unmeasured (premature death)', 'MAR/MCAR'           , 'Imputation'       ,
-    'CSF glucose'           , na(csf_glucose)     , 'Unmeasured (premature death)'                           , 'MAR/MCAR'           , 'Imputation'       ,
-    'CSF lymphocyte count'  , na(csf_lympho)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
-    'CSF neutrophil count'  , na(csf_neutro)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
-    'CSF protein'           , na(csf_protein)     , 'Data input error / Test error'       , 'MAR/MCAR'           , 'Imputation'       ,
-    'CSF lactate'           , na(csf_lactate)     , 'Data input error / Test error'                              , 'MAR/MCAR'           , 'Imputation'     
-    # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0'                  
-  ) |>
-  flextable::flextable() |>
-  # flextable::set_caption('Rationale and method of missing values handling') |>
-  flextable::width(width = 1.25) |>
-  flextable::footnote(i = c(14,15),j = 1,inline=FALSE,
-                      value=flextable::as_paragraph(rep('CSF Cell counts = CSF white-cell count x Pct of Cell Type / 100; if very low, then either lymphocytes or neutrophils had values, the other were left missing')),
-                      part = 'body') |>
-  flextable::merge_v(part='footer') |>
-  flextable::theme_zebra() |>
-  flextable::bold(bold=FALSE, part='footer') |>
-  flextable::italic(italic=TRUE, part='footer')
-```
-
-## Model estimation
-
-### Confimatory test positive rates
-
-
-
-### Risk factors for TBM and scoring system
-
-### Simplifed scoring system
 
 \newpage
 
@@ -583,7 +535,6 @@ bl_tbl |> as_flex_table() |>
   flextable::width(width = 1.25) |>
   flextable::fontsize(size=10, part = 'all') |>
   flextable::theme_zebra()
-
 ```
 
 <!---BLOCK_LANDSCAPE_STOP--->
@@ -592,4 +543,57 @@ bl_tbl |> as_flex_table() |>
 
 \newpage
 
-## Model performance
+## Missing data mechanisms
+
+To be scrutinised
+
+```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling"}
+na = \(x) sum(is.na(x))
+data_dirty$csf_neutro <- data_dirty$NEUPER * data_dirty$csf_wbc / 100
+data_dirty %$%
+  tibble::tribble(
+     ~ 'Variable'           , ~ 'N\n missing'     ,  ~ 'Expected Reason of Missingness'                      , ~ 'Mechanism',        ~ 'Handling method' ,
+    'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'HIV Status'            , na(hiv_stat)        , 'Test not mandatory'                                     , 'MAR/MNAR'           , 'Imputation'       ,
+    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR/MNAR'           , 'Imputation'       ,
+    'Local neuro-deficit'   , na(clin_motor_palsy), 'Unconscious'                                            , 'MAR/MNAR'           , 'Imputation'       ,
+    'Glasgow Coma Score'    , na(clin_gcs)        , 'Intubated / Unmeasured'       , 'MAR'                , 'Imputation'       ,
+    'Age'                   , na(age)             , 'Input error'                                            , 'MCAR'              , 'Imputation'       ,
+    'Illness days'          , na(clin_illness_day), 'Patients forget / Unconscious'                          , 'MAR'                , 'Imputation'       ,
+    'Blood Lymphocyte'      , na(LYMP)            , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    'Blood Neutrophil'      , na(NEUTRO)          , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    'Blood Glucose'         , na(BLDGLU)          , 'Most likely input error / Unmeasured (premature death)', 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF glucose'           , na(csf_glucose)     , 'Unmeasured (premature death)'                           , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lymphocyte count'  , na(csf_lympho)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
+    'CSF neutrophil count'  , na(csf_neutro)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
+    'CSF protein'           , na(csf_protein)     , 'Data input error / Test error'       , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lactate'           , na(csf_lactate)     , 'Data input error / Test error'                              , 'MAR/MCAR'           , 'Imputation'     
+    # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0'                  
+  ) |>
+  flextable::flextable() |>
+  # flextable::set_caption('Rationale and method of missing values handling') |>
+  flextable::width(width = 1.25) |>
+  flextable::footnote(i = c(14,15),j = 1,inline=FALSE,
+                      value=flextable::as_paragraph(rep('CSF Cell counts = CSF white-cell count x Pct of Cell Type / 100; if very low, then either lymphocytes or neutrophils had values, the other were left missing')),
+                      part = 'body') |>
+  flextable::merge_v(part='footer') |>
+  flextable::theme_zebra() |>
+  flextable::bold(bold=FALSE, part='footer') |>
+  flextable::italic(italic=TRUE, part='footer')
+```
+
+## Model performance and selection
+
+
+
+## Posterior estimation
+
+### Confimatory test positive rates
+
+
+
+### Risk factors for TBM and scoring system
+
+### Simplifed scoring system

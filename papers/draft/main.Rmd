@@ -210,7 +210,7 @@ $$
 $$
 *where $Y$ is the observed test results whose prevalence is $\pi(Y)$, $z_0$ is the average test positive rate; $b$ and $b_{RE}$ are the effects of $X'$ to $B$ and of $B$ to $\pi(Y)$, respectively.*
 
-```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different features to TBM prevalence and patients' mycobacillary burden for each model mentioned in table \\@ref(tab:model-archs), based on background knowledge. Cell values are the expected association and how firm that expectation is; empty cells imply no association", tab.id = "predictor-tab", label='tab0'}
+```{r predictor-tab, out.width="100%",  tab.cap="Contribution of different features to TBM prevalence and patients' mycobacillary burden for each model mentioned in table \\@ref(tab:model-archs), based on background knowledge. Cell values are the expected association and the level of confidence; empty cells imply no association expected", tab.id = "predictor-tab", label='tab0'}
 tibble::tribble(
   ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
   'Age'                            , '+, weak'  , ''                  ,
@@ -227,7 +227,7 @@ tibble::tribble(
   'Blood Glucose'                  , '-, weak'  , ''                  ,
   'CSF Glucose'                    , '-, weak'  , 'Unknown, weak'     ,
   'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
-  'CSF Total While cell Count'     , 'ᴖ^[Risk of TBM increases if White Cell count is in a bounded range], weak' , '+, weak'    ,
+  'CSF Total While cell Count'     , '$\\frown$^[Risk of TBM increases if White Cell count is in a bounded range], weak' , '+, weak'    ,
   'CSF Protein'                    , '+, weak'  , '+, weak'    ,
   'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
   'CSF Oeosinophil Count'          , '-, strong', ''                  ,
@@ -389,12 +389,10 @@ model_archs |>
 
 #### Manifest variables
 
-By design, most patients with very high chance of and/or evidently diagnosed with different diseases were not tested with TBM confirmation assays (namely ZN Smear, MGIT, and Xpert), unless there were excessive amount of CSF samples. However, as confirmation tests' were all firmly believed to be almost specific [@nhu2013, @heemskerk2018], we assumed that patients who had no TBM confirmation tests are all negative. Apart from one premature death, all patients were tested or diagnosed with a different disease.
+By design, most patients with very high chance of and/or evidently diagnosed with different diseases were not tested with TBM microbiological assays (namely ZN Smear, MGIT, and Xpert), unless there were excessive amount of CSF samples. We assumed that patients who had no TBM confirmatory tests are all negatives as these are assumed to have high specificity [@nhu2013, @heemskerk2018].
 
-#### Predictors
-
-We assumed predictors are Missing At Random (MAR) and performed a model-based imputation in one step together with the main model, unless explicitly stated in table \@ref(tab:missing-handling). Composite variables (*TB-suggested symptoms* and *Glasgow Coma Score (GCS)*) were imputed per corresponding compartments. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency, all binary predictors were imputed using (Multivariate) Probit models, which facilitate a (Multivariate) Normal Distribution instead [@albert1993]. Numeric predictors are imputed using Multivariate Linear Regression.<!--# , with one exception of PPCA-extended models where the imputation of CSF bio-markers was handled by the PPCA directly --> 
-
+We assumed predictors are Missing At Random (MAR) and performed a model-based imputation in one step together with the main model, unless explicitly stated (table \@ref(tab:missing-handling)). Composite variables (*TB-suggested symptoms* and *Glasgow Coma Score (GCS)*) were imputed per corresponding compartments.<!--  Potentially correlated variables were grouped together and sampled from a multivariate distribution.Due to Stan not supporting Multivariate Logistic Distribution, in favour of methodological consistency,--> All binary predictors were imputed using Probit models [@stan-doc, @albert1993]. Numeric predictors are imputed using Multivariate Linear Regression.
+<!--
 $$
 \begin{aligned}
  X_{cont} &\sim \mathcal{N}(U_{X_{cont}}^TG, \Sigma) \\
@@ -402,7 +400,8 @@ $$
 \end{aligned}
 $$
 
-where $X_{cont}$ and $X_{binary}$ are vectors of continuous and binary variables to be imputed, and $U^T_{X_{cont}}$ and $U^T_{X_{binary}}$ are vector of auxiliary covariates used in the respective imputation model, with coefficients $G$. $\mathcal{N}$ is the *Normal* distribution in univariate case and *Multivariate Normal* distribution otherwise with $\Sigma$ as the variance-covariance matrix; in binary case, $\Sigma$ is the identity matrix $I$ [@albert1993].
+
+where $X_{cont}$ and $X_{binary}$ are vectors of continuous and binary variables to be imputed, and $U^T_{X_{cont}}$ and $U^T_{X_{binary}}$ are vector of auxiliary covariates used in the respective imputation model, with coefficients $G$. $\mathcal{N}$ is the *Normal* distribution in univariate case and *Multivariate Normal* distribution otherwise with $\Sigma$ as the variance-covariance matrix; in binary case, $\Sigma$ is the identity matrix $I$ [@albert1993].-->
 
 Our imputation algorithm were summarised in figure \@ref(fig:impute-model), together with their auxiliary covariables. Note that due to technical limitation, imputed RGCS were treated as-is in the sampling step, but were rounded when estimating model performance.
 
@@ -806,7 +805,7 @@ We also test for the validity of the local independence assumption after correct
 
 #### Complete-case analysis and imputation under MNAR assumption
 
-To check the level of impact from our imputation method, we did a complete-case analysis. Suspected MNAR variables as listed in table \@ref(tab:missing-handling) were also tested for MNAR where we randomly allocated values based on experts' opinions. Under MNAR assumption, we did a pattern-mixture method [@mason2017; @white2007], where we inquired prediction offsets $\delta$. $\delta$ represents the difference between unobserved part and observed part of each variables, after correction for all hyper-predictors listed in \@ref(fig:impute-model). Offsets were collected from interviews with experts working at the Viet Anh Ward at HTD, where they were supposed to provide an estimation and 95% confidence intervals (95% CI), based on which $\delta$s were then sampled from.
+To check the level of impact from our imputation method, we did a complete-case analysis. Suspected MNAR variables as listed in table \@ref(tab:missing-handling) were also tested for MNAR where we randomly allocated values based on experts' opinions. Under MNAR assumption, we did a pattern-mixture method [@mason2017; @white2007], where we inquired prediction offsets $\delta$. $\delta$ represents the difference between unobserved part and observed part of each variables, after correction for all auxiliary variables listed in \@ref(fig:impute-model). Offsets were collected from interviews with experts working at the Viet Anh Ward at HTD, where they were supposed to provide an estimation and 95% confidence intervals (95% CI), based on which $\delta$s were then sampled from.
 
 $$
 \delta \sim Normal(\mu_{expert}, sd_{expert})
@@ -914,8 +913,8 @@ data_dirty %$%
     'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
     'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
     'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
-    'HIV Status'            , na(hiv_stat)        , 'Test not mandatory'                                     , 'MAR/MCAR'           , 'Imputation'       ,
-    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR/MNAR'           , 'Imputation'       ,
+    'HIV Status'            , na(hiv_stat)        , 'Test not mandatory'                                     , 'MAR/MNAR'           , 'Imputation'       ,
+    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR'       , 'Imputation'       ,
     'Local neuro-deficit'   , na(clin_motor_palsy), 'Unconscious'                                            , 'MAR/MNAR'           , 'Imputation'       ,
     'Glasgow Coma Score'    , na(clin_gcs)        , 'Unconscious (GCSV) / Blinded (GCSE) / Unmeasured'       , 'MAR'                , 'Imputation'       ,
     'Age'                   , na(age)             , 'Input error'                                            , 'MCAR'              , 'Imputation'       ,

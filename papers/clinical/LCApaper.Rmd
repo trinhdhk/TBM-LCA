@@ -653,7 +653,7 @@ Performances metrics from different models were shown in table ## Should I show 
 
 ```
 
-```{r best-metrics, out.width='100%', fig.dim=c(8,6), fig.align='center', fig.asp=1, fig.cap = 'Performance plots for selected model', echo=FALSE, message=FALSE}
+```{r best-metrics-prep, message=FALSE, warning=FALSE, include=FALSE}
 m3 <- readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3s.RDS'))
 with(my_fn, {
   my_roc_plot <- 
@@ -778,8 +778,7 @@ with(my_fn, {
   }
 })
 
-plot_theme <- theme(axis.title = element_blank(), text=element_text(size=7), 
-                    )
+plot_theme <- theme(axis.title = element_blank(), text=element_text(size=7))
 
 rocs <- 
   (my_fn$my_roc_plot(obs = data_19EI$csf_smear, pred = m3$p$p_Smear$mean) + ggtitle('Smear') + theme_bw() + plot_theme)+
@@ -802,8 +801,11 @@ calib <- patchworkGrob(calib) |>
     left = "Observed", 
     bottom = "Predicted")
 
-wrap_plots(rocs, calib, ncol=1)
+```
 
+```{r best-metrics, fig.align='center', fig.asp=1, fig.cap='Performance plots for selected model', fig.dim=c(8,6), message=FALSE, warning=FALSE, out.width='100%'}
+w = wrap_plots(rocs, calib, ncol=1)
+plot(w)
 ```
 
 The selected model provides good discrimination between two TBM status.

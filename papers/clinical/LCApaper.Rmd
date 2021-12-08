@@ -35,6 +35,7 @@ output:
       - '--lua-filter=includes/author-info-blocks.lua'
     toc: no
 bibliography: includes/references.bib
+csl: includes/the-lancet-infectious-diseases.csl
 ---
 
 ```{r setup, include=FALSE}
@@ -117,6 +118,8 @@ my_fn$plot_theme <-
 data_dir <- '../../data/cleaned/'
 load(file.path(data_dir, 'data_input.Rdata'))
 data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
+load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
 ```
 
 # Introduction
@@ -298,7 +301,7 @@ By protocol, most patients with very high chance of or evidently diagnosed with 
 
 *Normal* distribution with appropriate means and standard deviations were chosen for TBM confirmatory tests sensitivity and specificity, on the logit scale, so that they could cover past estimations from different studies involving Vietnamese cohort [@thwaites2004; @nhu2013; @heemskerk2018] (figure \@ref(fig:mv-priors)). Weakly informative priors for True Positive Rate (TPC = Sensitivity) given the discrepancies between different research. We also used *Normal* distribution for other linear covariates, but with weakly informative configurations.
 
-All model performances were estimated and compared by (1) expected log point-wise predictive density (elpd, @vehtari2016), (2) calibration [@rms; @VanCalster2019], and (3) Receiver Operating Characteristic (ROC) curve and corresponding Area Under the Curve (AUC). All metrics were estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation. Results from best performed model were reported. Pair-wise residual correlation were plotted to validate the local indepence assumption, after correction for local effects [@qu1996; @schumacher2016]. For demonstration, we visualised class-wise predicted probability density plots depicting how separable predicted values are between two classes. We also used the diagnosis at discharge (if available at time) as a pseudo-gold standard to visualise the correlation of our model-based prediction and delayed clinical diagnosis. 
+All model performances were estimated and compared by (1) expected log point-wise predictive density (elpd [@vehtari2016]), (2) calibration [@rms; @VanCalster2019], and (3) Receiver Operating Characteristic (ROC) curve and corresponding Area Under the Curve (AUC). All metrics were estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation. Pair-wise residual correlation were plotted to validate the local independence assumption, after correction for local effects [@qu1996; @schumacher2016]. For demonstration, we visualised class-wise predicted probability density plots depicting how separable predicted values are between two classes. We also used the diagnosis at discharge (if available at time) as a pseudo-gold standard to visualise the correlation of our model-based prediction and delayed clinical diagnosis. 
 
 ```{r mv-priors, fig.cap="Density plots for prior distributions and their adherence to prior knowledge of sensitvity and specifity for TBM confirmation tests, against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval", warning=FALSE,  fig.align='center', out.width='90%', fig.id="mv-priors", fig.height=8, dpi=300 }
 sen_tbl <-
@@ -341,8 +344,7 @@ spc_rng = rbind(
   )
 ) |>
   filter(linear<.05)
-  # |> 
-  # tidyr::pivot_longer(cols=c(logit, linear), names_to = 'scale.name', values_to = 'scale.value')
+  
 
 sen_rng = rbind(
   data.frame(
@@ -443,9 +445,9 @@ All data preparation, cleaning, and processing were performed on statistical pac
 
 ## Clinical characteristics
 
-From 29th August 2017 to 22nd January 2021, there were 689 patients enrolled in the main study, amongst them `r nrow(data_19EI)` were included in the analysis. Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). In general, there were `r sum(data_19EI$csf_smear, na.rm=TRUE)` ZN Smear, `r sum(data_19EI$csf_mgit, na.rm=TRUE)` MGIT Culturing, and `r sum(data_19EI$csf_xpert, na.rm=TRUE)` Xpert samples got positive result <!--(figure \@ref(fig:venn-test))-->.
+From 29th August 2017 to 22nd January 2021, there were `r nrow(data_dirty)` patients enrolled in the main study, amongst them `r nrow(data_19EI)` were included in the analysis. `r nrow(data_dirty) - nrow(data_19EI)` were excluded due to contaminated culture growth. Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). In general, there were `r sum(data_19EI$csf_smear, na.rm=TRUE)` ZN Smear, `r sum(data_19EI$csf_mgit, na.rm=TRUE)` MGIT Culturing, and `r sum(data_19EI$csf_xpert, na.rm=TRUE)` Xpert samples got positive result (figure \@ref(fig:venn-test)).
 
-```{r venn-test, out.width='60%', fig.align='center', fig.asp=1, fig.cap = 'Venn diagram for ZN Smear, MGIT, and Xpert', include=FALSE}
+```{r venn-test, out.width='60%', fig.align='center', fig.asp=1, fig.cap = 'Venn diagram for ZN Smear, MGIT, and Xpert'}
 
 data_19EI |>
   mutate(across(c(csf_smear, csf_mgit, csf_xpert), as.logical)) |>
@@ -467,14 +469,15 @@ data_19EI |>
 
 ```{r test-bl-tbl, echo=FALSE}
 bl_tbl <- 
-  data_19EI |>
+  data_dirty |>
   as_tibble() |>
   mutate(csf_neutro = csf_wbc - csf_lympho - csf_eos) |>
   mutate(
     across(c(csf_smear, csf_xpert, csf_mgit), 
            ~ factor(.x, 
-                    levels = c(0,1), 
-                    labels = c('Negative', 'Positive')
+                    levels = c(TRUE, FALSE,NA), 
+                    labels = c('Positive', 'Negative', 'Missing'),
+                    exclude = NULL
            )
     )
   ) |>
@@ -512,8 +515,9 @@ bl_tbl <-
     Test = case_when(
       Test == 'csf_smear' ~ 'ZN Smear',
       Test == 'csf_mgit'  ~ 'MGIT',
-      Test == 'csf_xpert' ~ 'Xpert (Ultra) MTB/RIF',
+      Test == 'csf_xpert' ~ 'Xpert (Ultra)',
     )
+    # Result = ifelse(is.na(Result), 'Missing', Result) |> factor()
   ) |>
   tbl_strata(
     strata = Test,
@@ -531,9 +535,9 @@ bl_tbl <-
   )
 
 bl_tbl |> as_flex_table() |>
-  flextable::set_caption('Patient Characteristics') |>
-  flextable::width(width = 1.25) |>
-  flextable::fontsize(size=10, part = 'all') |>
+  flextable::set_caption('Baseline characteristics') |>
+  flextable::width(width = .88) |>
+  flextable::fontsize(size=9, part = 'all') |>
   flextable::theme_zebra()
 ```
 
@@ -543,9 +547,6 @@ bl_tbl |> as_flex_table() |>
 
 \newpage
 
-## Missing data mechanisms
-
-To be scrutinised
 
 ```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling"}
 na = \(x) sum(is.na(x))
@@ -584,16 +585,233 @@ data_dirty %$%
   flextable::italic(italic=TRUE, part='footer')
 ```
 
-## Model performance and selection
+```{r calc_na}
+suspected_hiv <- data_dirty |> filter(DISDIA %in% c('DIA1', 'DIA10', 'DIA12'))
+n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
+```
+HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r (nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100`%) enroled individuals and `r n_test_suspected_hiv` (`r n_test_suspected_hiv/nrow(suspected_hiv)*100`%). `r na(data_dirty$clin_symptoms)` patients did not provide information for at least one in three TB-suggested symptoms. Amongst `r na(data_dirty$clin_gcs)` individuals with incomplete GCS, GCS Vocal was missing for `r na(data_dirty$GCSV)`. 
+
+## Model estimation
+
+```{r mv-posterior, tab.cap="Posterior estimations for test positive rates in each latent class, CrI: Credible interval", tab.id="mv-posterior"}
+
+est = \(name, tab = z_summary, digits=2, transformation = plogis, ci.sep = ', ', post.fn = I) {
+  m <- c(tab[name, 'mean'], tab[name, '50%'], tab[name, '2.5%'], tab[name, '97.5%']) |> transformation() |> formatC(digits=2, format='f') |> post.fn()
+  c(m[1], m[2], paste(min(m[3:4]), max(m[3:4]), sep=ci.sep))
+}
+
+spc.est = purrr::partial(est,
+                         transformation=\(x) 100*(1-plogis(x)), ci.sep='-',
+                         post.fn = \(x) paste0(x, '%'))
+sen.est = purrr::partial(est, transformation=\(x) 100*plogis(x), ci.sep='-',
+                         post.fn = \(x) paste0(x, '%'))
+
+sen = \(name) {
+  name = paste0(name, '[2]')
+  do.call(sprintf, as.list(c('%s (%s)', sen.est(name)[-2])))
+}
+
+spc = \(name) {
+  name = paste0(name, '[1]')
+  do.call(sprintf, as.list(c('%s (%s)', spc.est(name)[-2])))
+}
 
 
+pr <- matrix(c(
+  c('', rep(c('False positive rate (1-Specificity)'),3), rep(c('True positive rate (Sensitivity)'),3)),
+  c('Test', rep(c('Mean', 'Median', '95% CrI'),2)),
+  c('Smear', est('z_Smear[1]'), est('z_Smear[2]')),
+  c('Mgit', est('z_Mgit[1]'), est('z_Mgit[2]')),
+  c('Xpert', est('z_Xpert[1]'), est('z_Xpert[2]'))
+), byrow=T, nrow=5)
 
-## Posterior estimation
+huxtable::as_hux(pr) |>
+  huxtable::as_flextable() |>
+  flextable::merge_h(i=1, part='body') |>
+  flextable::width(width = .85) |>
+  flextable::align(i=1, align='center') |>
+  flextable::bold(i=1:2) |>
+  flextable::theme_zebra()
+```
 
-### Confimatory test positive rates
+Posterior estimations for diagnosis positive rates of ZN Smear, MGIT, and Xpert against the latent TBM status were reported in table \@ref(tab:mv-posterior). All confirmatory assays have nearly perfect specificity, with Smear being `r spc('z_Smear')`, MGIT `r spc('z_Mgit')`, and Xpert  `r spc('z_Xpert')`. Ziehl-Neelsen, similar to previous paper [@thwaites2004; @nhu2013; @heemskerk2018], was the most sensitive test with `r sen('z_Smear')`. Mycobacterial culturing showed suboptimal sensitivity at `r sen('z_Mgit')`. Different from a recent study [@donovan2020], Xpert and Xpert Ultra were estimatedly the least sensitive indicators for TBM diagnosis, with a test positive rate only `r spc.est('z_Xpert[2]')[1]` for TBM postive class, however the credible interval was wide (`r spc.est('z_Xpert[2]')[3]`).
+
+Estimated coefficients for risk factors were shown in figure \@ref(fig:coef-est). Continuous features are scaled by 2 times of standard deviations and binary features were kept as-is. Patients with history of HIV, Miliary TB, and past TBM contacts were in the higher risk group for TBM infection, although 95% credible interval of the last cut 0 due to its scarcity in our population. The three TB systemic symptoms were, however, on average provided minimal extra information. So does Reversed Glasgow Coma Score. Long duration since first onset increases the chance of TBM in our population, in which log odd of TBM increases by `r a_plot$data$m[11]` when sickness period doubles.
+
+On the laboratory domain, CSF glucose, similar to the uniform definition [@marais2010], decreased TBM odd, with protein on the opposite side. They also show similar trends to the bacillary burden estimation amongst TBM positive group, with the exception of lymphocyte count. Although higher lymphocyte count in the fluid relatively means a higher chance of TBM, it also lifts the expected burden of the disease, consequently reduces the chance of bacterial detection of the confirmation tests. 
+
+```{r coef-est, out.width='100%', fig.align='center', fig.asp=1, fig.cap = 'Coefficient posterior estimations for TBM risk factors and bacillary burden predictors. Points, thick lines, and thin lines are posterior means, 50\\% and 90\\% credible intervals'}
+(a_plot + ggtitle('TBM Risk factor')) /
+  (b_plot + ggtitle('Bacillary burden predictors')) + 
+  theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "bottom") 
+```
+## Model performance and selection 
+
+Performances metrics from different models were shown in table ## Should I show this?
+
+```{r metrics-tbl, tab.cap="Performance metrics for models" , tab.id="metrics-tbl"}
+
+```
+
+```{r best-metrics, out.width='100%', fig.dim=c(8,6), fig.align='center', fig.asp=1, fig.cap = 'Performance plots for selected model', echo=FALSE, message=FALSE}
+m3 <- readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3s.RDS'))
+with(my_fn, {
+  my_roc_plot <- 
+  function(obs, pred, pred_rep = NULL, resamps = 2000, force_bootstrap = NULL){
+    require(ggplot2)
+    require(data.table)
+    
+    plt <- ggplot()
+    for (.pred_rep in pred_rep)
+      plt <- ._add_roc_plot(plt, obs, .pred_rep, resamps, force_bootstrap, .rep = TRUE)
+    plt <- ._add_roc_plot(plt, obs, pred, resamps, force_bootstrap, .rep = FALSE, .has_rep = length(pred_rep))
+    plt # + coord_cartesian(xlim=c(0, 100, ylim=c(0,100)))
+  }
+._add_roc_plot <- 
+  function (plt, obs, pred, resamps = 2000, force_bootstrap = NULL, .rep = FALSE, .has_rep = FALSE) 
+  {
+    # browser()
+    maincolor <- "#CD113B"
+    subcolor1 <- "#111111"
+    subcolor2 <- "#999999"
+    n <- length(obs)
+    obs.bin <- obs == 1
+    nbins <- min(50, n)
+    npositives <- sum(obs.bin)
+    nnegatives <- n - npositives
+    negative_steps <- floor(nnegatives/50)
+    negative_steps <- floor(nnegatives/nbins)
+    auc <- classifierplots:::calculate_auc(obs, pred)
+    writeLines(paste("AUC:", auc))
+    big_data_cutoff <- 50000
+    if (!is.null(force_bootstrap)) {
+      bootstrap <- force_bootstrap
+    }
+    else {
+      bootstrap <- n <= big_data_cutoff
+    }
+    pos_pred_probs <- -pred[obs.bin]
+    neg_pred_probs <- -pred[!obs.bin]
+    if (bootstrap) {
+      writeLines("Bootstrapping ROC curves")
+      pos_pred_boots <- pos_pred_probs[c(caret::createResample(pos_pred_probs, 
+                                                               times = resamps, list = F))]
+      neg_pred_boots <- neg_pred_probs[c(caret::createResample(neg_pred_probs, 
+                                                               times = resamps, list = F))]
+      roc_tbl <- data.table(preds = c(pos_pred_boots, neg_pred_boots), 
+                            y = c(rep(T, length(pos_pred_boots)), rep(F, length(neg_pred_boots))), 
+                            resample = c(rep(1:resamps, each = length(pos_pred_probs)), 
+                                         rep(1:resamps, each = length(neg_pred_probs))))
+      setkey(roc_tbl, "resample", "preds")
+      roc_tbl[, `:=`(tp, cumsum(y)), by = resample]
+      roc_tbl[, `:=`(fp, cumsum(!y)), by = resample]
+      roc_tbl[, `:=`(fpr_step, ((fp%%negative_steps) == 0)), 
+              by = resample]
+      substeps_tbl <- roc_tbl[fpr_step == T, ]
+      subind <- substeps_tbl[, .I[.N], by = c("resample", 
+                                              "fp")]
+      roc_tbl_sub <- substeps_tbl[subind$V1]
+      roc_tbl_sub_stats <- roc_tbl_sub[, as.list(quantile(tp, 
+                                                          c(0.025, 0.5, 0.975))), keyby = fp]
+      writeLines("Eval AUC")
+      roc_tbl[, `:=`(rank, mean(.I)), by = c("resample", "preds")]
+      r1 <- roc_tbl[y == T, sum(rank) - .N * n * (resample - 
+                                                    1), keyby = "resample"]$V1
+      u1 <- r1 - (npositives * (npositives + 1))/2
+      aucs <- 1 - u1/(npositives * nnegatives)
+      auc_bounds <- 100 * quantile(aucs, c(0.025, 0.5, 0.975))
+      digits_use <- 3
+      if (format(auc_bounds[1], digits = digits_use) == format(auc_bounds[3], 
+                                                               digits = digits_use)) {
+        digits_use <- 5
+      }
+    }
+    else {
+      roc_tbl <- data.table(preds = c(pos_pred_probs, neg_pred_probs), 
+                            y = c(rep(T, length(pos_pred_probs)), rep(F, length(neg_pred_probs))))
+      setkey(roc_tbl, "preds")
+      roc_tbl[, `:=`(tp, cumsum(y))]
+      roc_tbl[, `:=`(fp, cumsum(!y))]
+      roc_tbl[, `:=`(fpr_step, ((fp%%negative_steps) == 0))]
+      substeps_tbl <- roc_tbl[fpr_step == T, ]
+      subind <- substeps_tbl[, .I[.N], by = c("fp")]
+      roc_tbl_sub_stats <- substeps_tbl[subind$V1]
+      roc_tbl_sub_stats[, `:=`(`50%`, tp)]
+    }
+    writeLines("Producing ROC plot")
+    
+    # plt <- ggplot()
+    plt <- plt + geom_line(data=roc_tbl_sub_stats, 
+                     mapping=aes(x = 100 * fp/nnegatives, 
+                                 y = 100 * `50%`/npositives),
+                     color = if (!.rep) classifierplots:::green_str else subcolor2, 
+                     size = if (!.rep) 1 else .5,
+                     alpha =  if (!.rep) 1 else .5) + 
+      geom_abline(slope = 1, intercept = 0, linetype = "dotted") 
+    
+    if (!.rep) 
+      plt <- plt + 
+      annotate("text", x = 62.5, y = 22.5, label = paste0("AUC ", format(auc, digits = 3), "%"),
+               parse = F, size = 4, colour = classifierplots:::fontgrey_str) + 
+      scale_x_continuous(name = "False Positive Rate (%)    (1-Specificity)", 
+                         limits = c(0, 100), expand = c(0.05, 0.05)) + 
+      scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
+                         limits = c(0, 100), expand = c(0.05, 0.05))
+    
+    if (bootstrap) {
+      plt <- plt + geom_ribbon(mapping = aes(x = 100 * fp/nnegatives, 
+                                             ymin = 100 * `2.5%`/npositives, 
+                                             ymax = 100 * `97.5%`/npositives), 
+                               data=roc_tbl_sub_stats, 
+                               # fill = if (!.rep) classifierplots:::green_str else subcolor2, 
+                               fill = classifierplots:::green_str, 
+                               alpha = if (.has_rep) .1 else .2) 
+      if (!.rep)
+        plt <- plt +
+          annotate("text", x = 62.5, y = 15, 
+                   label = paste0("95% CI: ", 
+                                  format(auc_bounds[1], digits = digits_use),
+                                  "% - ", format(auc_bounds[3], digits = digits_use), "%"), 
+                   parse = F, size = 2.8, colour = classifierplots:::fontgrey_str)
+    }
+    return(plt)
+  }
+})
+
+plot_theme <- theme(axis.title = element_blank(), text=element_text(size=7), 
+                    )
+
+rocs <- 
+  (my_fn$my_roc_plot(obs = data_19EI$csf_smear, pred = m3$p$p_Smear$mean) + ggtitle('Smear') + theme_bw() + plot_theme)+
+  (my_fn$my_roc_plot(obs = data_19EI$csf_mgit, pred = m3$p$p_Mgit$mean) + ggtitle('Mgit') + theme_bw() + plot_theme)+ 
+  (my_fn$my_roc_plot(obs = data_19EI$csf_xpert, pred = m3$p$p_Xpert$mean) + ggtitle('Xpert') + theme_bw() + plot_theme) 
+
+rocs <-  
+  patchworkGrob(rocs) |>
+  gridExtra::grid.arrange(
+    left = "True Positive Rate (%)    (Sensitivity)", 
+    bottom = "False Positive Rate (%)    (1-Specificity)")
 
 
+calib <- td.misc::binary_calibration(pred=m3$p$p_Smear$mean, obs=data_19EI$csf_smear, span=1) + plot_theme +
+     td.misc::binary_calibration(pred=m3$p$p_Mgit$mean, obs=data_19EI$csf_mgit, span=1) + plot_theme + 
+     td.misc::binary_calibration(pred=m3$p$p_Xpert$mean, obs=data_19EI$csf_xpert, span=1) + plot_theme
 
-### Risk factors for TBM and scoring system
+calib <- patchworkGrob(calib) |>
+  gridExtra::grid.arrange(
+    left = "Observed", 
+    bottom = "Predicted")
+
+wrap_plots(rocs, calib, ncol=1)
+
+```
+
+The selected model provides good discrimination between two TBM status.
+
+## Sensitivity analysis
+
+No difference 
 
 ### Simplifed scoring system
+
+

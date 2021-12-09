@@ -128,13 +128,13 @@ load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
 
 In the absence of a gold standard for TBM diagnosis, the uniform case definition has been widely adopted, particularly for the evaluation of new index diagnostic tests. However, the uniform case definition was developed as a standardised approach to reporting TBM research, rather than a gold standard for TBM diagnosis. When categorising cases of suspected TBM, the uniform case definition allocates cases to one of four levels; *Definite*, *Probable*, *Possible*, and *Not TBM*, with both *Probable* and *Possible* each encompassing a numerical score range where higher scores increase the probability of a diagnosis of TBM. All *Probable* cases do not therefore have the same probability of having TBM. *Definite TBM* incorporates microbiological tests, which, in the case of mycobacterial culture, may not return a positive result for several weeks. The best combination of these 4 levels that represents TBM, whilst including no cases of *non-TBM*, is not known and probably lies beyond the use of 4 levels. True TBM cases are likely represented by all *Definite* cases, most *Probable* cases, and some *Possible* cases. On the other hands, due to not being developed upon discussions consensuses where a mere change does need more time and efforts, several statistical models can be re-fitted basing on one same dataset with different covariables, hence have more flexibility and adaptability in different scenarios. *(in case this is ambiguous: this closely links to one of our objectives where we build a simplified score table that uses only clinical and demographic data, for resources-limited settings and quick screening)*
 
-*Latent Class Analysis (LCA)* is a statistical technique which has been adopted in settings where a gold standard does not exist, in place of which are a set of mutually independent tests. This model assumes the whole population is separable into different unobserved classes; between them, the chance of positive test results are different. By combining information coming from the aforementioned tests -- or manifest variables -- we can recover prevalence of the hidden classes and the patients' true allocation. Figure \@ref(fig:classic-lca) exemplifies a situation where there are 3 manifest variables representing for two latent classes. The technique is commonly used in social science and psychology, but has been gradually adopted in several diagnostic and prognosis models, especially in Tuberculosis \[@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018\] given the limitation of current tools. Classical LCA imposes strong assumption of local independence, namely in each latent class, the distributions of all manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
+*Latent Class Analysis (LCA)* is a statistical technique which has been adopted in settings where a gold standard does not exist, in place of which are a set of mutually independent tests. This model utilies a list of different indicators to divide the population into separated group. LCA is commonly used in social science and psychology to detect different hidden traits [@Weller2020]. Recently, it has been gradually adopted in several diagnositic and prognosis studies, especially in Tuberculosis [@stout2018; @adams2019; @schumacher2016; @lahuerta-marin2018] given the limitation of current toolsets. Classical LCA all test manifest variables are mutually independent, which might not hold in most cases hence hinders the applicability of such design. The introduction of random effects and Bayesian approach has brought more flexibility to the model [@qu1996; @toft2005; @menten2008].
 
-```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (test 1, test 2, and test 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='90%', fig.id = "classic-lca", , fig.cap.style = "Image Caption", fig.align='center'}
+```{r classic-lca, fig.cap = "Design of classic Latent Class Analysis with two unobserved classes 1 and 2 and three iid. binary manifest variables (test 1, test 2, and test 3). Distributions of manifest variables in both classes are generated for demonstration only", out.width='90%', fig.id = "classic-lca", dpi=300, fig.cap.style = "Image Caption", fig.align='center', include=FALSE}
 # knitr::include_graphics("includes/graph1.jpg")
 # knitr::include_graphics('includes/classicLCA.svg')
 fig_svg <- cowplot::ggdraw() + 
-  cowplot::draw_image("includes/classicLCA.svg")
+  cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5, height=159*5))
 plot(fig_svg)
 ```
 
@@ -146,7 +146,7 @@ As secondary objectives, our analysis also aim to build a simplified scoring sys
 
 ## Participants
 
-Data used for this analysis were extracted from an observational study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections [@thwaites2002]. This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee [@donovan2020]. All participants were enrolled between 29th August 2017 and 22nd January 2021. Inclusion criteria included a minimum age of 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). Specifically for this analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission. Overall patient characteristics, with respects to test results, are shown in \@ref(tab:test-bl-tbl).
+Data used for this analysis were extracted from an observational study of brain infection conducted at the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam, a large centre providing secondary and tertiary treatment for a wide range of tropical infections [@thwaites2002]. This study received ethical approvals from HTD and Oxford Tropical Research Ethics Committee [@donovan2020]. All participants were enrolled between 29th August 2017 and 22nd January 2021. Inclusion criteria included a minimum age of 16 years old, with suspected brain infection, admitted to a neuro-infection ward, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). Specifically for this analysis, we also excluded patients with contaminated MGIT results and with no subsequent culture in the first week since admission. Overall patient characteristics, with respects to test results, are shown in table \@ref(tab:test-bl-tbl).
 
 ## Data collection and testing procedures
 
@@ -254,7 +254,14 @@ model_archs |>
 
 Basic desgins for all models is shown in figure \@ref(fig:skeleton-model). Similar to @schumacher2016, we used a stepwise approach where we incrementally added up more flexibility and lifted more constraints (\@ref(tab:model-archs)). Note that only CSF White Cell count was modeled via a quadratic effect, as suggested by @marais2010.
 
-```{dot skeleton-model, fig.show="hold", out.width="100%", out.height="5cm",  fig.align="center", fig.cap="Model skeleton. Bacillary Burden is only available in model 2+", fig.id="skeleton-model"}
+```{r skeleton-model, fig.show='hold', out.width="100%", fig.align="center", fig.cap="Model basic design. Bacillary burden is only included in model 2+", fig.id='skeleton-model'}
+
+fig_svg <- cowplot::ggdraw() + 
+  cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5, height=159*5))
+plot(fig_svg)
+```
+
+```{dot skeleton-model-old, fig.show="hold", out.width="100%", out.height="5cm",  fig.align="center", fig.cap="Model skeleton. Bacillary Burden is only available in model 2+", fig.id="skeleton-model", include=FALSE}
 
 digraph m1{
     rankdir = LR;
@@ -589,7 +596,7 @@ data_dirty %$%
 suspected_hiv <- data_dirty |> filter(DISDIA %in% c('DIA1', 'DIA10', 'DIA12'))
 n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
 ```
-HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r (nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100`%) enroled individuals and `r n_test_suspected_hiv` (`r n_test_suspected_hiv/nrow(suspected_hiv)*100`%). `r na(data_dirty$clin_symptoms)` patients did not provide information for at least one in three TB-suggested symptoms. Amongst `r na(data_dirty$clin_gcs)` individuals with incomplete GCS, GCS Vocal was missing for `r na(data_dirty$GCSV)`. 
+HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r round((nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100, 2)`%) enroled individuals and `r n_test_suspected_hiv` (`r (n_test_suspected_hiv/nrow(suspected_hiv)*100) |> round(2)`%). `r na(data_dirty$clin_symptoms)` patients did not provide information for at least one in three TB-suggested symptoms. Amongst `r na(data_dirty$clin_gcs)` individuals with incomplete GCS, GCS Vocal was missing for `r na(data_dirty$GCSV)`. 
 
 ## Model estimation
 
@@ -645,7 +652,7 @@ On the laboratory domain, CSF glucose, similar to the uniform definition [@marai
   (b_plot + ggtitle('Bacillary burden predictors')) + 
   theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "bottom") 
 ```
-## Model performance and selection 
+## Model validation 
 
 Performances metrics from different models were shown in table ## Should I show this?
 
@@ -803,17 +810,22 @@ calib <- patchworkGrob(calib) |>
 
 ```
 
-```{r best-metrics, fig.align='center', fig.asp=1, fig.cap='Performance plots for selected model', fig.dim=c(8,6), message=FALSE, warning=FALSE, out.width='100%'}
+```{r best-metrics, fig.align='center', fig.asp=1, fig.cap='ROC curves and calibration plots for selected model', fig.dim=c(8,6), message=FALSE, warning=FALSE, out.width='100%'}
 w = wrap_plots(rocs, calib, ncol=1)
 plot(w)
 ```
 
-The selected model provides good discrimination between two TBM status.
+The selected model with highest *elpd* = `r (m3$elpd$estimates[,'Estimate']) |> round(2)` provides good discrimination between two TBM status, with 5x20-fold-CV *AUC* = `r classifierplots:::calculate_auc(test.y = data_19EI$csf_smear, pred.prob = m3$p$p_Smear$mean) |> round(2)` for ZN Smear, `r classifierplots:::calculate_auc(test.y = data_19EI$csf_mgit, pred.prob = m3$p$p_Mgit$mean) |> round(2)`, and  `r classifierplots:::calculate_auc(test.y = data_19EI$csf_xpert, pred.prob = m3$p$p_Xpert$mean) |> round(2)` for Xpert. Average predicted probabilities were comparable to observed positivate rates, whereas calibration intercepts were estimatedly near 0 and calibration slop approximately 1 for all three manifest variables. Visualised calibration curves against non-parametric loess fits (figure \@ref(fig:best-metrics)) depict highly precise moderate calibration [@VanCalster2019] for Ziehl-Neelsen culturing, and a slight drop at the upper end for Smearing and Xpert; however, as shown in the corresponding histogrammes, there were minimal amount of participants with predictedly extremely high chance of positive, hence the less certainty.
 
 ## Sensitivity analysis
 
-No difference 
+No difference
 
-### Simplifed scoring system
+## Simplifed scoring system
 
+Result of latent var logistic regression goes here. What should it be named?
 
+# References
+
+::: {#refs}
+:::

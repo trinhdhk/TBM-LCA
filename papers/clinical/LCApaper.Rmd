@@ -198,9 +198,18 @@ tibble::tribble(
   flextable::italic(italic = TRUE, part = "footer" )
 ```
 
-As they are usually right-skewed, prior to the analysis, most continuous variables were transformed to logarithmic scale and subsequently centred and divided by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* (table \@ref(tab:gcs-tab)). Binary variables were dummy-coded into 0 for "Negative"/"No" and 1 for "Positive"/"Yes".
+```{aligned_formula, fml.lab='eq:fml-gcs', results='asis'}
+\begin{aligned}
+RGCS &= 15 - GCS \\
+RGCS_{Eyes} &= 4 - GCS_{Eyes} \\
+RGCS_{Verbal} &= 5 - GCS_{Verbal} \\
+RGCS_{Motor} &= 6 - GCS_{Motor}
+\end{aligned}
+```
 
-```{r gcs-tab, out.width='100%', tab.id='gcs-tab', tab.cap='Conversion table from clasic Glasgow Coma Score (GCS) to Reversed GCS (RGCS)'}
+As they are usually right-skewed, prior to the analysis, most continuous variables were transformed to logarithmic scale and subsequently centred and divided by their standard deviations. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* as demonstrated in formula `r my_fn$labEq.docx('fml-gcs')`, so that a GCS of 15 is equal to a RGCS of 0 and a GCS of 3 is equal to RGCS of 12. Binary variables were dummy-coded into 0 for "Negative"/"No" and 1 for "Positive"/"Yes".
+
+```{r gcs-tab, out.width='100%', tab.id='gcs-tab', tab.cap='Conversion table from clasic Glasgow Coma Score (GCS) to Reversed GCS (RGCS)', include=FALSE}
 
 tibble::tribble(
   ~ Feature,                     ~ Response, ~ GCS, ~ RGCS,
@@ -252,63 +261,20 @@ model_archs |>
   flextable::theme_zebra()
 ```
 
-Basic desgins for all models is shown in figure \@ref(fig:skeleton-model). Similar to @schumacher2016, we used a stepwise approach where we incrementally added up more flexibility and lifted more constraints (\@ref(tab:model-archs)). Note that only CSF White Cell count was modeled via a quadratic effect, as suggested by @marais2010.
+Basic desgins for all models is shown in figure \@ref(fig:skeleton-model). We considered different model designs in which we incrementally added up more flexibility and lifted more constraints [@schumacher2016] (table \@ref(tab:model-archs)). As supported by background knowledge[@marais2010], only CSF White Cell count was modeled via a quadratic effect.
 
-```{r skeleton-model, fig.show='hold', out.width="100%", fig.align="center", fig.cap="Model basic design. Bacillary burden is only included in model 2+", fig.id='skeleton-model'}
+```{r skeleton-model, fig.show='hold', out.width="100%", fig.align="center", fig.cap="Model basic design. Bacillary burden is only included in model 2. The test positive rates are for demonstration only.", fig.id='skeleton-model'}
 
 fig_svg <- cowplot::ggdraw() + 
   cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5, height=159*5))
 plot(fig_svg)
 ```
 
-```{dot skeleton-model-old, fig.show="hold", out.width="100%", out.height="5cm",  fig.align="center", fig.cap="Model skeleton. Bacillary Burden is only available in model 2+", fig.id="skeleton-model", include=FALSE}
-
-digraph m1{
-    rankdir = LR;
-    compound = true;
-    graph[dpi = 300, fontname="CMU Serif"];
-    node[fontname = "CMU Serif"];
-
-    subgraph cluster_pred{
-        label = < <B>Predictors</B> >;
-        bgcolor = lightgrey;
-        node[style=filled fillcolor=white shape=rectangle];
-        X1; X2; X3;
-    }
-
-    subgraph cluster_latent{
-        rank=same;
-        bgcolor = "#98cde2";
-        label = < <B>Latent Space</B> >;
-        node[shape=ellipse style=filled fillcolor=white];
-        subgraph zzz{
-            C[label=TBM];
-            I[label="Bacillary burden" style="filled, dashed"];
-            C -> I[label="+"];
-        }
-        
-    }
-    
-    subgraph cluster_manifest{
-        node[shape=box];
-        label = < <B>Manifest variables</B> >;
-        Y1[label="ZN Smear"];
-        Y2[label="MGIT"];
-        Y3[label="Xpert"];
-    }
-
-    {X1 X2 X3} -> C;
-    C -> {Y2}[lhead="cluster_manifest"];
-    X3 -> I -> Y3[lhead="cluster_manifest"];
-}
-
-```
-
-By protocol, most patients with very high chance of or evidently diagnosed with different diseases were not tested with TBM confirmation assays, we assumed that patients who had no TBM confirmation tests are all negative, because these tests are assumed to have high specificity [@nhu2013, @heemskerk2018]. Missing predictors were handled case by case basing on their expected missing mechanisms (table \@ref(tab:missing-handling)). In case they were expected to be Missing At Random (MAR), we performed a model-based imputation.
+By protocol, most patients with very high chance of or evidently diagnosed with different diseases were not tested with TBM confirmation assays, we assumed that patients who had no TBM confirmation tests are all negative, because these tests are assumed to have high specificity[@nhu2013, @heemskerk2018]. Missing predictors were handled case by case basing on their expected missing mechanisms (table \@ref(tab:missing-handling)). In case they were expected to be Missing At Random (MAR), we performed a model-based imputation.
 
 *Normal* distribution with appropriate means and standard deviations were chosen for TBM confirmatory tests sensitivity and specificity, on the logit scale, so that they could cover past estimations from different studies involving Vietnamese cohort [@thwaites2004; @nhu2013; @heemskerk2018] (figure \@ref(fig:mv-priors)). Weakly informative priors for True Positive Rate (TPC = Sensitivity) given the discrepancies between different research. We also used *Normal* distribution for other linear covariates, but with weakly informative configurations.
 
-All model performances were estimated and compared by (1) expected log point-wise predictive density (elpd [@vehtari2016]), (2) calibration [@rms; @VanCalster2019], and (3) Receiver Operating Characteristic (ROC) curve and corresponding Area Under the Curve (AUC). All metrics were estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation. Pair-wise residual correlation were plotted to validate the local independence assumption, after correction for local effects [@qu1996; @schumacher2016]. For demonstration, we visualised class-wise predicted probability density plots depicting how separable predicted values are between two classes. We also used the diagnosis at discharge (if available at time) as a pseudo-gold standard to visualise the correlation of our model-based prediction and delayed clinical diagnosis. 
+All model performances were estimated and compared by (1) expected log point-wise predictive density (elpd) [@vehtari2016] , (2) calibration merics and calibration curvers[@rms; @VanCalster2019] , and (3) Receiver Operating Characteristic (ROC) curve and corresponding Area Under the Curve (AUC). All metrics were estimated using a pooled dataset held out from 5 repetitions of 20-fold cross validation. Pair-wise residual correlation were plotted to validate the local independence assumption, after correction for local effects [@qu1996; @schumacher2016]. For demonstration, we visualised class-wise predicted probability density plots depicting how separable predicted values are between two classes. We also used the diagnosis at discharge (if available at time) as a pseudo-gold standard to visualise the correlation of our model-based prediction and delayed clinical diagnosis. 
 
 ```{r mv-priors, fig.cap="Density plots for prior distributions and their adherence to prior knowledge of sensitvity and specifity for TBM confirmation tests, against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval", warning=FALSE,  fig.align='center', out.width='90%', fig.id="mv-priors", fig.height=8, dpi=300 }
 sen_tbl <-
@@ -596,6 +562,7 @@ data_dirty %$%
 suspected_hiv <- data_dirty |> filter(DISDIA %in% c('DIA1', 'DIA10', 'DIA12'))
 n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
 ```
+
 HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r round((nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100, 2)`%) enroled individuals and `r n_test_suspected_hiv` (`r (n_test_suspected_hiv/nrow(suspected_hiv)*100) |> round(2)`%). `r na(data_dirty$clin_symptoms)` patients did not provide information for at least one in three TB-suggested symptoms. Amongst `r na(data_dirty$clin_gcs)` individuals with incomplete GCS, GCS Vocal was missing for `r na(data_dirty$GCSV)`. 
 
 ## Model estimation
@@ -652,13 +619,8 @@ On the laboratory domain, CSF glucose, similar to the uniform definition [@marai
   (b_plot + ggtitle('Bacillary burden predictors')) + 
   theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "bottom") 
 ```
+
 ## Model validation 
-
-Performances metrics from different models were shown in table ## Should I show this?
-
-```{r metrics-tbl, tab.cap="Performance metrics for models" , tab.id="metrics-tbl"}
-
-```
 
 ```{r best-metrics-prep, message=FALSE, warning=FALSE, include=FALSE}
 m3 <- readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3s.RDS'))
@@ -817,13 +779,44 @@ plot(w)
 
 The selected model with highest *elpd* = `r (m3$elpd$estimates[,'Estimate']) |> round(2)` provides good discrimination between two TBM status, with 5x20-fold-CV *AUC* = `r classifierplots:::calculate_auc(test.y = data_19EI$csf_smear, pred.prob = m3$p$p_Smear$mean) |> round(2)` for ZN Smear, `r classifierplots:::calculate_auc(test.y = data_19EI$csf_mgit, pred.prob = m3$p$p_Mgit$mean) |> round(2)`, and  `r classifierplots:::calculate_auc(test.y = data_19EI$csf_xpert, pred.prob = m3$p$p_Xpert$mean) |> round(2)` for Xpert. Average predicted probabilities were comparable to observed positivate rates, whereas calibration intercepts were estimatedly near 0 and calibration slop approximately 1 for all three manifest variables. Visualised calibration curves against non-parametric loess fits (figure \@ref(fig:best-metrics)) depict highly precise moderate calibration [@VanCalster2019] for Ziehl-Neelsen culturing, and a slight drop at the upper end for Smearing and Xpert; however, as shown in the corresponding histogrammes, there were minimal amount of participants with predictedly extremely high chance of positive, hence the less certainty.
 
+We also used the diagnosis at discharge time at a pseudo-gold standard to visualise the calibration and AUC for the predicted TBM prevalence (@ref(fig:theta-metrics)). The AUC for TBM prediction were `r classifierplots:::calculate_auc(test.y = !data_19EI$other_dis_dx, pred.prob = m3$p$theta$mean) |> round(2)` and calibration plots show quite small over-estimation at the centre. 
+
+```{r theta-metrics, fig.align='center', fig.cap='ROC curves and calibration plots for selected model againts discharge diagnosis', fig.dim=c(6,3), message=FALSE, warning=FALSE, out.width='100%'}
+theta_rocs <- 
+  my_fn$my_roc_plot(obs = !data_19EI$other_dis_dx, pred = m3$p$theta$mean) + ggtitle('Smear') + theme_bw() + plot_theme
+theta_calib <- td.misc::binary_calibration(pred=m3$p$theta$mean, obs=!data_19EI$other_dis_dx, span=1) + plot_theme
+
+theta_rocs+theta_calib
+
+```
+
 ## Sensitivity analysis
 
-No difference
-
-## Simplifed scoring system
+## Simplifed model
 
 Result of latent var logistic regression goes here. What should it be named?
+
+# Discussions
+
+Through the implication of LCA, our model succesfully estimated the positive rates for corresponding confirmation procedures. We founds out that GeneXpert, in combination with Xpert Ultra, was not superior to other confirmatory tests, at least for TBM diagnosis, contrary to its popularity and benefit for pulmonary TB <citation>. Compared to estimations the most recent one [@donovan2020], where the authors used one subset of data with 305 patients, the estimated sensitivity were marginally lower for all three assays, with ZN Smear stood at 67% (compared with 71.3%), MGIT culture 31% (47.9%), and Xpert was 13% (39.6%). However, the latter were against standard uniform definition which is in favor of the confirmatory tests themselves, whereas ours were calculated against the actual TBM status, regardless of the test. This might also suggest a small misdiagnosis of TBM when using the current approach, particularly for those with negative test results <may be we can calculate prob TBM in case all test negative to demonstrate this>. This underperfomance was again shown in the calibration plot against discharge diagnosis, with a small dip of observed risk at the around 50%. In fact, we all agree that none amongst the three confirmation indicators are reliable to be used alone as gold standard, and a true gold standard is urgently needed. They, however, all performs well in TBM negative class, with mostly no false positive. These estimations reflect well the biological mechanisms of the tests.
+
+Despite being design for research, due to the categorical nature, current TBM definition studies usually suffer difficulty in which group of patients should be included in the cohort. A study of only definite TBM might favour severe patients while a lower group might have more false positive mixed with them. Choosing a cut-off usually comes with large trade-off, as a large group of patient would be excluded or included. By providing a probability, our model can benefit both clinicians and researchers with more clear insight, and more flexible choices of cut-off. In prognosis research, this probability, together with the ordinal quanitification of bacillary burden, are correction parameters for patients' responses to TBM treatment regimen, which is usually quite specific.
+
+Another finding of our study is the correction of current known diagnostic criteria. In comparison to widely-used consensual scores, some risk factors considered important when diagnose TBM (TB-suggested symptoms, cranial nerve palsy) have minimal contribution in our model. HIV, albeit not mentioned in the original score, turns out to be very important. Laboratorial parameters in general follow the same impact as background belief. Basing on our posterior estimations, we proposed a formula for TBM probability <cross-ref> and a corrected scoring system in table <to-be-added>. A Shiny app was built as a convenient tool for research purpose. In clinical settings, we also provide a simplified scoring system, based on our simplification model. This system only needs demographic and clinical inputs, and are usually easier to diagnose, particularly as early as admission time.
+
+
+```{r pseudo-fit}
+
+```
+
+
+```{r corrected-score, tab.cap="Corrected TBM definition, as compared the uniform case definition", tab.id="corrected-score"}
+
+
+
+```
+
+In addition, we can 
 
 # References
 

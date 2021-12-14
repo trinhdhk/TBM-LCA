@@ -316,7 +316,7 @@ spc_rng = rbind(
     linear = rlogis(1000000,qlogis(.005),.7) |> plogis()
   )
 ) |>
-  filter(linear<.05)
+  filter(linear<.1)
   
 
 sen_rng = rbind(
@@ -440,7 +440,7 @@ data_19EI |>
 
 <!---BLOCK_LANDSCAPE_START--->
 
-```{r test-bl-tbl, echo=FALSE}
+```{r test-bl-tbl, echo=FALSE, tab.cap="Baseline characteristics", tab.id="test-bl-tbl"}
 bl_tbl <- 
   data_dirty |>
   as_tibble() |>
@@ -452,8 +452,7 @@ bl_tbl <-
                     labels = c('Positive', 'Negative', 'Missing'),
                     exclude = NULL
            )
-    ),
-    across(c(GCSV, GCSE, GCSV), as.numeric)
+    )
   ) |>
   select(age, hiv_stat, diabetes = ISDIABETE, clin_illness_day, clin_symptoms, clin_contact_tb, clin_motor_palsy, clin_nerve_palsy, GCSV, GCSM, GCSE, clin_gcs, xray_pul_tb, xray_miliary_tb, csf_lympho, csf_wbc, csf_eos, csf_rbc, csf_protein, csf_lactate, csf_glucose, bld_glucose = BLDGLU, csf_crypto, csf_smear, csf_xpert, csf_mgit) |>
   tidyr::pivot_longer(
@@ -469,7 +468,7 @@ bl_tbl <-
     clin_symptoms     = 'TB-suggested symptoms',
     clin_contact_tb   = 'Past noticeable contact TB within 12 months',
     clin_motor_palsy  = 'Focal neurological deficit',
-    clin_nerve_palsy  = 'Crain nerve palsy',
+    clin_nerve_palsy  = 'Cranial nerve palsy',
     GCSV              = 'Glasgow Coma Scale-Verbal',
     GCSM              = 'Glasgow Coma Scale-Motor',
     GCSE              = 'Glasgow Coma Scale-Eyes',
@@ -502,17 +501,20 @@ bl_tbl <-
       .x, 
       by = Result,
       missing_text = '  - Missing',
-      statistic = list(all_continuous() ~ '{mean} ({p25}, {p75})'),
-      digits = list(csf_eos ~ c(0, 0, 0), clin_gcs ~ c(0, 0, 0))
+      # type = list(GCSV~'continuous', GCSE~'continuous',GCSM~'continuous'),
+      statistic = list(
+        all_continuous() ~ '{mean} ({p25}, {p75})'),
+      digits = list(csf_eos ~ c(0, 0, 0), clin_gcs ~ c(0, 0, 0), 
+                    GCSE ~ c(0, 0, 0), GCSV ~ c(0, 0, 0), GCSM ~ c(0, 0, 0))
     )
   ) |>
   modify_footnote(
-    update = all_stat_cols() ~ "Mean (1st, 3rd quartiles) for numeric variables; n (%) for for categorical variables",
+    update = all_stat_cols() ~ "Mean (1st, 3rd quartiles) for numeric variables; n (%) for categorical variables",
     text_interpret = "html"
   )
 
 bl_tbl |> as_flex_table() |>
-  flextable::set_caption('Baseline characteristics') |>
+  # flextable::set_caption('Baseline characteristics') |>
   flextable::width(width = .88) |>
   flextable::fontsize(size=9, part = 'all') |>
   flextable::theme_zebra()
@@ -779,12 +781,12 @@ calib <- patchworkGrob(calib) |>
 
 ```
 
-```{r best-metrics, fig.align='center', fig.asp=1, fig.cap='ROC curves and calibration plots for selected model', fig.dim=c(8,6), message=FALSE, warning=FALSE, out.width='100%'}
+```{r best-metrics, fig.align='center', fig.cap='ROC curves and calibration plots for selected model', fig.dim=c(8,6), message=FALSE, warning=FALSE, out.width='100%'}
 w = wrap_plots(rocs, calib, ncol=1)
 plot(w)
 ```
 
-All MCMC chains converged with decent $\hat{R}$ and effective sample size. Selected model with highest *elpd* = `r (m3$elpd$estimates[,'Estimate']) |> round(2)` provides good discrimination between TBM and non-TBM status, with 5x20-fold-CV *AUC* = `r classifierplots:::calculate_auc(test.y = data_19EI$csf_smear, pred.prob = m3$p$p_Smear$mean) |> round(0)`% for ZN Smear, `r classifierplots:::calculate_auc(test.y = data_19EI$csf_mgit, pred.prob = m3$p$p_Mgit$mean) |> round(0)`%, and  `r classifierplots:::calculate_auc(test.y = data_19EI$csf_xpert, pred.prob = m3$p$p_Xpert$mean) |> round(0)`% for Xpert. Average predicted probabilities were comparable to observed positivity rates, whereas calibration intercepts were estimated near 0 and calibration slope approximately 1 for all three manifest variables. Calibration curves against non-parametric loess fits (figure \@ref(fig:best-metrics)) depict highly precise moderate calibration [@VanCalster2019] for Ziehl-Neelsen smearing, and a slight drop at the upper end for MGIT culture and Xpert; however, as shown in the corresponding histograms, there were only few participants with predicted high chance of positive test result, hence the lower certainty. A full summary of model metrics and residual correlation plots are shown in the supplementary document.
+All MCMC chains converged with decent $\hat{R}$ and effective sample size. Selected model with highest *elpd* = `r (m3$elpd$estimates[,'Estimate']) |> round(2)`. It provides good discrimination between TBM and non-TBM status, with 5x20-fold-CV *AUC* = `r classifierplots:::calculate_auc(test.y = data_19EI$csf_smear, pred.prob = m3$p$p_Smear$mean) |> round(0)`% for ZN Smear, `r classifierplots:::calculate_auc(test.y = data_19EI$csf_mgit, pred.prob = m3$p$p_Mgit$mean) |> round(0)`%, and  `r classifierplots:::calculate_auc(test.y = data_19EI$csf_xpert, pred.prob = m3$p$p_Xpert$mean) |> round(0)`% for Xpert. Average predicted probabilities were comparable to observed positivity rates, whereas calibration intercepts were estimated near 0 and calibration slope approximately 1 for all three manifest variables. Calibration curves against non-parametric loess fits (figure \@ref(fig:best-metrics)) depict highly precise moderate calibration [@VanCalster2019] for Ziehl-Neelsen smearing, and a slight drop at the upper end for MGIT culture and Xpert; however, as shown in the corresponding histograms, there were only few participants with predicted high chance of positive test result, hence the lower certainty. A full summary of model metrics and residual correlation plots are shown in the supplementary document.
 
 We also used the diagnosis at discharge time as a pseudo-gold standard to visualise the calibration and AUC for the predicted TBM prevalence (figure \@ref(fig:theta-metrics)). The AUC for TBM prediction are `r classifierplots:::calculate_auc(test.y = !data_19EI$other_dis_dx, pred.prob = m3$p$theta$mean) |> round(2)`% and calibration plots show some over-estimation at the centre. 
 
@@ -806,9 +808,11 @@ Estimated scores for clinical signs and symptoms are shown in \@ref(fig:simplifi
 
 _I don't know what to say here. There shall be a calibration plot, but for estimations, I am out of words_
 ```{r simplified-model, fig.align='center', fig.cap='Estimation of simplified TBM risk factors', message=FALSE, warning=FALSE, out.width='70%'}
-tmp_svg <- cowplot::ggdraw() + 
-  cowplot::draw_image(magick::image_read_svg("includes/a_plog_s.svg", width=212*5, height=159*5))
-plot(tmp_svg)
+# tmp_svg <- cowplot::ggdraw() + 
+#   cowplot::draw_image(magick::image_read_svg("includes/a_plog_s.svg", width=212*5, height=159*5))
+# plot(tmp_svg)
+a_plot_s <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS'))
+plot(a_plot_s)
 ```
 
 # Discussions

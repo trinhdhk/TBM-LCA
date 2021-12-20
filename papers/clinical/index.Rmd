@@ -1,0 +1,106 @@
+---
+title: 'In search of a novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach'
+author:
+  - Trinh Dong Huu Khanh:
+      email: trinhdhk@oucru.org
+      institute: [oucru, kcl]
+      correspondence: true
+  - Joseph Donovan:
+      institute: [oucru, lshtm]
+  - Guy Thwaites:
+      institute: [oucru, oxford]
+  - Ronald Geskus:
+      institute: [oucru, oxford]
+institute:
+  - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam 
+  - kcl: King's College London, London, United Kingdom
+  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
+  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
+site: bookdown::bookdown_site
+bibliography: includes/references.bib
+csl: includes/the-lancet-infectious-diseases.csl
+---
+
+```{r setup, include=FALSE}
+options(tinytex.engine_args = '-shell-escape')
+knitr::opts_chunk$set(echo = FALSE, dpi=300) #, dev = 'png'
+flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='fixed')
+```
+
+```{r library, include=FALSE}
+library(gtsummary)
+library(dplyr)
+library(magrittr, include.only = '%$%')
+library(ggplot2)
+library(patchwork)
+library(officedown)
+
+# All the misc functions go here.
+my_fn <- new.env()
+
+## Add labels accross a tbl
+my_fn$add_labels <- \(.data, ...){
+  cols <- list(...)
+  for (i in seq_along(cols))
+    attr(.data[[names(cols)[i]]], 'label') <- cols[[i]]
+  .data
+}
+
+## Register a knit engine for stan code highlight
+my_fn$stan_knitr_engine <- \(options){
+  out <- c('\\begin{Shaded}','\\begin{minted}{stan}', options$code, '\\end{minted}','\\end{Shaded}')
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(stan_code = my_fn$stan_knitr_engine)
+
+## Gist to number equations
+## https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
+my_fn$is_docx_output <- function (fmt = knitr:::pandoc_to()) {
+  if (length(fmt) == 0) {
+    return(FALSE)
+  } else {
+    return(fmt == "docx")
+  }
+}
+
+my_fn$numberEq.docx <- function (eq, lab, envir = docx.eqcounter) {
+  assign(x = "counter", value = get(x = "counter", envir = envir)+1, envir = envir)
+  assign(x = gsub("eq:", "", lab), value = get(x = "counter", envir = envir), envir = envir)
+  lab <- get("counter", envir = envir)
+  return(c('$$', eq, '\\;\\;\\;\\;(', lab, ')', '$$'))
+}
+my_fn$labEq.docx <- function (lab, envir = docx.eqcounter) {
+  return(paste0('(', get(x = gsub("eq:", "", lab), envir = envir), ')'))
+}
+
+docx.eqcounter <- new.env()
+docx.eqcounter$counter <- 0
+  
+# Register a knit engine for formula
+my_fn$aligned_formula_knit <- \(options){
+  out <- my_fn$numberEq.docx(options$code, lab = options$fml.lab)
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
+
+
+# Global theming for ggplots
+my_fn$plot_theme <-
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+```
+
+```{r data, include=FALSE}
+data_dir <- '../../data/cleaned/'
+load(file.path(data_dir, 'data_input.Rdata'))
+data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
+load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
+```

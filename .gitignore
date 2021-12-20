@@ -35,3 +35,8 @@ papers/clinical/includes/classicLCA.vectornator/Manifest.json
 papers/clinical/LCApaper.aux
 papers/clinical/LCApaper.fdb_latexmk
 papers/clinical/LCApaper.aux
+*.aux
+*.fdb_latexmk
+*.aux
+papers/clinical/Output/LCA_paper.tex
+*.aux

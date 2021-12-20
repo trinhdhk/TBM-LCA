@@ -1,0 +1,17 @@
+bookdown::pdf_document2:
+  toc: no
+  pandoc_args:
+    - '--lua-filter=includes/scholarly-metadata.lua'
+    - '--lua-filter=includes/author-info-blocks.lua'
+  latex_engine: xelatex
+  keep_tex: yes
+  highlight: pygments
+  includes:
+    in_header: includes/header.tex
+officedown::rdocx_document:
+  fig_caption: yes
+  reference_docx: includes/styles.docx
+  pandoc_args:
+    - '--lua-filter=includes/scholarly-metadata.lua'
+    - '--lua-filter=includes/author-info-blocks.lua'
+  toc: no

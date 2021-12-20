@@ -1,0 +1,8 @@
+# Conclusion
+
+Our Bayesian LCA model yield good and well-calibrated results. A novel diagnostic gold standard is still urgently needed as no test perform superiorly reliable. Until then, our scoring system can be an objective diagnostic tool and baseline severity estimator in both clinical practice and research, for patients with suspected neurological infection. 
+
+# References
+
+::: {#refs}
+:::

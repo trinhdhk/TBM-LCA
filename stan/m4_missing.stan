@@ -245,6 +245,7 @@ generated quantities {
   vector[N_all] p_Smear;
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
+  vector[3] pairwise_corr;
   vector[N_all] theta;
   matrix[N_all, nX] X;
 
@@ -266,6 +267,8 @@ generated quantities {
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
       p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);
+      
+#include includes/generated_quantities/pairwise_corr.stan
       
       for (n in 1:N_all){
         real ll_Smear[2] = 

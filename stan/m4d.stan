@@ -40,8 +40,10 @@ parameters {
   
   // Parameters of the logistics regression -----------------------------------
 #include includes/parameters/a.stan
+  vector[nXc+nQ] a2_raw;
   real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
-  vector[nB] b_raw;
+  matrix[nB,2] b_raw;
+  // vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
   vector<lower=0>[3] b_FE_raw;
   matrix[nD,3] d_raw;
@@ -57,8 +59,10 @@ parameters {
 
 transformed parameters {
 #include includes/transform_parameters/a_variable_declaration.stan
+  vector[nXc+nQ] a2;
   real b_HIV;
-  vector[nB] b;
+  matrix[nB,2] b;
+  // vector[nB] b2;
   vector<lower=0>[3] b_RE;
   vector<lower=0>[3] b_FE;
   matrix[nD,3] d;
@@ -68,10 +72,12 @@ transformed parameters {
 #include includes/transform_parameters/penalty.stan
 #include includes/transform_parameters/a_transform.stan
     
+    a2 = a2_raw*SP[1];
     b_FE = b_FE_raw * SP[2];
     b_RE = b_RE_raw * SP[2];
     b_HIV = b_HIV_raw * SP[2] / mean(b_FE);
     b = b_raw * SP[2] / mean(b_FE);
+    // b2 = b2_raw * SP[2] / mean(b_FE);
     d = d_raw * SP[2];
   }
 }
@@ -86,9 +92,56 @@ model {
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
 #include includes/main_prior/a.stan
-#include includes/main_prior/b.stan
 #include includes/main_prior/penalty.stan
   for (j in 1:2) RE[j]    ~ normal(0, 1);
+  
+  if (penalty_family == 0) {
+    for (i in 1:(nXc+nQ)){
+      a2_raw[i] ~ student_t(nu, 0, inv(sd_X[i]));
+    }
+  }
+  
+  if (penalty_family == 1) {
+    for (i in 1:(nXc+nQ)){
+      a2_raw[i] ~ double_exponential(0, inv(sd_X[i]));
+    }
+  }
+  
+   if (penalty_family == 2) {
+    for (i in 1:(nXc+nQ)){
+      a2_raw[i] ~ normal(0, inv(sd_X[i]));
+    }
+  }
+  
+  if (nB > 0){
+    if (penalty_family == 1){
+      int j = 1;
+      for (i in B){
+        // b_raw[j]  ~ student_t(nu, 1, inv(sd_X[i+nXc]));
+        b_raw[j,:]  ~ student_t(nu, 1, inv(sd_X[i]));
+        j += 1;
+      }
+    }
+    
+    if (penalty_family == 1){
+      int j = 1;
+      for (i in B){
+        // b_raw[j] ~ double_exponential(0, inv(sd_X[i+nXc]));
+        b_raw[j,:] ~ double_exponential(0, inv(sd_X[i]));
+        j += 1;
+      }
+    }
+    
+    if (penalty_family == 2){
+      int j = 1;
+      for (i in B){
+        // b_raw[j]  ~ normal(0, inv(sd_X[i+nXc]));
+        b_raw[j,:]  ~ normal(0, inv(sd_X[i]));
+        j += 1;
+      }
+    }
+  }
+
   if (penalty_family == 0){
     b_HIV_raw ~ student_t(nu, 0, 2);
     b_RE_raw  ~ student_t(nu, 0, 1);
@@ -121,9 +174,9 @@ model {
       if (obs_Xd[n,1] == 1){
         for (i in 1:N_pattern){
           real logprob_theta = pat_thetas[1,i];
-          real theta = inv_logit(pat_thetas[2,i]);
+          real theta = inv_logit(pat_thetas[2,i] + dot_product(a2, Xc_imp[n,:])*Xd_imp[n,1]);
             
-          real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b, Xc_imp[n,B]) + RE[1,n];
+          real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b[:,1], Xc_imp[n,B]) + Xd_imp[n,1]*dot_product(b[:,2], Xc_imp[n,B]) + RE[1,n];
           real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d[:,1], D[n]) + b_RE[1]*(RE[2,n] + square(RE[2,n])*quad_RE);
           real z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + dot_product(d[:,2], D[n]) + b_RE[2]*(RE[2,n] + square(RE[2,n])*quad_RE);
           real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d[:,3], D[n]) + b_RE[3]*(RE[2,n] + square(RE[2,n])*quad_RE);
@@ -135,19 +188,21 @@ model {
       } else {
         for (i in 1:N_pattern){
           real logprob_theta = pat_thetas[1,i];
-          real theta = inv_logit(pat_thetas[2,i]);
-          
-          vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [b_HIV]');
-          vector[2] logprob_Y = pat_bac_load[1];
-          vector[2] bac_load = pat_bac_load[2] + dot_product(b, Xc_imp[n,B]) + RE[1,n];
-          
-          vector[2] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d[:,1], D[n]) + b_RE[1]*(RE[2,n] + square(RE[2,n])*quad_RE);
-          vector[2] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + dot_product(d[:,2], D[n]) + b_RE[2]*(RE[2,n] + square(RE[2,n])*quad_RE);
-          vector[2] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d[:,3], D[n]) + b_RE[3]*(RE[2,n] + square(RE[2,n])*quad_RE);
-          log_liks[i] = logprob_theta + log_mix(theta, log_sum_exp(
-            logprob_Y[1] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1])),
-            logprob_Y[2] + (bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2]))
-            ),
+          real theta;
+          real bac_load;
+          if (i % 2){
+            theta = inv_logit(pat_thetas[2,i] + dot_product(a2, Xc_imp[n,:])); 
+            bac_load = b_HIV*Xd_imp[n,1] + dot_product(b[:,1], Xc_imp[n,B]) + dot_product(b[:,2], Xc_imp[n,B]) + RE[1,n];
+          } else {
+            theta = inv_logit(pat_thetas[2,i]);
+            bac_load = b_HIV*Xd_imp[n,1] + dot_product(b[:,1], Xc_imp[n,B]) + RE[1,n];
+          }
+          real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d[:,1], D[n]) + b_RE[1]*(RE[2,n] + square(RE[2,n])*quad_RE);
+          real z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + dot_product(d[:,2], D[n]) + b_RE[2]*(RE[2,n] + square(RE[2,n])*quad_RE);
+          real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d[:,3], D[n]) + b_RE[3]*(RE[2,n] + square(RE[2,n])*quad_RE);
+        
+          log_liks[i] = logprob_theta + log_mix(theta, 
+            bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE),
             bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
         }
       }
@@ -157,9 +212,9 @@ model {
     } else {
       // The normal way
       row_vector[nA] X = append_col(Xd_imp[n,:], X_compl[n,:]);
-      real theta = inv_logit(a0 + dot_product(a, X));
+      real theta = inv_logit(a0 + dot_product(a, X) + dot_product(a2, Xc_imp[n,:])*X[1]);
       
-      real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b, Xc_imp[n,B]) + RE[1,n];
+      real bac_load   = b_HIV*Xd_imp[n, 1] + dot_product(b[:,1], Xc_imp[n,B]) + Xd_imp[n,1]*dot_product(b[:,2], Xc_imp[n,B]) + RE[1,n];
       real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d[:,1], D[n]) + b_RE[1]*(RE[2,n] + square(RE[2,n])*quad_RE);
       real z_Mgit_RE  = z_Mgit [2] + b_FE[2]*bac_load + dot_product(d[:,2], D[n]) + b_RE[2]*(RE[2,n] + square(RE[2,n])*quad_RE);
       real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d[:,3], D[n]) + b_RE[3]*(RE[2,n] + square(RE[2,n])*quad_RE);
@@ -183,7 +238,7 @@ generated quantities {
   {
 #include includes/impute_model/generate_X_CV.stan
     
-    theta = inv_logit(a0 + X*a);
+    theta = inv_logit(a0 + X*a + (X[:,(nXd+1):(nA)]*a2).*X[:,1]);
     {
       vector[N_all] RE_all[2];
       vector[N_all] bac_load;
@@ -194,7 +249,7 @@ generated quantities {
         for (n in which_not(keptin)) RE_all[j,n] = normal_rng(0, 1);
       }
       
-      bac_load = b_HIV*X[:,1] + X[:,B2]*b + RE_all[1];
+      bac_load = b_HIV*X[:,1] + X[:,B2]*b[:,1] + (X[:,B2]*b[:,2]).*X[:,1] + RE_all[1];
       vector[N_all] z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + D_all*d[:,1] + b_RE[1]*(RE_all[2] + square(RE_all[2])*quad_RE);
       vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + D_all*d[:,2] + b_RE[2]*(RE_all[2] + square(RE_all[2])*quad_RE);
       vector[N_all] z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + D_all*d[:,3] + b_RE[3]*(RE_all[2] + square(RE_all[2])*quad_RE);

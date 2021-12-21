@@ -1,7 +1,7 @@
 // Imputation ---------------------------------------------------------------
 // - HIV
 HIV_a0 ~ normal(0, 2.5);
-HIV_a ~ normal(0, 2.5);
+// HIV_a ~ normal(0, 2.5);
 
 // - Clinical symptoms
 L_Omega_cs ~ lkj_corr_cholesky(4);
@@ -43,11 +43,10 @@ L_sigma_gcs ~ normal(0, 0.5);
 }
 
 // - Blood
-// bld_a0 ~ normal(0, 2.5);
-L_Omega_bld ~ lkj_corr_cholesky(4);
-L_sigma_bld ~ normal(0, 1);
+// L_Omega_bld ~ lkj_corr_cholesky(4);
+// L_sigma_bld ~ normal(0, 1);
 
-{
-  matrix[2,2] L_Sigma_bld = diag_pre_multiply(L_sigma_bld, L_Omega_bld);
-  Bld_imp ~ multi_normal_cholesky(bld_a0, L_Sigma_bld);
-}
+// {
+  // matrix[2,2] L_Sigma_bld = diag_pre_multiply(L_sigma_bld, L_Omega_bld);
+  // Bld_imp ~ multi_normal_cholesky(bld_a0, L_Sigma_bld);
+// }

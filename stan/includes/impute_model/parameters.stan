@@ -1,6 +1,6 @@
   // * Impute HIV Xd[1] -------------------------------------------------------
   real HIV_a0;
-  vector[2] HIV_a; //WHITE and LYM
+  // vector[2] HIV_a; //WHITE and LYM
   
   // Impute symptoms Td[1:3] for components variables -------------------------
     // Xd[2] is the combined one aka clin_symptoms
@@ -45,6 +45,6 @@
   
   //Lymph and WHITE in blood
   // vector<lower=0>[2] bld_a0;
-  cholesky_factor_corr[2] L_Omega_bld;
-  vector<lower=0>[2] L_sigma_bld;
-  real<lower=0> bld_imp[N*2 - obs_bld];
+  // cholesky_factor_corr[2] L_Omega_bld;
+  // vector<lower=0>[2] L_sigma_bld;
+  // real<lower=0> bld_imp[N*2 - obs_bld];

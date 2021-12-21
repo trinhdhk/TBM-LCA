@@ -5,12 +5,24 @@ matrix[N, 3] Xd_imp; //fully imputed discrete X
 vector[nXc+nQ] Xc_imp[N]; //fully imputed cont X
 matrix[N, nA - 3] X_compl;
 vector[3] GCS_imp[N];
-vector[2] Bld_imp[N];
+// vector[2] Bld_imp[N];
 vector[nXc+nQ] sd_X;
 // vector[nXc+nQ] a_scaled;
 
-Bld_imp       = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
-z_HIV         = HIV_a0 + append_all(Bld_imp)*HIV_a;
+// Bld_imp       = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
+
+for (n in 1:N){
+  if (Td[n,7]==0) {
+    if (obs_Td[n,8]==1){
+      z_HIV[n] = (Td[n,8]==1) ? inv_Phi(0.0043) : inv_Phi(0.0021);
+    } else {
+      z_HIV[n] = inv_Phi(0.0032);
+    }
+  } else{
+    z_HIV[n] = HIV_a0;
+  }
+}
+// z_HIV         = HIV_a0 + append_all(Bld_imp)*HIV_a;
 p_HIV         = Phi(z_HIV);
 GCS_imp       = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], gcs_imp);
 

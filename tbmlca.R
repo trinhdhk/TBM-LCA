@@ -43,7 +43,7 @@ args <-
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
   add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf) %>%
-  add_argument("--sensitivity-case", help = "Case to perform sensitivity analysis, 1 is Joe, 2 is Dr.Nghia, 3 is Guy", default=NA_integer_, nargs=1)
+  add_argument("--hiv-mar", help = "Treating all HIV as MAR", flag=TRUE, nargs=1)
 argparser <- parse_args(args)
 
 # Functions to create folds
@@ -148,10 +148,10 @@ with(
     # Create results env
     # results <- new.env()
     # If sensitivity case = 2 (Dr. Nghia), impute HIV = 0
-    if (isTRUE(sensitivity_case==2)){
-      recipe$Xd[,1] = ifelse(is.na(recipe$Xd[,1]), 0, recipe$Xd[,1])
-      recipe$obs_Xd[,1] = 1
-    }
+    # if (isTRUE(sensitivity_case==2)){
+    #   recipe$Xd[,1] = ifelse(is.na(recipe$Xd[,1]), 0, recipe$Xd[,1])
+    #   recipe$obs_Xd[,1] = 1
+    # }
     
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
@@ -214,7 +214,7 @@ with(
     )
     writeLines(">> Sample")
     pars <- c("z_Smear", "z_Mgit", "z_Xpert",
-              "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta")
+              "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta", "pairwise_corr")
     if (model_no > 0) pars <- c(pars, "a0", "a")
     # if (model != "m0kf" && any(penalty_term == 0)) pars <- c(pars, paste0("sp", c(1,2)[penalty_term==0]))
     if (model_no > 0 && any(penalty_term == 0)) pars <- c(pars, 'sp')
@@ -228,12 +228,13 @@ with(
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
     if (model_no > 1) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
+    if (model == 'm4d') pars <- c(pars, "a2")
     if (is_pca) pars <- c(pars, "L_csf")
     # if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     if (include_d) pars <- c(pars, c('d'))
     if (grepl('missing$', model)) pars <- c(pars, 'z_obs') 
-    if (grepl('missing$', model)) pars <- c(pars, 'z_obs_Xpert') 
+    if (grepl('missingXpert$', model)) pars <- c(pars, 'z_obs_Xpert') 
     if (!all(is.na(include_pars))) pars <- include_pars 
     
     if (mode == "sampling"){

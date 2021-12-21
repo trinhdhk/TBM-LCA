@@ -48,10 +48,12 @@ data_19EI = merge(
                              csf_xpert=GeneXpert,
                              csf_mgit_contaminated = Contaminated,
                              Volume),
-  all=TRUE) |>
-  filter(is.na(csf_mgit_contaminated) | !csf_mgit_contaminated)
+  all=TRUE)
 
 saveRDS(data_19EI, 'export/data_dirty.RDS')
+
+data_19EI = data_19EI |>
+  filter(is.na(csf_mgit_contaminated) | !csf_mgit_contaminated)
 
 data_19EI[, `:=`(
   Volume    = fifelse(is.na(Volume), 6, Volume),
@@ -100,6 +102,8 @@ data_19EI[, `:=`(
 #                              c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE") := NULL], imp_19EI) # "csf_wbc"
 ##################### End not used
 
+# Fix GCS
+# In sum, if GCSV is missing
 
 Xd <- data_19EI %$% cbind(
   hiv_stat,                                                                 #1
@@ -133,7 +137,9 @@ Td <- data_19EI %$% cbind(
   ISCOUGH,                                                            #3
   HEMIPLEGIA,                                                         #4
   PARAPLEGIA,                                                         #5
-  TETRAPLEGIA                                                         #6
+  TETRAPLEGIA,                                                        #6
+  suspectedHIV = DISDIA %in% c('DIA1', 'DIA10', 'DIA12', 'DIA3'),     #7
+  sex = sex                                                           #8
 )
 
 

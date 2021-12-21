@@ -7,14 +7,27 @@
   
   //HIV and Blood
   {
-    vector[2] Bld_imp[N_all];
-    if (sum(keptin) < N_all){
-      vector[3] bld_mu_valid[N_valid] = rep_array(bld_a0, N_valid) ;
-      Bld_imp[which_not(keptin),:] = multi_normal_cholesky_partial_pos_rng(Tc_all[which_not(keptin),4:5], obs_Tc_all[which_not(keptin),4:5], bld_mu_valid, L_Omega_bld);
+    // vector[2] Bld_imp[N_all];
+    // if (sum(keptin) < N_all){
+    //   vector[3] bld_mu_valid[N_valid] = rep_array(bld_a0, N_valid) ;
+    //   Bld_imp[which_not(keptin),:] = multi_normal_cholesky_partial_pos_rng(Tc_all[which_not(keptin),4:5], obs_Tc_all[which_not(keptin),4:5], bld_mu_valid, L_Omega_bld);
+    // }
+    // Bld_imp[which(keptin),:] = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
+    // vector[N_all] z_HIV = HIV_a0 + append_all(Bld_imp)*HIV_a;
+    
+    real z_HIV[N_all];
+    for (n in 1:N_all){
+      if (Td_all[n,7]==0) {
+        if (obs_Td_all[n,8]==1){
+          z_HIV[n] = (Td_all[n,8]==1) ? inv_Phi(0.0043) : inv_Phi(0.0021);
+        } else {
+          z_HIV[n] = inv_Phi(0.0032);
+        }
+      } else{
+        z_HIV[n] = HIV_a0;
+      }
     }
-    Bld_imp[which(keptin),:] = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
-    vector[N_all] z_HIV = HIV_a0 + append_all(Bld_imp)*HIV_a;
-    Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], to_array_1d(z_HIV)), obs_Xd_all[:,1]);
+    Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], z_HIV), obs_Xd_all[:,1]);
   }
   
   //Age & illness day

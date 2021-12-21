@@ -571,14 +571,15 @@ thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale =
 }
 
 # Function to draw the calibration curve
-calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, hist = TRUE, hist.normalize = TRUE, yscale=.1, ..., theme = ggplot2::theme_bw){
+calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, type=c('binary', 'linear'), hist = TRUE, hist.normalize = TRUE, yscale=.1, ..., theme = ggplot2::theme_bw){
   require(ggplot2)
   maincolor <- "#CD113B"
   subcolor1 <- "#111111"
   subcolor2 <- "#999999"
   
   method <- match.arg(method) 
-  
+  type <- match.arg(type)
+  if (type=='linear') hist <- FALSE
   # browser()
   p <- ggplot(mapping=aes(x = pred))
   add_pred <- function(pr, line = FALSE){
@@ -586,7 +587,10 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
     if (method == "loess"){
       geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'loess', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line,...)
     } else {
-      stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+      if (type == 'binary')
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+      else
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
     }
   }
   
@@ -598,14 +602,21 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
 	  p <- p + geom_smooth(aes( y = as.numeric(obs)), method = 'loess', color=maincolor, fill = subcolor2, se = se, size=.9, alpha=.3, ...)
   }
   else {
-    p <- p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=as.logical(y)~splines::ns(qlogis(x), knots), method.args=list(family='binomial'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
+    p <- if (type == 'binary')
+      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=as.logical(y)~splines::ns(qlogis(x), knots), method.args=list(family='binomial'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
+    else
+      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(qlogis(x), knots), method.args=list(family='gaussian'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
   }
   p <- p + 
     geom_line(aes(y = pred), color = "#000000") + 
     ylab("Observed") + xlab("Predicted")+
-    scale_y_continuous(breaks = seq(0, 1, length.out = 5), limits = c(0,1), oob = scales::squish)+
-    scale_x_continuous(breaks = seq(0, 1, length.out = 5))+
     ggtitle(title)
+  
+  if (type == 'binary')
+    p <- p +
+    scale_y_continuous(breaks = seq(0, 1, length.out = 5), limits = c(0,1), oob = scales::squish)+
+    scale_x_continuous(breaks = seq(0, 1, length.out = 5))
+   
   
   if (hist){
     p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = yscale, plot = FALSE)
@@ -618,17 +629,16 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
   
   # Find minimum calibration
   # browser()
-  pred.logit <- qlogis(pred)
-  calib.fit <- glm(as.logical(obs)~pred.logit, family='binomial')
+  if (type == 'binary'){
+    pred.logit <- qlogis(pred)
+    calib.fit <- glm(as.logical(obs)~pred.logit, family='binomial')
+  } else {
+    pred.logit <- pred
+    calib.fit <- lm(obs~pred.logit)
+  }
   
   # browser()
   p + 
-    # ggplot2::annotate(
-    #   "text", x = .625, y = .18, 
-    #   label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',
-    #                  'Predicted prevalence: ', format(pred_p, digits=2)), 
-    #   parse = F, size = 2.8, colour = classifierplots:::fontgrey_str
-    # ) + 
     ggplot2::annotate(
       "text", x = .99, y = .05, hjust='right', vjust='bottom',
       label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',

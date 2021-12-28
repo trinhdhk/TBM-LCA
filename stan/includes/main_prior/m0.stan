@@ -1,5 +1,5 @@
 // Priors of covariates
-a0       ~ student_t(nu, 0, 5);
+a0       ~ student_t(nu, 0, 6);
 
 //1-Specificity of each test
 if (unsure_spc == 1){

@@ -50,6 +50,9 @@ data_19EI = merge(
                              Volume),
   all=TRUE)
 
+#csf smear should not be missing if xpert or mgit is available. they were forgotten to input
+data_19EI[, csf_smear := ifelse(is.na(csf_smear)&(!is.na(csf_mgit)|!is.na(csf_xpert)), FALSE, csf_smear)]
+
 saveRDS(data_19EI, 'export/data_dirty.RDS')
 
 data_19EI = data_19EI |>

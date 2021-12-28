@@ -156,41 +156,38 @@ model {
           real logprob_theta = pat_thetas[1,i];
           real theta = inv_logit(pat_thetas[2,i]);
           
-          vector[2] pat_bac_load[2] = get_patterns([Xd_imp[n,1]], {0}, [b_HIV]');
-          vector[2] logprob_Y = pat_bac_load[1];
-          vector[2] bac_load = pat_bac_load[2] + dot_product(b, Xc_imp[n,B]);
+          real bac_load;
+          if (i % 2 == 0){
+            bac_load = b_HIV + dot_product(b, Xc_imp[n,B]);
+          } else {
+            bac_load = dot_product(b, Xc_imp[n,B]);
+          }
+          real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n] + square(RE[n])*quad_RE);
+          real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n] + square(RE[n])*quad_RE);
+          real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n] + square(RE[n])*quad_RE);
           
-          vector[2] z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-          vector[2] z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-          vector[2] z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-          
-          real ll_Smear[3] = 
+          real ll_Smear[2] = 
             obs_Smear[n] == 1 ?
-            { bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]), bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[1]), bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE[2])} :
-            { 0, 0, 0};
-            
-          real ll_Mgit[3] = 
+            { bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]), bernoulli_logit_lpmf(Y_Smear[n] | z_Smear_RE) } :
+            { 0, 0 };
+          
+          real ll_Mgit[2] = 
             obs_Mgit[n] == 1 ?
-            { bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]), bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[1]), bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE[2])} :
-            { 0, 0, 0};
-            
-          real ll_Xpert[3] = 
+            { bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]), bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit_RE) } :
+            { 0, 0 };
+                  
+          real ll_Xpert[2] = 
             obs_Xpert[n] == 1 ?
-            { bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]), bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[1]), bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE[2])} :
-            { 0, 0, 0};
+            { bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]), bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert_RE) } :
+            { 0, 0 };
             
-          int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] > 0 ? 1 : 0;
+          int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] > 0 ? 1 : 0;  
           log_liks[i] = logprob_theta + log_mix(theta, 
-            // (bernoulli_logit_lpmf(obs_Smear[n] | z_obs[1,2]) + bernoulli_logit_lpmf(obs_Mgit[n] | z_obs[2,2]) + bernoulli_logit_lpmf(obs_Xpert[n] | z_obs[3,2]))/3 +
-            bernoulli_logit_lpmf(obs | z_obs[2]) +
-            log_sum_exp(
-              logprob_Y[1] + 
-              ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-              logprob_Y[2] + 
-              ll_Smear[3] + ll_Mgit[3] + ll_Xpert[3]
-            ),
+            // (bernoulli_logit_lpmf(obs_Smear[n] | z_obs[1,2]) + bernoulli_logit_lpmf(obs_Mgit[n] | z_obs[2,2]) + bernoulli_logit_lpmf(obs_Xpert[n] | z_obs[3,2]))/3 + 
+            bernoulli_logit_lpmf(obs | z_obs[2]) + 
+            ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
             // (bernoulli_logit_lpmf(obs_Smear[n] | z_obs[1,1]) + bernoulli_logit_lpmf(obs_Mgit[n] | z_obs[2,1]) + bernoulli_logit_lpmf(obs_Xpert[n] | z_obs[3,1]))/3 + 
-            bernoulli_logit_lpmf(obs | z_obs[1]) +
+            bernoulli_logit_lpmf(obs | z_obs[1]) + 
             ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
         }
       }

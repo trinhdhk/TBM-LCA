@@ -257,7 +257,7 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
   progressr::with_progress({
     p <- progressr::progressor(steps = n_fold*chains)
     #sflist <- vector("list", length(n_fold*chains))
-    sflist <- furrr::future_map(seq_len(n_fold*chains), function(i){
+    sflist <- furrr::future_map(cli::cli_progress_along(seq_len(n_fold*chains)), function(i){
     # for (i in seq_len(n_fold*chains))
       # sflist[[i]] <- future::future({
       setwd(wd)

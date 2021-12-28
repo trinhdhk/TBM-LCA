@@ -176,7 +176,7 @@ model {
           real logprob_theta = pat_thetas[1,i];
           real theta = inv_logit(pat_thetas[2,i] + dot_product(a2, Xc_imp[n,:])*Xd_imp[n,1]);
             
-          real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b[:,1], Xc_imp[n,B]) + Xd_imp[n,1]*dot_product(b[:,2], Xc_imp[n,B]) + RE[1,n];
+          real bac_load   = b_HIV + dot_product(b[:,1], Xc_imp[n,B]) + Xd_imp[n,1]*dot_product(b[:,2], Xc_imp[n,B]) + RE[1,n];
           real z_Smear_RE = z_Smear[2] + b_FE[1]*bac_load + dot_product(d[:,1], D[n]) + b_RE[1]*(RE[2,n] + square(RE[2,n])*quad_RE);
           real z_Mgit_RE  = z_Mgit[2]  + b_FE[2]*bac_load + dot_product(d[:,2], D[n]) + b_RE[2]*(RE[2,n] + square(RE[2,n])*quad_RE);
           real z_Xpert_RE = z_Xpert[2] + b_FE[3]*bac_load + dot_product(d[:,3], D[n]) + b_RE[3]*(RE[2,n] + square(RE[2,n])*quad_RE);
@@ -190,7 +190,7 @@ model {
           real logprob_theta = pat_thetas[1,i];
           real theta;
           real bac_load;
-          if (i % 2){
+          if (i % 2 == 0){
             theta = inv_logit(pat_thetas[2,i] + dot_product(a2, Xc_imp[n,:])); 
             bac_load = b_HIV*Xd_imp[n,1] + dot_product(b[:,1], Xc_imp[n,B]) + dot_product(b[:,2], Xc_imp[n,B]) + RE[1,n];
           } else {

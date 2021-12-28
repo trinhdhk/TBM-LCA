@@ -43,7 +43,7 @@ args <-
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
   add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf) %>%
-  add_argument("--hiv-mar", help = "Treating all HIV as MAR", flag=TRUE, nargs=1)
+  add_argument("--hiv-missing", help = "HIV missing treating condition, 0: all is 0, 1: MAR for suspected, 2: MAR for all ", default=1, nargs=1)
 argparser <- parse_args(args)
 
 # Functions to create folds
@@ -70,6 +70,7 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
            Y_Smear_all = data_19EI$csf_smear,
            Y_Mgit_all = data_19EI$csf_mgit,
            Y_Xpert_all = data_19EI$csf_xpert,
+           Y_NegCrypto_all = recipe$csf_NegCrypto,
            obs_Smear_all = data_19EI$obs_smear,
            obs_Mgit_all = data_19EI$obs_mgit,
            obs_Xpert_all = data_19EI$obs_xpert,
@@ -145,13 +146,25 @@ with(
     load(input, envir = recipe)
     recipe$penalty_term = penalty_term
     recipe$penalty_family = penalty_family
-    # Create results env
-    # results <- new.env()
-    # If sensitivity case = 2 (Dr. Nghia), impute HIV = 0
-    # if (isTRUE(sensitivity_case==2)){
-    #   recipe$Xd[,1] = ifelse(is.na(recipe$Xd[,1]), 0, recipe$Xd[,1])
-    #   recipe$obs_Xd[,1] = 1
-    # }
+    # Remove crypto if model == m3e
+    if (model == 'm3e') {
+      recipe$csf_NegCrypto = !recipe$Xd[,8]
+      recipe$Xd = recipe$Xd[,-8]
+      recipe$obs_Xd = recipe$obs_Xd[,-8]
+    }
+    
+    # HIV missing case
+    if (hiv_missing == 0){
+      recipe$obs_Xd[,1] = 1
+    }
+    if (hiv_missing == 1){
+      recipe$obs_Xd[recipe$Td[,7]==0,1] = 1
+      # recipe$obs_Xd[,1] = ifelse((recipe$Td[,7]==0)&(recipe$obs_Xd[,1]==0), 1, recipe$obs_Xd[,1])
+    }
+    if (hiv_missing == 2){
+      recipe$Td[,7] = 1
+    }
+  
     
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
@@ -201,7 +214,7 @@ with(
       dir.create(outdir, showWarnings = F)
     } else outdir <- NULL
     
-    cat('>> Compile the sampler\n')
+    cat('>> Compile model sampler\n')
     if (is.na(sampler)) sampler <- file.path("stan", paste0(model, ".stan"))
     sampler <- tryCatch(
       my_stan_model(sampler),
@@ -228,6 +241,8 @@ with(
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
     if (model_no > 1) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
+    if (model == 'm3d') pars <- c(pars, 'a2')
+    if (model == 'm3e') pars <- c(pars, 'z_NegCrypto')
     if (model == 'm4d') pars <- c(pars, "a2")
     if (is_pca) pars <- c(pars, "L_csf")
     # if (model_no == 5) pars <- c(pars, "b_cs")

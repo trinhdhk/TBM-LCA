@@ -11,7 +11,7 @@ myco <- readRDS("data/cleaned//mycol19.RDS")
 
 joindt <- plyr::join_all(
   list(
-    data$INEX[, .(USUBJID, YOB, SEX, ENROLL)],
+    data$INEX[, .(USUBJID, INITIAL, YOB, SEX, ENROLL)],
     data$BASE[, .(USUBJID, ISHIV, ISCHRONIC, ISDIABETE, ISFEVER, ISCONTUBER, ILLNESSDAY, 
              ISREDUCED, ISWEIGHT, ISNSWEAT, ISCOUGH, NONE, ISHEADACHE, ISLOCALSEIZURE, ISGENNERALSEIZURE, 
              ISPSYCHOSIS, ISLANGCHANGE, ISMOVEMENT,
@@ -31,7 +31,7 @@ joindt <- plyr::join_all(
                MYCORESULT, GRAM, BACCUL)],
     data$IMAG[, .(USUBJID, PTB, MTB, CTRESULT)],
     data$ADDINFO[, .(USUBJID, HIV, DENIGM, DENNS1, ADD_JEVIGM = JEVIGM, HEMO, WHITE, NEUTRO, LYMP, EOSI, PLATE)],
-    data$OUTC[, .(USUBJID, DISDIA)],
+    data$OUTC[, .(USUBJID, DISDIA, ISTBTREAT, TBTREATDATE=TBDATE)],
     
     myco
   ), 
@@ -98,7 +98,8 @@ joindt[,`:=`(
   other_dx = !is.na(BACSPE) | stringr::str_detect(tolower(OTH), "[dương,+]")| JEVIGM == "POS" | ADD_JEVIGM == "POS" |  DENGUEIMG == "POS" | DENGUEPCR == "POS" | JEVCSF == "POS" | 
     stringr::str_detect(tolower(VIRO_OTH), "[dương,+]") | NMDAR == "POS",
   other_dis_dx_conf = !DISDIA %in% c("DIA1", "DIA10", "DIA16", "DIA2", "DIA4"),
-  other_dis_dx = !DISDIA %in% c("DIA1", "DIA10")
+  other_dis_dx = !DISDIA %in% c("DIA1", "DIA10"),
+  tbm_dx = DISDIA %in% c("DIA1", "DIA10") | ISTBTREAT %in% 'C49488' | !is.na(TBTREATDATE)
 )][, `:=`(
   clin_score = pmin(4*clin_illness_day+2*as.numeric(clin_symptoms)+(2*clin_contact_tb)+1*clin_motor_palsy+1*clin_nerve_palsy+1*(clin_gcs<15),6),
   csf_score = pmin(4, csf_clear + (csf_wbc >= 10 & csf_wbc <= 500) + (csf_lym_pct > .5) + (csf_protein > 1) + (glucose_ratio < .5 | csf_glucose < 2.2)),

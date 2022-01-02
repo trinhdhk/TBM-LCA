@@ -1,2 +1,2 @@
  //hyper-prior for the penalty adaptation
-sp ~ normal(0, 1.25);
+sp ~ normal(0, .7);

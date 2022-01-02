@@ -175,31 +175,44 @@ with(
     # Load cache or create new folds
     cache_file <- file.path(cache_dir, "folds", paste0(output_name, "_recipe.RDS"))
     has_cache <- file.exists(cache_file)
-    writeLines(paste(">> Program starts at:", Sys.time()))
-    writeLines(crayon::yellow("------------------------------------------------"))
-    writeLines(crayon::yellow("Configuration:"))
-    writeLines(crayon::yellow("- Model", model))
-    writeLines(crayon::yellow("-", fold, "fold(s) with", rep, "repetition(s)"))
-    writeLines(crayon::yellow("- Prior family:", switch(as.character(penalty_family), "0" = "Student t", "1" = "Laplace", "2" = "Normal"),
-      "with scales = {", toString(ifelse(penalty_term==0, "~N[0,2.5]", penalty_term)), "}"))
-    writeLines(crayon::yellow("- Seed =", seed))
-    writeLines(crayon::yellow("- Stan config: Cores =", cores, "Chains =", chains, "Iter =", iter, "Warmup =", warmup, "Init_r =", init_r, "Adapt_delta =", adapt_delta))
-    if (model == "m6kf")
-      writeLines(crayon::yellow("- Number of latent factors:", n_FA))
-    writeLines(crayon::yellow("------------------------------------------------"))
+    prior_family_name <- 
+      switch(as.character(penalty_family), 
+             "0" = "Student t", "1" = "Laplace", "2" = "Normal")
+    # Print out program information
+    writeLines('')
+    cli::cli_inform('{.strong LCA Model Sampler}')
+    cli::cli_alert_info('Program starts at: {Sys.time()}')
+    cli::cli_h1('Configurations:')
+    cli::cli_ul()
+    cli::cli_li('{.strong Model} {model}')
+    cli::cli_li('Mode: {mode}')
+    cli::cli_li('{fold} fold{?s} with {rep} repetition{?s}')
+    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N(0,2.5)", penalty_term))}]')
+    cli::cli_li('{.strong Random seed:} {.field {seed}}')
+    cli::cli_li('Stan configurations:')
+    ulid <- cli::cli_ul()
+    cli::cli_li('cores = {.field {cores}}')
+    cli::cli_li('chains = {.field {chains}}')
+    cli::cli_li('iter = {.field {iter}}')
+    cli::cli_li('warmup = {.field {warmup}}')
+    cli::cli_li('adapt_delta = {.field {adapt_delta}}')
+    cli::cli_li('init_r = {.field {init_r}}')
+    cli::cli_end(ulid)
+    cli::cli_end()
+    cli::cli_h1('')
 
     if (clean_state){
       if (has_cache) {
-        writeLines(">> Remove cache and create new folds")
+        cli::cli_alert("Remove cache and create new folds")
         file.remove(cache_file)
       }
       folds <- create_folds(recipe, fold, rep, seed, cache_file, n_FA, B, lifted_spc, quad_RE=m3_quadRE)
     } else{
       if (has_cache) {
-        writeLines(">> Cache file found. Use cache file.")
+        cli::cli_alert("Cache file found. Use cache file.")
         folds <- readRDS(cache_file)
       } else {
-        writeLines(">> No cache file found. Create new folds")
+        cli::cli_alert("No cache file found. Create new folds")
         folds <- create_folds(recipe, fold, rep, seed, cache_file, n_FA, B, lifted_spc, quad_RE = m3_quadRE)
       }
     }
@@ -214,7 +227,7 @@ with(
       dir.create(outdir, showWarnings = F)
     } else outdir <- NULL
     
-    cat('>> Compile model sampler\n')
+    cli::cli_alert('Compile model sampler')
     if (is.na(sampler)) sampler <- file.path("stan", paste0(model, ".stan"))
     sampler <- tryCatch(
       my_stan_model(sampler),
@@ -225,8 +238,8 @@ with(
         my_stan_model(sampler)
       }
     )
-    writeLines(">> Sample")
-    pars <- c("z_Smear", "z_Mgit", "z_Xpert",
+    cli::cli_alert('Sample')
+    pars <- c("z_Smear", "z_Mgit", "z_Xpert", "z_theta",
               "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta", "pairwise_corr")
     if (model_no > 0) pars <- c(pars, "a0", "a")
     # if (model != "m0kf" && any(penalty_term == 0)) pars <- c(pars, paste0("sp", c(1,2)[penalty_term==0]))
@@ -289,19 +302,20 @@ with(
     
     # Clear cache
     if (!keep_cache){
-      writeLines(">> Clean up cache")
+      cli::cli_inform("Clean up cache")
       unlink(outdir, recursive = TRUE)
       file.remove(cache_file)
     } 
     
     # Save results
-    writeLines(">> Save results")
+    cli::cli_alert("Save results")
     results$model_name <- model
     results$folds  <- folds
     if (mode != 'optimizing')
       results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
     saveRDS(results, file = file.path(output_dir, output_file))
     future::plan("sequential")
+    cli::cli_alert_success('Sampling completed!')
   })
 
 

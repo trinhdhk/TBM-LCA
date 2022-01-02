@@ -143,7 +143,7 @@ LCAModel <- R6::R6Class(
     calibration_plot = function(
       which = c("Y", "C"),
       method = c("loess", "splines"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       span = .75,
       knots = 3,
       est = c("mean", "median"),
@@ -172,7 +172,7 @@ LCAModel <- R6::R6Class(
     },
     density_plot = function(
       which = c("Y", "C"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       est = c("mean", "median"),
       theme = ggplot2::theme_bw 
     ){
@@ -196,7 +196,7 @@ LCAModel <- R6::R6Class(
     },
     roc_plot = function(
       which = c("Y", "C"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       resamps = 2000,
       force_bootstrap = NULL,
       est = c("mean", "median"),

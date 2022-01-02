@@ -1,25 +1,25 @@
 // Imputation ---------------------------------------------------------------
 // - HIV
-HIV_a0 ~ normal(0, 2.5);
+HIV_a0 ~ normal(0, 5);
 // HIV_a ~ normal(0, 2.5);
 
 // - Clinical symptoms
 L_Omega_cs ~ lkj_corr_cholesky(4);
-cs_a0 ~ normal(0, 2.5);
+cs_a0 ~ normal(0, 5);
 to_vector(cs_a) ~ normal(0, 2.5);
 
 // - Motor palsy
 L_Omega_mp ~ lkj_corr_cholesky(4);
-mp_a0 ~ normal(0, 2.5);
+mp_a0 ~ normal(0, 5);
 to_vector(mp_a) ~ normal(0, 2.5);
 
 // - Age
-age_a0 ~ normal(0, 2.5);
+age_a0 ~ normal(0, 5);
 age_a  ~ normal(0, 2.5);
 age_sigma ~ normal(0, 1);
 
 // - Illness day
-id_a0 ~ normal(0, 2.5);
+id_a0 ~ normal(0, 5);
 id_a  ~ normal(0, 2.5);
 id_sigma ~ normal(0, 1);
 

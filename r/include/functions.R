@@ -372,10 +372,11 @@ kfold <- function(log_lik_heldout)  {
   return(out)
 }
 
-extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,  holdout=TRUE){
+extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...){
   K = length(list_of_holdouts)
   Nrep = sum(simplify2array(list_of_holdouts)[1,])
-  holdout <- as.numeric(holdout)
+  holdout = 1
+  # holdout <- as.numeric(holdout)
   stopifnot(length(list_of_stanfits) == K)
   D = if (holdout) 1 else (K/Nrep - 1)
   par_extract_list <- lapply(list_of_stanfits,FUN = rstan::extract, pars=pars, ...)
@@ -390,15 +391,22 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...,
         for (d in seq_len(D)){
           # print((n-1)*K2+k)
           k_par <- par_extract_list[[(n-1)*K2+k]][[p]] 
-          #browser()
+          # browser()
           par_dims <- dim(k_par)
           # browser()
           if (length(par_dims) >= 2 && par_dims[min(length(par_dims),2)] == length(holdout_k)) {
             commas <- paste(rep(',', length(par_dims)-2), collapse = " ")
             # browser()
-            call_string <- glue::glue('extract_holdout_par[(dim(par_extract_list[[1]][[p]])[1]*(n-1)*d+1):(dim(par_extract_list[[1]][[p]])[1]*n*d),
-                                    holdout_k=={holdout} {commas}] <- k_par[,holdout_k=={holdout} {commas}]')
-            eval(parse(text=call_string))
+            # if (holdout){
+              call_string <- glue::glue('extract_holdout_par[(dim(par_extract_list[[1]][[p]])[1]*(n-1)*d+1):(dim(par_extract_list[[1]][[p]])[1]*n*d),
+                                    which(holdout_k==1) {commas}] <- k_par[,which(holdout_k==1 {commas})]')
+              eval(parse(text=call_string))
+            # } else {
+            #   call_string <- glue::glue('k_par[,which(holdout_k==0 {commas})] <- 0')
+            #   eval(parse(text=call_string))
+            #   ex
+            # }
+            
           } else {
             stop('Par(s) is/are not individual propert(y/ies). Please use the rstan::extract instead!')
             #commas <- paste(rep(',', length(par_dims)-1), collapse = " ")
@@ -588,9 +596,9 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
       geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'loess', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line,...)
     } else {
       if (type == 'binary')
-        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
       else
-        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
     }
   }
   
@@ -603,9 +611,9 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
   }
   else {
     p <- if (type == 'binary')
-      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=as.logical(y)~splines::ns(qlogis(x), knots), method.args=list(family='binomial'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
+      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
     else
-      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(qlogis(x), knots), method.args=list(family='gaussian'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
+      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
   }
   p <- p + 
     geom_line(aes(y = pred), color = "#000000") + 
@@ -631,6 +639,7 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
   # browser()
   if (type == 'binary'){
     pred.logit <- qlogis(pred)
+    pred.logit <- ifelse(is.infinite(pred.logit), NA_real_, pred.logit)
     calib.fit <- glm(as.logical(obs)~pred.logit, family='binomial')
   } else {
     pred.logit <- pred

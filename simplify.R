@@ -141,7 +141,7 @@ with(
     cli::cli_end()
     cli::cli_h1('')
     
-    cli::cli_alert("Extract posteriors from target")
+    clyyi::cli_alert("Extract posteriors from target")
     target_file <- file.path('outputs', paste0(target,'.RDS'))
     target_fit <- readRDS(target_file)
     if (!inherits(target_fit, 'stanfit')) target_fit <- target_fit$ouputs 
@@ -240,6 +240,7 @@ with(
       results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
     saveRDS(results, file = file.path(output_dir, output_file))
     future::plan("sequential")
+    cli::cli_alert_success('Sampling completed!')
   }
 )
 

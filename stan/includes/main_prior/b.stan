@@ -3,7 +3,7 @@
       int j = 1;
       for (i in B){
         // b_raw[j]  ~ student_t(nu, 1, inv(sd_X[i+nXc]));
-        b_raw[j]  ~ student_t(nu, 1, inv(sd_X[i]));
+        b_raw[j]  ~ student_t(nu, 0, inv(sd_X[i]));
         j += 1;
       }
     }

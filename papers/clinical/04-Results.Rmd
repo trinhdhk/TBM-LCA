@@ -2,7 +2,7 @@
 
 ## Clinical characteristics
 
-From 29th August 2017 to 22nd January 2021, there were `r nrow(data_dirty)` patients with suspected brain infection enrolled into study. `r nrow(data_19EI)` were included in the analysis. `r nrow(data_dirty) - nrow(data_19EI)` were excluded due to contaminated culture growth. Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). There were `r sum(data_19EI$csf_smear, na.rm=TRUE)` ZN Smear, `r sum(data_19EI$csf_mgit, na.rm=TRUE)` MGIT Culturing, and `r sum(data_19EI$csf_xpert, na.rm=TRUE)` Xpert samples got positive result (figure \@ref(fig:venn-test)).
+From 29th August 2017 to 22nd January 2021, there were `r nrow(data_dirty)` patients with suspected brain infection enrolled into study. `r nrow(data_19EI)` were included in the analysis. `r sum(data_dirty$csf_mgit_contaminated)` were excluded due to contaminated culture growth; `r sum(data_dirty$wrong_name)` were excluded due to unrecoverable data error; and `r sum(data_dirty$Volume < 3)` were excluded due to sample volume collected were lower than 3. Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). There were `r sum(data_19EI$csf_smear, na.rm=TRUE)` ZN Smear, `r sum(data_19EI$csf_mgit, na.rm=TRUE)` MGIT Culturing, and `r sum(data_19EI$csf_xpert, na.rm=TRUE)` Xpert samples got positive result (figure \@ref(fig:venn-test)).
 
 ```{dot patient-flow}
 

@@ -1,6 +1,6 @@
 # Conclusion
 
-Our Bayesian LCA model yield good and well-calibrated results. A novel diagnostic gold standard is still urgently needed as no test perform superiorly reliable. Until then, our scoring system can be an objective diagnostic tool and baseline severity estimator in both clinical practice and research, for patients with suspected neurological infection. 
+Our LCA is the first to provide a thorough approach for TBM diagnosis, from admission, to days later with all confirmatory tests, with good discrimination and calibration values. Until a better gold standard being developed, our scoring system can be an objective diagnostic tool and baseline severity estimator in both clinical practice and research for TBM patients.
 
 # References
 

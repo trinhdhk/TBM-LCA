@@ -1,2 +1,3 @@
 book_filename: "LCA_paper.Rmd"
 output_dir: "outputs"
+delete_merged_file: yes

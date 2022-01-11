@@ -18,7 +18,7 @@ institute:
   - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
 site: bookdown::bookdown_site
 bibliography: includes/references.bib
-csl: includes/the-lancet-infectious-diseases.csl
+csl: includes/clinical-infectious-diseases.csl
 ---
 
 ```{r setup, include=FALSE}
@@ -30,6 +30,7 @@ flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='
 ```{r library, include=FALSE}
 library(gtsummary)
 library(dplyr)
+library(data.table)
 library(magrittr, include.only = '%$%')
 library(ggplot2)
 library(patchwork)
@@ -87,6 +88,24 @@ my_fn$aligned_formula_knit <- \(options){
 }
 knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
 
+# Register diagrammer graphviz
+my_fn$diagrammer_engine <- \(options){
+  grviz_opt = formals(DiagrammeR::grViz)
+  grviz_opt = grviz_opt[names(grviz_opt) != 'diagram']
+  new_opt = options[names(options) %in% names(grviz_opt)]
+  # not_grviz_opt = opt[!names(opt %in% c('diagram', name(grviz_opt)))]
+  grviz_opt = modifyList(grviz_opt, new_opt)
+  dia_call <- purrr::partial(DiagrammeR::grViz, diagram = options$code)
+  
+  out <- do.call(dia_call, grviz_opt) 
+  options$code <- out$x$diagram
+  options$engine <- 'dot'
+  options$echo <- FALSE
+  knitr::knit_engines$get('dot')(options)
+  # options$results <- 'asis'
+  # knitr::engine_output(options, options$code, '')
+}
+knitr::knit_engines$set(diagrammer = my_fn$diagrammer_engine)
 
 # Global theming for ggplots
 my_fn$plot_theme <-
@@ -95,12 +114,16 @@ my_fn$plot_theme <-
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 
+na = \(x) sum(is.na(x))
+
 ```
 
 ```{r data, include=FALSE}
 data_dir <- '../../data/cleaned/'
 load(file.path(data_dir, 'data_input.Rdata'))
 data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
+setDT(data_dirty)
 load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
 load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
+m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS'))
 ```

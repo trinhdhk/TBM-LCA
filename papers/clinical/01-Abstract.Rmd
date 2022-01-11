@@ -1,0 +1,17 @@
+# Abstract {-}
+
+### Background {-}
+
+*Tuberculous meningitis* (TBM) is the one most mortal form of tuberculosis. Current expertise-based diagnosis comes with high uncertainty and performance of Ziehl-Neelsen smear (ZN Smear), cuturing, and GeneXpert are suboptimal. We developed a diagnosis model that provides a statistically calibrated scoring system, on full and simplified scales, estimations of individual TBM risk, bacillary burden, and sensitivity and specificity of current confirmatory tests amongst adults with suspected brain infection.
+
+### Methods {-}
+
+We included 662 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021. We used a Bayesian latent class regression model with local random effects. Models were validated internally and a Shiny app was provided.
+
+### Results {-}
+
+All current confirmatory had nearly perfect specificity. The sensitivity of ZN Smear was ... , culturing was.., and GeneXpert was.... Stratified by HIV status, ZN Smear was ... sensitive, culturing was ... sensitive, and GeneXpert was ...sensitive for HIV negative population. Amongst HIV patient, the sensitivities of the three tests were in turn ..., ..., and .... Our full diagnosis model showed an AUC of ... and the simplified model showed an AUC of .... The models showed decent calibration. 
+
+### Conclusion {-}
+
+The developed models could be practically used as a decision assistants for the clinicians to recognise patients with high risk of TBM at different time points from early admission to after all tests returned.

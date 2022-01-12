@@ -15,7 +15,7 @@ args <-
   add_argument("--output-file", help = "output filename, default to auto-inference", short = "-f") |>
   add_argument("--fold", help = "number of folds for cross-validation, ignored if not in a clean state and cache is available", default = 10, short = "-k") |>
   add_argument("--rep", help = "number of repetitions of K-fold procedure, ignored if not in a clean state and cache is available", default = 4, short = "-r") |>
-  add_argument("--seed", help = "random seed", default = sample(0:100000, 1), short = "-S") |>
+  add_argument("--seed", help = "random seed, default to randomly select a number from 0 to 100,000", default = sample(0:100000, 1), short = "-S") |>
   add_argument("--clean-state", help = "ignore cache to run a clean state", flag = TRUE) |> 
   add_argument("--cache-dir", help = "cache directory, ignored if --no-cache flag is on", default = ".cache", short = "-d") |>
   add_argument("--no-cache", help = "disable caching and monitoring process, written to <cache-dir>/sampling/<model> ", flag = TRUE, short = "-n") |> 
@@ -28,15 +28,17 @@ args <-
   add_argument("--init-r", help = "Stan init parameter", default = 1, short = "-R") |>
   add_argument("--adapt-delta", help = "Stan param", default = .8, short = "-D") |>
   add_argument("--penalty-family", help = "Family for the regularised prior, either 't', 'normal', or 'laplace'", default = "t", short = "-F") |>
-  add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed, second term == -1 will make it follow the first", nargs = 2, default = c(0,0), short = "-P") |>
+  add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed, second term == -1 will make it follow the first", nargs = 1, default = 0, short = "-P") |>
   add_argument("--all-params", help = "Whether to expose imputation params, ignored for m0", flag = TRUE, short="-a") |>
   add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf) |>
+  add_argument("--extra-x", help =  "Extra X", default = NA_character_, nargs = Inf) |>
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) 
 
 argparser <- parse_args(args)
 
 create_folds <- 
-  \(recipe, K, N, seed, cache_file=NULL){
+  \(recipe, K, N, X_extra, seed, cache_file=NULL){
+    recipe <- recipe
     inp <-
       with(recipe,
            list(
@@ -55,12 +57,15 @@ create_folds <-
              Xd_all = Xd,
              Td_all = Td,
              Tc_all = Tc,
+             nX_extra = ncol(X_extra),
+             X_extra_all = X_extra,
              obs_Xc_all = cbind(obs_Xc),
              obs_Xd_all = obs_Xd,
              obs_Td_all = obs_Td,
              obs_Tc_all = obs_Tc,
              penalty_family = penalty_family,
              penalty_term = penalty_term,
+             mu_theta = mu_theta,
              mu_ztheta = mu_ztheta,
              sd_ztheta = sd_ztheta
            ))
@@ -94,6 +99,8 @@ with(
     load(input, envir = recipe)
     recipe$penalty_term = penalty_term
     recipe$penalty_family = penalty_family
+    
+    X_extra = if (!all(is.na(extra_x))) recipe$data_19EI[extra_x] else NULL
     
     # HIV missing case
     # if (hiv_missing == 0){
@@ -141,27 +148,29 @@ with(
     cli::cli_end()
     cli::cli_h1('')
     
-    clyyi::cli_alert("Extract posteriors from target")
+    cli::cli_alert("Extract posteriors from target")
     target_file <- file.path('outputs', paste0(target,'.RDS'))
     target_fit <- readRDS(target_file)
-    if (!inherits(target_fit, 'stanfit')) target_fit <- target_fit$ouputs 
-    z_theta <- rstan::summary(target_fit, pars = 'z_theta')$summary
+    if (!inherits(target_fit, 'stanfit')) target_fit <- target_fit$outputs 
+    z_theta <- rstan::summary(target_fit, pars = c('z_theta'))$summary
+    theta <- rstan::summary(target_fit, pars = c('theta'))$summary
     recipe$mu_ztheta <- z_theta[,'mean']
     recipe$sd_ztheta <- z_theta[,'sd']
+    recipe$mu_theta <- theta[,'mean']
     
     if (clean_state){
       if (has_cache) {
         cli::cli_alert("Remove cache and create new folds")
         file.remove(cache_file)
       }
-      folds <- create_folds()
+      folds <- create_folds(recipe=recipe, K=fold, N=rep, X_extra=X_extra, seed=seed, cache_file=cache_file)
     } else{
       if (has_cache) {
         cli::cli_alert("Cache file found. Use cache file.")
         folds <- readRDS(cache_file)
       } else {
         cli::cli_alert("No cache file found. Create new folds")
-        folds <- create_folds()
+        folds <- create_folds(recipe=recipe, K=fold, N=rep, X_extra=X_extra, seed=seed, cache_file=cache_file)
       }
     }
     
@@ -176,7 +185,7 @@ with(
     } else outdir <- NULL
     
     cli::cli_alert('Compile model sampler')
-    if (is.na(sampler)) sampler <- file.path("stan", paste0(model, ".stan"))
+    sampler <-"stan/s3.stan"
     sampler <- tryCatch(
       my_stan_model(sampler),
       error = function(e) {
@@ -243,5 +252,3 @@ with(
     cli::cli_alert_success('Sampling completed!')
   }
 )
-
-  add_argument()

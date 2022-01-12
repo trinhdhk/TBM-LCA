@@ -189,10 +189,16 @@ change_ylabs <- function(mcmc_plot, ..., labs = character(), top_down = TRUE){
 
 # functions to create repeated kfold
 repeated_kfold <- function(K = 10, N_rep = 4, N_obs, data, seed = 123, cores = 10){
-  if (K == 1) return(
-    list(keptin = list(rep(1L, N_obs)), holdout = list(rep(0L, N_obs)), 
-         inputs = list(modifyList(data, list(keptin = rep(1L, N_obs)))))
-  )
+  if (K == 1) {
+    # lll <- vector('list', N_rep)
+    folds <- list()
+    # print(data$N_all)
+    folds$keptin = lapply(seq_len(N_rep), \(.) (rep(1L, N_obs)))
+    folds$holdout = lapply(seq_len(N_rep), \(.) (rep(0L, N_obs)))
+    folds$inputs = lapply(seq_len(N_rep), \(.) (modifyList(data, list(keptin = rep(1L, N_obs)))))
+    return(folds)
+  }
+  
   holdout <- vector("list", N_rep * K)
   keptin <- vector("list", N_rep * K)
   for(n in seq_len(N_rep)){
@@ -236,6 +242,7 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
   backend <- match.arg(backend)
   badRhat <- 1.1 # don't know why we need this?
   n_fold <- length(list_of_datas)
+  # n_fold=1
   if (missing(sampler)){
     model <- if (backend == "cmdstanr")
       cmdstanr::cmdstan_model(stan_file=file, include_paths = include_paths)
@@ -257,7 +264,7 @@ stan_kfold <- function(file, sampler, list_of_datas, include_paths=NULL, sample_
   progressr::with_progress({
     p <- progressr::progressor(steps = n_fold*chains)
     #sflist <- vector("list", length(n_fold*chains))
-    sflist <- furrr::future_map(cli::cli_progress_along(seq_len(n_fold*chains)), function(i){
+    sflist <- furrr::future_map(seq_len(n_fold*chains), function(i){
     # for (i in seq_len(n_fold*chains))
       # sflist[[i]] <- future::future({
       setwd(wd)
@@ -430,7 +437,7 @@ my_roc_plot <-
     
     plt <- ggplot()
     for (.pred_rep in pred_rep)
-      plt <- ._add_roc_plot(plt, obs, .pred_rep, resamps, force_bootstrap, .rep = TRUE)
+      plt <- ._add_roc_plot(plt, obs, .pred_rep, resamps, force_bootstrap, .rep = TRUE, .has_rep = length(pred_rep))
     plt <- ._add_roc_plot(plt, obs, pred, resamps, force_bootstrap, .rep = FALSE, .has_rep = length(pred_rep))
     plt # + coord_cartesian(xlim=c(0, 100, ylim=c(0,100)))
   }
@@ -443,10 +450,11 @@ my_roc_plot <-
     subcolor2 <- "#999999"
     n <- length(obs)
     obs.bin <- obs == 1
-    nbins <- min(50, n)
+    nbins <- min(100, n)
+    # nbins <- n
     npositives <- sum(obs.bin)
     nnegatives <- n - npositives
-    negative_steps <- floor(nnegatives/50)
+    # negative_steps <- floor(nnegatives/60)
     negative_steps <- floor(nnegatives/nbins)
     auc <- classifierplots:::calculate_auc(obs, pred)
     writeLines(paste("AUC:", auc))
@@ -508,23 +516,35 @@ my_roc_plot <-
     writeLines("Producing ROC plot")
     
     # plt <- ggplot()
-    plt <- plt + geom_line(data=roc_tbl_sub_stats, 
-                     mapping=aes(x = 100 * fp/nnegatives, 
-                                 y = 100 * `50%`/npositives),
-                     color = if (!.rep) classifierplots:::green_str else subcolor2, 
-                     size = if (!.rep) 1 else .5,
-                     alpha =  if (!.rep) 1 else .5) + 
-      geom_abline(slope = 1, intercept = 0, linetype = "dotted") 
     
-    if (!.rep) 
+    
+    if (!.rep) {
+      proc <- pROC::roc(obs~pred)
+      coord <- pROC::coords(proc, x='best', input='threshold')
+      # ci.coord <- pROC::ci.coords(proc, x='best', input='threshold')
       plt <- plt + 
-      annotate("text", x = 62.5, y = 22.5, label = paste0("AUC ", format(auc, digits = 3), "%"),
-               parse = F, size = 6, colour = classifierplots:::fontgrey_str) + 
-      scale_x_continuous(name = "False Positive Rate (%)    (1-Specificity)", 
-                         limits = c(0, 100), expand = c(0.05, 0.05)) + 
-      scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
-                         limits = c(0, 100), expand = c(0.05, 0.05))
-    
+        annotate("text", x = 62.5, y = 22.5, label = paste0("AUC ", format(auc, digits = 3), "%"),
+                 parse = F, size = 6, colour = classifierplots:::fontgrey_str) + 
+        scale_x_continuous(name = "False Positive Rate (%)    (1-Specificity)", 
+                           limits = c(0, 100), expand = c(0.05, 0.05),
+                           breaks = c(0, 25, 50, 75, 100, round(100 - coord[['specificity']]*100,1))
+                           ) + 
+        scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
+                           limits = c(0, 100), expand = c(0.05, 0.05),
+                           breaks = c(0, 25, 50, 75, 100, round(coord[['sensitivity']]*100,1))) + 
+        geom_hline(aes(yintercept=coord[['sensitivity']]*100), colour = classifierplots:::fontgrey_str, linetype = "dashed") +
+        geom_vline(aes(xintercept=100-coord[['specificity']]*100), colour = classifierplots:::fontgrey_str, linetype = "dashed") +
+        annotate("text", y=coord[['sensitivity']]*100-3, x=100-coord[['specificity']]*100+3,
+                 hjust='left', vjust='top',
+                 label = glue::glue("Pr(Y) = {round(coord[['threshold']]*100,1)}"),
+                 size=3.8)
+        
+        # geom_segment(aes(y=ci.coord$sensitivity[[1]]*100,
+        #                   yend=ci.coord$sensitivity[[3]]*100,
+        #                   x=100-ci.coord$specificity[[1]]*100,
+        #                   xend=100-ci.coord$specificity[[3]]*100), colour =  classifierplots:::green_str)
+    }
+      
     if (bootstrap) {
       plt <- plt + geom_ribbon(mapping = aes(x = 100 * fp/nnegatives, 
                                              ymin = 100 * `2.5%`/npositives, 
@@ -532,7 +552,7 @@ my_roc_plot <-
                                data=roc_tbl_sub_stats, 
                                # fill = if (!.rep) classifierplots:::green_str else subcolor2, 
                                fill = classifierplots:::green_str, 
-                               alpha = if (.has_rep) .1 else .2) 
+                               alpha = if (.has_rep) .07 else .3) 
       if (!.rep)
         plt <- plt +
           annotate("text", x = 62.5, y = 15, 
@@ -541,6 +561,13 @@ my_roc_plot <-
                                   "% - ", format(auc_bounds[3], digits = digits_use), "%"), 
                    parse = F, size = 3.8, colour = classifierplots:::fontgrey_str)
     }
+    plt <- plt + geom_line(data=roc_tbl_sub_stats, 
+                           mapping=aes(x = 100 * fp/nnegatives, 
+                                       y = 100 * `50%`/npositives),
+                           color = if (!.rep) classifierplots:::green_str else subcolor2, 
+                           size = if (!.rep) 1 else .5,
+                           alpha =  if (!.rep) 1 else .5) + 
+      geom_abline(slope = 1, intercept = 0, linetype = "dotted") 
     return(plt)
   }
 
@@ -579,84 +606,106 @@ thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale =
 }
 
 # Function to draw the calibration curve
-calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, type=c('binary', 'linear'), hist = TRUE, hist.normalize = TRUE, yscale=.1, ..., theme = ggplot2::theme_bw){
+calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines"), se = TRUE, knots=3, span=1, type=c('binary', 'linear'), hist = TRUE, hist.normalize = TRUE, yscale=.1, theme = ggplot2::theme_bw()){
   require(ggplot2)
   maincolor <- "#CD113B"
   subcolor1 <- "#111111"
   subcolor2 <- "#999999"
   
-  method <- match.arg(method) 
-  type <- match.arg(type)
-  if (type=='linear') hist <- FALSE
-  # browser()
-  p <- ggplot(mapping=aes(x = pred))
-  add_pred <- function(pr, line = FALSE){
+  pred_env = new.env(parent=baseenv())
+  pred_env$title <- title
+  pred_env$method <- match.arg(method) 
+  pred_env$type <- match.arg(type)
+  pred_env$span <- span
+  pred_env$knots <- knots
+  pred_env$se <- se
+  pred_env$hist <- hist
+  pred_env$hist.normalize <- hist.normalize
+  pred_env$yscale <- yscale
+  pred_env$plot_theme <- theme
+  if (pred_env$type=='linear') pred_env$hist <- FALSE
+  
+  import::into({pred_env},.from=ggplot2,.all=TRUE, .character_only=F)
+  # import::into({pred_env},thinhist_subplot.binary,.from=parent.frame())
+  pred_env$thinhist_subplot.binary = thinhist_subplot.binary
+  pred_env$pred = pred
+  pred_env$pred_rep = pred_rep
+  pred_env$obs = obs
+  pred_env$add_pred <- function(pr, line = FALSE){
     pr <- pr
     if (method == "loess"){
-      geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'loess', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line,...)
+      geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'loess', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line,span=span)
     } else {
       if (type == 'binary')
-        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line) 
       else
-        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line, ...) 
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line) 
     }
   }
-  
-  for (pr in pred_rep) p <- p + add_pred(pr)
-  for (pr in pred_rep) p <- p + add_pred(pr, line = .3)
+  # browser()\
+  with(pred_env, {
+    maincolor <- "#CD113B"
+    subcolor1 <- "#111111"
+    subcolor2 <- "#999999"
+    p <- ggplot(mapping=aes(x = pred))
     
+    for (pr in pred_rep) p <- p + add_pred(pr)
+    for (pr in pred_rep) p <- p + add_pred(pr, line = .3)
+    
+    
+    if (method == "loess"){
+      p <- p + geom_smooth(aes( y = as.numeric(obs)), method = 'loess', color=maincolor, fill = subcolor2, se = se, size=.9, alpha=.3, span=span)
+    }
+    else {
+      p <- if (type == 'binary')
+        p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se) 
+      else
+        p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se) 
+    }
+    p <- p + 
+      geom_line(aes(y = pred), color = "#000000") + 
+      ylab("Observed") + xlab("Predicted")+
+      ggtitle(title)
+    
+    if (type == 'binary')
+      p <- p +
+      scale_y_continuous(breaks = seq(0, 1, length.out = 5), limits = c(0,1), oob = scales::squish)+
+      scale_x_continuous(breaks = seq(0, 1, length.out = 5))
+    
+    
+    if (hist){
+      p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = yscale, plot = FALSE)
+      p <- p + p0[[1]] + p0[[2]]
+    }
+    
+    # Find average calibration
+    obs_p <- sum(obs)/length(obs)
+    pred_p <- mean(pred)
+    
+    # Find minimum calibration
+    # browser()
+    if (type == 'binary'){
+      pred.logit <- stats::qlogis(pred)
+      pred.logit <- ifelse(is.infinite(pred.logit), NA_real_, pred.logit)
+      calib.fit <- stats::glm(as.logical(obs)~pred.logit, family=stats::binomial())
+    } else {
+      pred.logit <- pred
+      calib.fit <- stats::lm(obs~pred.logit)
+    }
+    
+    # browser()
+    p + 
+      ggplot2::annotate(
+        "text", x = .99, y = .05, hjust='right', vjust='bottom',
+        label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',
+                       'Predicted prevalence: ', format(pred_p, digits=2), '\n',
+                       "Calibration intercept: ", format(stats::coef(calib.fit)[['(Intercept)']], digits = 2),'\n',
+                       'Calibration slope: ', format(stats::coef(calib.fit)[['pred.logit']], digits=2)), 
+        parse = F, size = 2.8, colour = classifierplots:::fontgrey_str
+      ) +
+      plot_theme
+  })
   
-  if (method == "loess"){
-	  p <- p + geom_smooth(aes( y = as.numeric(obs)), method = 'loess', color=maincolor, fill = subcolor2, se = se, size=.9, alpha=.3, ...)
-  }
-  else {
-    p <- if (type == 'binary')
-      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
-    else
-      p + stat_smooth(aes( y = as.numeric(obs)), fullrange = TRUE, method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = maincolor, fill = subcolor2, size=.9, alpha = .3, se = se,...) 
-  }
-  p <- p + 
-    geom_line(aes(y = pred), color = "#000000") + 
-    ylab("Observed") + xlab("Predicted")+
-    ggtitle(title)
-  
-  if (type == 'binary')
-    p <- p +
-    scale_y_continuous(breaks = seq(0, 1, length.out = 5), limits = c(0,1), oob = scales::squish)+
-    scale_x_continuous(breaks = seq(0, 1, length.out = 5))
-   
-  
-  if (hist){
-    p0 <-  thinhist_subplot.binary(x = pred, y = as.numeric(obs), normalize = hist.normalize, yscale = yscale, plot = FALSE)
-    p <- p + p0[[1]] + p0[[2]]
-  }
-  
-  # Find average calibration
-  obs_p <- sum(obs)/length(obs)
-  pred_p <- mean(pred)
-  
-  # Find minimum calibration
-  # browser()
-  if (type == 'binary'){
-    pred.logit <- qlogis(pred)
-    pred.logit <- ifelse(is.infinite(pred.logit), NA_real_, pred.logit)
-    calib.fit <- glm(as.logical(obs)~pred.logit, family='binomial')
-  } else {
-    pred.logit <- pred
-    calib.fit <- lm(obs~pred.logit)
-  }
-  
-  # browser()
-  p + 
-    ggplot2::annotate(
-      "text", x = .99, y = .05, hjust='right', vjust='bottom',
-      label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',
-                    'Predicted prevalence: ', format(pred_p, digits=2), '\n',
-                    "Calibration intercept: ", format(coef(calib.fit)[['(Intercept)']], digits = 2),'\n',
-                    'Calibration slope: ', format(coef(calib.fit)[['pred.logit']], digits=2)), 
-      parse = F, size = 2.8, colour = classifierplots:::fontgrey_str
-    ) +
-    theme()
 }
 
 

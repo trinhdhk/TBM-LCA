@@ -37,7 +37,7 @@ parameters {
   
   // Parameters of the logistics regression -----------------------------------
 #include includes/parameters/a.stan
-  real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
+  real<lower=0> b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
   vector[N] RE; //base random effect;
@@ -52,7 +52,7 @@ parameters {
 
 transformed parameters {
 #include includes/transform_parameters/a_variable_declaration.stan
-  real b_HIV;
+  real<lower=0> b_HIV;
   vector[nB] b;
   vector<lower=0>[3] b_RE;
 #include includes/impute_model/transform_parameters.stan
@@ -75,6 +75,14 @@ model {
 #include includes/main_prior/a.stan
 #include includes/main_prior/m_RE.stan
 #include includes/main_prior/penalty.stan
+
+  {
+    int j = 1;
+    for (i in B){
+      b_raw[j]  ~ normal(0, inv(sd_X[i]));
+      j += 1;
+    }
+  }
   
   for (n in 1:N){
     // If HIV is observed
@@ -114,10 +122,10 @@ model {
     } else { // HIV is missing, the situation got worse
 #include includes/impute_model/impute_priors.unobservedHIV.stan
       if (is_nan(
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,1] + cs_a[:,2]*Xc[n,2], L_Omega_cs) +
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,2]*Xc[n,2], L_Omega_cs) +
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a[:,1] + mp_a[:,2]*Xc[n,2], L_Omega_mp) +
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + cs_a[:,2]*Xc[n,2], L_Omega_mp)))
+        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,1] + cs_a[:,2]*Xc_imp[n,1], L_Omega_cs) +
+        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,2]*Xc_imp[n,1], L_Omega_cs) +
+        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a[:,1] + mp_a[:,2]*Xc_imp[n,1], L_Omega_mp) +
+        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + cs_a[:,2]*Xc_imp[n,1], L_Omega_mp)))
         // This is to suppress the program from complaining at the start
         target += not_a_number();
 
@@ -192,8 +200,8 @@ model {
         }
       }
       target += log_mix(p_HIV[n], 
-      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_1[1] + ll_Xc_imp_2[1],
-      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_1[2] + ll_Xc_imp_2[2]);
+      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_2[1],
+      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_2[2]);
     }
   }
 }
@@ -206,7 +214,13 @@ generated quantities {
   vector[3] pairwise_corr;
   vector[N_all] theta;
   vector[N_all] z_theta;
+  vector[N_all] Y0_theta[3];
+  vector[N_all] Y00_theta[3];
+  vector[N_all] Y000_theta;
   matrix[N_all, nA] X;
+  vector[N_all] z_Smear_RE;
+  vector[N_all] z_Mgit_RE;
+  vector[N_all] z_Xpert_RE;
 
   {
 #include includes/impute_model/generate_X_CV.stan
@@ -221,14 +235,15 @@ generated quantities {
       RE_all[which(keptin)] = RE;
       for (n in which_not(keptin)) RE_all[n] = normal_rng(0, 1);
       bac_load = b_HIV*X[:,1] + X[:, B2]*b + RE_all + square(RE_all)*quad_RE;
-      vector[N_all] z_Smear_RE = z_Smear[2] + b_RE[1]*bac_load;
-      vector[N_all] z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*bac_load;
-      vector[N_all] z_Xpert_RE = z_Xpert[2] + b_RE[3]*bac_load;
+      z_Smear_RE = z_Smear[2] + b_RE[1]*bac_load;
+      z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*bac_load;
+      z_Xpert_RE = z_Xpert[2] + b_RE[3]*bac_load;
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
       p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);
       
 #include includes/generated_quantities/pairwise_corr.stan
+#include includes/generated_quantities/post_test_prob.stan
       
       for (n in 1:N_all){
         log_lik[n] = log_mix(theta[n],

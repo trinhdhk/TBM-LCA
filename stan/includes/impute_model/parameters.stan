@@ -20,17 +20,11 @@
   vector<upper=0>[N_neg_mp] z_neg_mp;
   vector[N_miss_mp] z_miss_mp;
   
-  // Impute age Xc[1] ---------------------------------------------------------
-  real age_a0;
-  real age_a; //for HIV
-  real<lower=0> age_sigma;
-  real age_imp[N - sum(obs_Xc[:,1])];
-  
-  // Impute illness day Xc[2]
+  // Impute illness day Xc[1]
   real id_a0;
   real id_a; //for HIV
   real<lower=0> id_sigma;
-  real id_imp[N - sum(obs_Xc[:,2])];
+  real id_imp[N - sum(obs_Xc[:,1])];
   
   // Impute csf lab tests as mvNormal -----------------------------------------
   cholesky_factor_corr[6] L_Omega_csf;

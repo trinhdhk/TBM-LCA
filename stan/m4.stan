@@ -40,7 +40,7 @@ parameters {
   
   // Parameters of the logistics regression -----------------------------------
 #include includes/parameters/a.stan
-  real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
+  real<lower=0> b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
   vector<lower=0>[3] b_FE_raw;
@@ -86,9 +86,16 @@ model {
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
 #include includes/main_prior/a.stan
-#include includes/main_prior/b.stan
 #include includes/main_prior/penalty.stan
   for (j in 1:2) RE[j]    ~ normal(0, 1);
+  if (nB > 0) {
+     int j = 1;
+     for (i in B){
+       b_raw[j]  ~ normal(0, inv(sd_X[i]));
+       j += 1;
+     }
+  }
+  // b_FE_raw ~ normal(0, 1); // b_RE and b cannot be both t or laplace, otherwise will cause funnel
   if (penalty_family == 0){
     b_HIV_raw ~ student_t(nu, 0, 2);
     b_RE_raw  ~ student_t(nu, 0, 1);
@@ -145,10 +152,10 @@ model {
     } else { // HIV is missing, the situation got worse
 #include includes/impute_model/impute_priors.unobservedHIV.stan
       if (is_nan(
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,1] + cs_a[:,2]*Xc[n,2], L_Omega_cs) +
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,2]*Xc[n,2], L_Omega_cs) +
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a[:,1] + mp_a[:,2]*Xc[n,2], L_Omega_mp) +
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + cs_a[:,2]*Xc[n,2], L_Omega_mp)))
+        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,1] + cs_a[:,2]*Xc_imp[n,1], L_Omega_cs) +
+        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,2]*Xc_imp[n,1], L_Omega_cs) +
+        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a[:,1] + mp_a[:,2]*Xc_imp[n,1], L_Omega_mp) +
+        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + cs_a[:,2]*Xc_imp[n,1], L_Omega_mp)))
         // This is to suppress the program from complaining at the start
         target += not_a_number();
 
@@ -223,8 +230,8 @@ model {
         }
       }
       target += log_mix(p_HIV[n], 
-      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_1[1] + ll_Xc_imp_2[1],
-      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_1[2] + ll_Xc_imp_2[2]);
+      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_2[1],
+      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_2[2]);
     }
   }
 }

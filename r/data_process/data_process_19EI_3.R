@@ -59,6 +59,8 @@ joindt[,`:=`(
     (HIV %in% c('', 'NOT DONE', 'UNKNOWN') | is.na(HIV)) & ISHIV == 'C49488' , TRUE,
     (HIV %in% c('', 'NOT DONE', 'UNKNOWN') | is.na(HIV)) & ISHIV == 'N' , FALSE
   ),
+  clin_headache = (ISHEADACHE == 'C49488') %in% TRUE,
+  clin_psychosis = (ISPSYCHOSIS == 'C49488') %in% TRUE,
   clin_illness_day = as.numeric(ILLNESSDAY),
   clin_symptoms = ISWEIGHT | ISNSWEAT | ISCOUGH,
   clin_contact_tb = ISCONTUBER,
@@ -99,7 +101,7 @@ joindt[,`:=`(
     stringr::str_detect(tolower(VIRO_OTH), "[dương,+]") | NMDAR == "POS",
   other_dis_dx_conf = !DISDIA %in% c("DIA1", "DIA10", "DIA16", "DIA2", "DIA4"),
   other_dis_dx = !DISDIA %in% c("DIA1", "DIA10"),
-  tbm_dx = DISDIA %in% c("DIA1", "DIA10") | ISTBTREAT %in% 'C49488' | !is.na(TBTREATDATE)
+  tbm_dx = ifelse(is.na(DISDIA), NA, (DISDIA %in% c("DIA1", "DIA10"))) | (ISTBTREAT %in% 'C49488' & (as.Date(TBTREATDATE) > as.Date(LUMBARDATE)) %in% TRUE)
 )][, `:=`(
   clin_score = pmin(4*clin_illness_day+2*as.numeric(clin_symptoms)+(2*clin_contact_tb)+1*clin_motor_palsy+1*clin_nerve_palsy+1*(clin_gcs<15),6),
   csf_score = pmin(4, csf_clear + (csf_wbc >= 10 & csf_wbc <= 500) + (csf_lym_pct > .5) + (csf_protein > 1) + (glucose_ratio < .5 | csf_glucose < 2.2)),

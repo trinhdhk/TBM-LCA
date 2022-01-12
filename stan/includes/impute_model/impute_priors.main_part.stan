@@ -13,11 +13,6 @@ L_Omega_mp ~ lkj_corr_cholesky(4);
 mp_a0 ~ normal(0, 5);
 to_vector(mp_a) ~ normal(0, 2.5);
 
-// - Age
-age_a0 ~ normal(0, 5);
-age_a  ~ normal(0, 2.5);
-age_sigma ~ normal(0, 1);
-
 // - Illness day
 id_a0 ~ normal(0, 5);
 id_a  ~ normal(0, 2.5);
@@ -29,7 +24,7 @@ L_sigma_csf ~ normal(0, 1);
 
 {
   matrix[6,6] L_Sigma_csf = diag_pre_multiply(L_sigma_csf, L_Omega_csf);
-  Xc_imp[:,3:8] ~ multi_normal_cholesky(rep_vector(0,6), L_Sigma_csf);
+  Xc_imp[:,2:7] ~ multi_normal_cholesky(rep_vector(0,6), L_Sigma_csf);
 }
 
 // - GCS

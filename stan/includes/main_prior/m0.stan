@@ -1,5 +1,5 @@
 // Priors of covariates
-a0       ~ student_t(nu, 0, 10);
+// a0       ~ student_t(nu, 0, 3);
 
 //1-Specificity of each test
 if (unsure_spc == 1){
@@ -13,6 +13,6 @@ if (unsure_spc == 1){
 }
 
 //Sensitivity of each test
-z_Xpert[2] ~ logistic(0, .3);
-z_Mgit[2]  ~ logistic(0, .3);
-z_Smear[2] ~ logistic(0, .3);
+z_Xpert[2] ~ logistic(0, .38);
+z_Mgit[2]  ~ logistic(0, .38);
+z_Smear[2] ~ logistic(0, .38);

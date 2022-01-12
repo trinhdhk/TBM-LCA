@@ -10,11 +10,11 @@ data_19EI[is.na(GCSV) & GLASCOW == 15, GCSV := 5]
 data_19EI[is.na(GCSE) & GLASCOW == 15, GCSV := 5]
 data_19EI[is.na(GCSM) & GLASCOW == 15, GCSV := 5]
 data_19EI[, clin_contact_tb := clin_contact_tb %in% TRUE]
-data_19EI <- data_19EI[!USUBJID %in% c("003-102")] # death?
+# data_19EI <- data_19EI[!USUBJID %in% c("003-102")] # death?
 # data_19EI <- data_19EI[!USUBJID %in% c("003-306","003-335", "003-102")] # death?
 ## Add some known test result from other sources and remove unknown one (for now)
 
-data_19EI <- data_19EI[!USUBJID %in% c('003-407')] # no information on TBM group side
+# data_19EI <- data_19EI[!USUBJID %in% c('003-407')] # no information on TBM group side
 # data_19EI[USUBJID == "003-038", c("csf_smear", "csf_mgit", "csf_xpert", "XpertLevel") := list(1,1,1, "very low")] 
 # data_19EI[USUBJID == "003-100", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,1,0)] 
 # data_19EI[USUBJID == "003-132", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,0,0)] 
@@ -30,7 +30,7 @@ data_19EI <- data_19EI[!USUBJID %in% c('003-407')] # no information on TBM group
 #                  (XpertLevel == "medium") %in% TRUE)]
 
 # Load cleaned data export from TB Group
-test_data = readRDS('data/cleaned/full_tb_test_extracted.RDS')
+test_data = readRDS('data/cleaned/full_tb_test_extracted_good.RDS')
 # test_data = readRDS('data/cleaned/full_tb_test_extracted_good.RDS')
 setDT(test_data)
 #remove age=0 bc outlier, replace it with the one in the test data
@@ -50,7 +50,7 @@ data_19EI = merge(
                              csf_xpert=GeneXpert,
                              csf_mgit_contaminated = Contaminated,
                              Volume, diffday, wrong_name),
-  all=TRUE)
+  all.x=TRUE)
 
 #csf smear should not be missing if xpert or mgit is available. they were forgotten to input
 data_19EI[, csf_smear := ifelse(is.na(csf_smear)&(!is.na(csf_mgit)|!is.na(csf_xpert)), FALSE, csf_smear)]
@@ -61,7 +61,7 @@ saveRDS(data_19EI, 'export/data_dirty.RDS')
 data_19EI = data_19EI |>
   filter(is.na(csf_mgit_contaminated) | !csf_mgit_contaminated) |>
   filter(is.na(Volume) | Volume >= 3) |>
-  filter(is.na(diffday) | diffday <= 7) |>
+  filter(is.na(diffday) | diffday < 7) |>
   filter(!wrong_name)
 
 data_19EI[, `:=`(
@@ -120,12 +120,13 @@ Xd <- data_19EI %$% cbind(
   xray_pul_tb,                                                              #6
   xray_miliary_tb,                                                          #7
   csf_ink | csf_crypto ,                                                    #8
-  ISPSYCHOSIS=='C49488'
-  # ISHEADACHE=='C49488'
+  # ISPSYCHOSIS=='C49488',
+  # ISHEADACHE=='C49488',
+  GRAM = csf_gram
 )
 
 Xc <- data_19EI %$% tibble(
-  age=scale(age, scale=T),                                           #1    #9 
+  # age=scale(age, scale=T),                                           #1    #9 
   id=scale(log2(clin_illness_day),scale=T),                          #2    #10
   glu=scale(log2(BLDGLU), scale=T),                                  #3    #11 
   csfglu=scale(log2(.1+csf_glucose), scale=T),                       #4    #12

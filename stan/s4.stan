@@ -21,8 +21,7 @@ data {
   int<lower=0, upper=2> penalty_family;
   real<lower=0> penalty_term;
 
-  vector[N_all] mu_ztheta;
-  vector<lower=0>[N_all] sd_ztheta;
+  vector[N_all] mu_theta;
   int<lower=0> nX_extra;
   matrix[N_all, nX_extra] X_extra_all;
 #include includes/cross_validation/data.stan
@@ -30,6 +29,7 @@ data {
 
 transformed data{
   // int N = N_all;
+  
   int nQ = 0;
   int quad_Xc_idx[nQ];
   int idxS[10] = {1,2,3,4,5,6,7,10,17};
@@ -50,7 +50,8 @@ parameters {
   
   //Penalty terms
   vector<lower=0>[adapt_penalty] sp;
-  
+  // vector[sum(z_theta)>0] z_lambda_pos;
+  // vecotr[sum(z_theta<=0)] z_lambda_neg;
   
   //Full coef
   // vector[N] ztheta;
@@ -82,7 +83,8 @@ model {
   
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/penalty.stan
-  a0 ~ student_t(nu, 0, 5);
+  a0 ~ student_t(nu, 0, 7);
+  // s_theta ~ normal(0,1);
   
  if (penalty_family == 0){
     int j = 1;
@@ -130,8 +132,11 @@ model {
         pat_lambda[2] += a0 + a[1]*Xd_imp[n,1] + dot_product(a[4:9], X_compl[n, idxS_2]) + dot_product(a[10:], X_extra[n,:]);
     
         for (i in 1:N_pattern){
-          // log_liks[i] = pat_lambda[1,i] + logistic_lpdf(ztheta[n] | pat_lambda[2,i], 1);
-          log_liks[i] = pat_lambda[1,i] + logistic_lpdf(pat_lambda[2,i] | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
+          log_liks[i] = pat_lambda[1,i] + log_mix(
+            mu_theta[which(keptin)][n],
+            bernoulli_logit_lpmf(1| pat_lambda[2,i]),
+            bernoulli_logit_lpmf(0| pat_lambda[2,i])
+          );
         }
         // Sum everything up
         target += log_sum_exp(log_liks);
@@ -141,8 +146,12 @@ model {
         row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
         real lambda = a0 + dot_product(a[1:9], X[idxS]) + dot_product(a[10:],X_extra[n,:]); 
         // print(logistic_lpdf(ztheta[n] | lambda, sigma_ztheta));
-        target += logistic_lpdf(lambda | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
-        // target += logistic_lpdf(ztheta[n] | lambda, 1);
+        // target += logistic_lpdf(lambda | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
+        target += log_mix(
+            mu_theta[which(keptin)][n],
+            bernoulli_logit_lpmf(1| lambda),
+            bernoulli_logit_lpmf(0| lambda)
+          );
       }
     } else { // HIV is missing, the situation got worse
 #include includes/impute_model/impute_priors.unobservedHIV.stan
@@ -170,8 +179,12 @@ model {
           pat_lambda[2] += a0 + a[1] + dot_product(a[4:9], X_compl[n, idxS_2]) + dot_product(a[10:], X_extra[n,:]);
           
           for (i in 1:N_pattern){
-            // log_liks[i] = pat_lambda[1,i] + logistic_lpdf(ztheta[n] | pat_lambda[2,i], 1);
-            log_liks[i] = pat_lambda[1,i] + logistic_lpdf(pat_lambda[2,i] | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
+            log_liks[i] = pat_lambda[1,i] + log_mix(
+            mu_theta[which(keptin)][n],
+            bernoulli_logit_lpmf(1| pat_lambda[2,i]),
+            bernoulli_logit_lpmf(0| pat_lambda[2,i])
+          );
+            // log_liks[i] = pat_lambda[1,i] + logistic_lpdf(pat_lambda[2,i] | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
           }
           // Sum everything up
           ll_HIV[1] = log_sum_exp(log_liks);
@@ -179,8 +192,12 @@ model {
           row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
           real lambda = a0 + a[1] + dot_product(a[2:9], X[idxS[2:]]) + dot_product(a[10:],X_extra[n,:]); 
           // print(logistic_lpdf(ztheta[n] | lambda, sigma_ztheta));
-          // ll_HIV[1] = logistic_lpdf(ztheta[n] | lambda, 1);
-          ll_HIV[1] = logistic_lpdf(lambda | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
+          ll_HIV[1] = log_mix(
+            mu_theta[which(keptin)][n],
+            bernoulli_logit_lpmf(1| lambda),
+            bernoulli_logit_lpmf(0| lambda)
+          );
+          // ll_HIV[1] = logistic_lpdf(lambda | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
         }
       }
       
@@ -198,8 +215,12 @@ model {
           pat_lambda[2] += a0 + dot_product(a[4:9], X_compl[n, idxS_2]) + dot_product(a[10:],X_extra[n,:]);
           
           for (i in 1:N_pattern){
-            // log_liks[i] = pat_lambda[1,i] + logistic_lpdf(ztheta[n] | pat_lambda[2,i], 1);
-            log_liks[i] = pat_lambda[1,i] + logistic_lpdf(pat_lambda[2,i] | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
+            log_liks[i] = pat_lambda[1,i] + log_mix(
+            mu_theta[which(keptin)][n],
+            bernoulli_logit_lpmf(1| pat_lambda[2,i]),
+            bernoulli_logit_lpmf(0| pat_lambda[2,i])
+          );
+            // log_liks[i] = pat_lambda[1,i] + logistic_lpdf(pat_lambda[2,i] | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
           }
           // Sum everything up
           ll_HIV[2] = log_sum_exp(log_liks);
@@ -207,8 +228,12 @@ model {
           row_vector[nX] X = append_col(Xd_imp[n,:], X_compl[n,:]);
           real lambda = a0 + dot_product(a[2:9], X[idxS[2:]]) + dot_product(a[10:],X_extra[n,:]); 
           // print(logistic_lpdf(ztheta[n] | lambda, sigma_ztheta));
-          // ll_HIV[2] = logistic_lpdf(ztheta[n] | lambda, 1);
-          ll_HIV[2] = logistic_lpdf(lambda | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
+          ll_HIV[2] =log_mix(
+            mu_theta[which(keptin)][n],
+            bernoulli_logit_lpmf(1| lambda),
+            bernoulli_logit_lpmf(0| lambda)
+          );
+          // ll_HIV[2] = logistic_lpdf(lambda | mu_ztheta[which(keptin)][n], sd_ztheta[which(keptin)][n] * sqrt(3) / pi());
         }
       }
       target += log_mix(p_HIV[n], 
@@ -220,7 +245,7 @@ model {
 
 generated quantities {
   vector[N_all] log_lik;
-  // vector[N_all] ztheta_all;
+  // vector[N_all] ztheta;
   vector[N_all] lambda;
   matrix[N_all, nX] X;
   
@@ -233,8 +258,12 @@ generated quantities {
     lambda = a0 + X[:, idxS]*a[1:9] + X_extra_all*a[10:];
     
     for (n in 1:N_all){
-      // log_lik[n] = logistic_lpdf(ztheta_all[n] | lambda[n], 1);
-      log_lik[n] = logistic_lpdf(lambda[n] | mu_ztheta[n], sd_ztheta[n] * sqrt(3) / pi());
+      log_lik[n] = log_mix(
+            mu_theta[n],
+            bernoulli_logit_lpmf(1| lambda[n]),
+            bernoulli_logit_lpmf(0| lambda[n])
+          );
+      // log_lik[n] = logistic_lpdf(lambda[n] | mu_ztheta[n], sd_ztheta[n] * sqrt(3) / pi());
     }
   }
 }

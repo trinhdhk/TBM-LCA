@@ -245,10 +245,10 @@ with(
     # if (model != "m0kf" && any(penalty_term == 0)) pars <- c(pars, paste0("sp", c(1,2)[penalty_term==0]))
     if (model_no > 0 && any(penalty_term == 0)) pars <- c(pars, 'sp')
     if (model_no > 0 && all_params) pars <- c(pars, 
-      "HIV_a0", "HIV_a", 
+      "HIV_a0", 
       "cs_a0", "cs_a", "L_Omega_cs",
       "mp_a0", "mp_a", "L_Omega_mp",
-      "age_a0", "age_a", "age_sigma",
+      # "age_a0", "age_a", "age_sigma",
       "id_a0", "id_a", "id_sigma",
       if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
@@ -256,6 +256,7 @@ with(
     if (model_no == 4) pars <- c(pars, "b_FE")
     if (model == 'm3d') pars <- c(pars, 'a2')
     if (model == 'm3e') pars <- c(pars, 'z_NegCrypto')
+    if (model == 'm3i') pars <- c(pars, 'b_mp')
     if (model == 'm4d') pars <- c(pars, "a2")
     if (is_pca) pars <- c(pars, "L_csf")
     # if (model_no == 5) pars <- c(pars, "b_cs")

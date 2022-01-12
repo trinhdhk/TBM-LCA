@@ -15,13 +15,13 @@ sLCAModel <- R6::R6Class(
       invisible(self)
     },
     calibration_plot = function(
-      which = c("ztheta", "theta", "C"),
+      which = c("theta","C"),
       method = c("loess", "splines"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       span = .75,
       knots = 3,
       est = c("mean", "median"),
-      plot_rep = FALSE, theme = ggplot2::theme_bw,
+      plot_rep = FALSE, theme = ggplot2::theme_bw(),
       ...
     ){
       which <- match.arg(which); method <- match.arg(method)
@@ -31,34 +31,35 @@ sLCAModel <- R6::R6Class(
       
       p_summary <- self$p
       p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
-      if (which == "ztheta"){
-        Y <- self$folds$inputs[[1]]$mu_ztheta
-        private$.misc$calib_curve(p_summary$lambda[[est]], lapply(p_rep, function(.) .$lambda[[est]]), Y, "TBM log-odd", type='linear', span=span, method = method, knots=knots,..., theme = theme)
-      } else if (which == "theta"){
-        Y <- self$folds$inputs[[1]]$mu_ztheta |> plogis()
+      if (which == "theta"){
+        Y <- NULL
         private$.misc$calib_curve(p_summary$lambda[[est]] |> plogis(), lapply(p_rep, function(.) plogis(.$lambda[[est]])), Y, "TBM probability", type='linear', span=span, method = method, knots=knots,..., theme = theme)
       } else {
-        private$.misc$calib_curve(p_summary$lambda[[est]] |> plogis(), lapply(p_rep, function(.) plogis(.$lambda[[est]])), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
+        not.na <- (!is.na(C))
+        C <- na.omit(C)
+        private$.misc$calib_curve(p_summary$theta[[est]][not.na], lapply(p_rep, function(.) (.$theta[[est]][not.na])), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
       }
     },
     density_plot = function(
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       est = c("mean", "median"),
-      theme = ggplot2::theme_bw 
+      theme = ggplot2::theme_bw() 
     ){
       require(ggplot2)
       require(patchwork)
       est <- match.arg(est)
       p_summary <- self$p
-      classifierplots::density_plot(as.integer(C), plogis(p_summary$lambda[[est]])) + theme() + ggplot2::ggtitle("Positive TBM")
+      not.na <- which(!is.na(C))
+      C <- na.omit(C)
+      classifierplots::density_plot(as.integer(C), (p_summary$theta[[est]][not.na])) + theme() + ggplot2::ggtitle("Positive TBM")
     },
     roc_plot = function(
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       resamps = 2000,
       force_bootstrap = NULL,
       est = c("mean", "median"),
       plot_rep = FALSE,
-      theme = ggplot2::theme_bw
+      theme = ggplot2::theme_bw()
     ){
       require(ggplot2)
       require(patchwork)
@@ -66,8 +67,10 @@ sLCAModel <- R6::R6Class(
       
       p_summary <- self$p
       p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
+      not.na <- (!is.na(C))
+      C <- na.omit(C)
       
-      private$.misc$my_roc_plot(C, plogis(p_summary$lambda[[est]]), lapply(p_rep, function(.) plogis(.$lambda[[est]])), resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Positive TBM")
+      private$.misc$my_roc_plot(obs=C, pred=p_summary$theta[[est]][not.na], lapply(p_rep, function(.) (.$theta[[est]][not.na])), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("Positive TBM")
     }
   ),
   private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL, .p_rep = NULL, .META = list()),
@@ -83,7 +86,7 @@ sLCAModel <- R6::R6Class(
     },
     p = function(){
       if (is.null(private$.p)){
-        p <- private$.misc$extract_K_fold(self$model, self$folds$holdout, pars = "lambda")
+        p <- private$.misc$extract_K_fold(self$model, self$folds$holdout, pars = c("lambda", "theta"))
         p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
         p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
         private$.p <- p_summary
@@ -96,7 +99,7 @@ sLCAModel <- R6::R6Class(
       if (is.null(private$.p_rep)){
         private$.p_rep <- vector("list", self$n_rep)
         for (n in seq_len(self$n_rep)){
-          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$folds$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = "lambda")
+          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$folds$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = c("lambda", "theta"))
           p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
           p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
           private$.p_rep[[n]] <- p_summary

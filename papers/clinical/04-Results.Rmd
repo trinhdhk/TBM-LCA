@@ -7,34 +7,34 @@ n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
 
 ## Clinical characteristics
 
-From 29th August 2017 to 22nd January 2021, there were `r nrow(data_dirty)` patients with suspected brain infection enrolled into study. `r nrow(data_19EI)` were included in the analysis.(figure \@ref(fig:patient-flow)). 
+From 29th August 2017 to 22nd January 2021, there were `r nrow(data_dirty)` patients with suspected brain infection enrolled into study. `r nrow(data_19EI)` were included in the analysis (figure \@ref(fig:patient-flow)). 
 
 ```{r echo=FALSE}
 var = c()
 var[1] <- nrow(data_dirty)
 var[2] <- sum(is.na(data_dirty$wrong_name) | data_dirty$wrong_name, na.rm=TRUE)
-var[3] <- sum(data_dirty$Volume < 3, na.rm=TRUE)
+var[3] <- data_dirty[, sum((wrong_name%in%F) & (Volume<3)%in%TRUE)]
 var[4] <- with(data_dirty, sum(
-  !(wrong_name%in%T) &
+  (wrong_name%in%F) &
     !((Volume<3)%in%TRUE) &
     (is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
 var[5] <- with(data_dirty,sum(
-  !(wrong_name%in%T) &
+  (wrong_name%in%F) &
     !((Volume<3)%in%TRUE) &
-    (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert)), na.rm=T))
+    !(is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
 var[6] <- with(data_dirty, sum(
-  !(wrong_name%in%T) &
+  (wrong_name%in%F) &
     !((Volume<3)%in%TRUE) &
     csf_mgit_contaminated, na.rm=TRUE))
 var[7] <- with(data_dirty,  sum(
-  !(wrong_name%in%T) &
+  (wrong_name%in%F) &
     !((Volume<3)%in%TRUE) &
     !(csf_mgit_contaminated %in% T) &
     (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
     ((csf_smear%in%T)|(csf_mgit%in%T)|(csf_xpert%in%T)), na.rm=TRUE))
 var[8] <- with(data_dirty, sum(
     !((Volume<3)%in%TRUE) &
-      !(wrong_name%in%T) &
+      (wrong_name%in%F) &
       !(csf_mgit_contaminated %in% T) &
       (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
       (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
@@ -43,21 +43,21 @@ var[8] <- with(data_dirty, sum(
     na.rm=TRUE))
 var[9] <- with(data_dirty, sum(
     !((Volume<3)%in%TRUE)  &
-      !(wrong_name%in%T) &
+      (wrong_name%in%F) &
       !(csf_mgit_contaminated %in% T) &
       is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)&
       (other_dis_dx_conf%in%T),
     na.rm=TRUE))
 var[10] <- with(data_dirty, sum(
     !((Volume<3)%in%TRUE) & 
-      !(wrong_name%in%T) &
+      (wrong_name%in%F) &
       !(csf_mgit_contaminated %in% T) &
       is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert) &
       !(other_dis_dx_conf%in%T), 
     na.rm=TRUE))
 var[11] <- with(data_dirty, sum(
     !((Volume<3)%in%TRUE) &
-      !(wrong_name%in%T) &
+      (wrong_name%in%F) &
       !(csf_mgit_contaminated %in% T) &
       (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
       (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
@@ -65,7 +65,7 @@ var[11] <- with(data_dirty, sum(
     na.rm=TRUE))
 var[12] <- with(data_dirty, sum(
     !((Volume<3)%in%TRUE) &
-      !(wrong_name%in%T) &
+      (wrong_name%in%F) &
       !(csf_mgit_contaminated %in% T) &
       (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
       (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
@@ -74,7 +74,7 @@ var[12] <- with(data_dirty, sum(
     na.rm=TRUE))
 ```
 
-Overall, there were `r var[5]` participants with valid TBM confirmatory tests, amongst whom `r var[7]` were microbiology confirmed \@ref(fig:venn-test). `r var[11]` were later confirmed with another cause. <!-- In the untested group, `r var[9]` were microbiologically and `r var[10]` clinically diagnosed with non-TBM conditions. --> Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). There were no significant different in the age of different groups. HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r round((nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100, 0)`%) enrolled individuals and `r n_test_suspected_hiv` (`r (n_test_suspected_hiv/nrow(suspected_hiv)*100) |> round(2)`%) amongst those with suspected conditions.  <!-- As HIV was only tested for suspected patients who admitted with HIV-related conditions or involved in high-risk activities, we assumed the HIV rate for the untested group to be similar to that of the general population. Missing GCSV due to intubation is a common issue and the practice of using a model-based imputation approach is supported[@Teasdale2014], as all the Glasgow Coma Scale components are usually highly correlated.--> Both HIV prevalence and duration from symptom onset in the test positive groups were consistently higher than those in the test negative groups. Amongst `r na(data_dirty$clin_gcs)` individuals with incomplete GCS, GCS Vocal was missing for `r na(filter(data_dirty, is.na(clin_gcs))$GCSV)`.
+Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). There were no significant different in the age of different groups, with the mean of `r quantile(data_dirty$age, .5, na.rm=TRUE) |> round(1)`. HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r round((nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100, 0)`%) enrolled individuals.  <!-- As HIV was only tested for suspected patients who admitted with HIV-related conditions or involved in high-risk activities, we assumed the HIV rate for the untested group to be similar to that of the general population. Missing GCSV due to intubation is a common issue and the practice of using a model-based imputation approach is supported[@Teasdale2014], as all the Glasgow Coma Scale components are usually highly correlated.--> Both HIV prevalence and duration from symptom onset in the test positive groups were consistently higher than those in the test negative groups. Overall, there were `r var[5]` participants with valid TBM confirmatory tests, `r var[7]` were microbiology confirmed \@ref(fig:venn-test). `r var[11]` were later confirmed with another disease. In the untested group, `r var[9]` were microbiologically diagnosed with non-TBM conditions. There were `r var[8]+var[10]` patients were not confirmed with any infection.
 
 ```{diagrammer patient-flow, fig.show="hold", out.width="100%", out.height="10cm",  fig.align="center", fig.cap="Recruited patient profile", fig.id="patient-flow"}
 digraph patientflow {
@@ -283,9 +283,9 @@ est = \(name, tab, digits=2, transformation = I, ci.sep = ', ', post.fn = I, pre
 }
 
 spc.est = purrr::partial(est,
-                         transformation=\(x) 100*(1-x), ci.sep=', ', digits=1,
+                         transformation=\(x) 100*(1-x), ci.sep=' - ', digits=1,
                          post.fn = \(x) paste0(x, '%'))
-sen.est = purrr::partial(est, transformation=\(x) 100*x, ci.sep=', ', digits=1,
+sen.est = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1,
                          post.fn = \(x) paste0(x, '%'))
 
 spc.est2 = purrr::partial(est,
@@ -305,7 +305,7 @@ spc = \(name, hiv=NULL, fn=spc.est) {
 }
 ```
 
-Posterior estimates for ZN Smear, MGIT, and Xpert performances against latent TBM status are reported in table \@ref(tab:mv-posterior). All confirmatory assays had near perfect specificity for both HIV positive and negative population. Smear was the most sensitive test with `r sen('z_Smear', hiv=FALSE)` for HIV negative patients and `r sen('z_Smear', hiv=TRUE)` for HIV positive patients. Xpert was estimatedly least sensitive, especially amongst HIV negative population, with only `r sen('z_Xpert', hiv=FALSE)` but was significantly higher and comparable to that of culturing in HIV positive group: `r sen('z_Xpert', hiv=TRUE)`.
+Posterior estimates for ZN Smear, MGIT, and Xpert performances against latent TBM status are reported in table \@ref(tab:mv-posterior). All confirmatory assays had over 99% specificity. Smear was the most sensitive test with `r sen('z_Smear', hiv=FALSE)` for HIV negative patients and `r sen('z_Smear', hiv=TRUE)` for HIV positive patients. Xpert was least sensitive, especially amongst HIV negative population, with only `r sen('z_Xpert', hiv=FALSE)`, but was significantly higher and comparable to that of culturing in HIV positive group: `r sen('z_Xpert', hiv=TRUE)`.
 
 Estimated coefficients for TB risk factors are shown in figure \@ref(fig:coef-est). Patients with HIV, Miliary TB, long symptom duration, and past TBM contacts were in the higher risk group of TBM. Of the laboratory variables, increased TBM risk were associated with low CSF glucose, low paired Blood Glucose, and high CSF lymphocyte count. CSF protein and lactate showed minimal trends of positive association. Total white blood cells showed quadratic trends with peaked TBM risk at intermediate values.
 
@@ -372,7 +372,7 @@ pr <- matrix(c(
 
 huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
   huxtable::as_flextable() |>
-  flextable::add_header_row(values=c("", rep("All",2), rep("HIV (-)",2), rep("HIV (+)",2))) |>
+  flextable::add_header_row(values=c("", rep("Overall",2), rep("HIV (-)",2), rep("HIV (+)",2))) |>
   # flextable::merge_h(i=1, part='body') |>
   flextable::merge_h(i=1, part='header') |>
   flextable::width(width = 1) |>
@@ -392,7 +392,7 @@ huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
 
 ## Model validation 
 
-Selected model showed good discrimination with cross-validated AUCs of `r classifierplots:::calculate_auc(test.y = data_19EI$csf_smear, pred.prob = m3$p$p_Smear$mean) |> round(0)`% for ZN Smear, `r classifierplots:::calculate_auc(test.y = data_19EI$csf_mgit, pred.prob = m3$p$p_Mgit$mean) |> round(0)`% for culturing, and  `r classifierplots:::calculate_auc(test.y = data_19EI$csf_xpert, pred.prob = m3$p$p_Xpert$mean) |> round(0)`% for Xpert (figure \@ref(fig:best-metrics)). The model was decently calibrated as estimated probabilities and observed frequency of positive tests showed overall agreement [@VanCalster2019], with slight drop at the upper tail of for MGIT culturing and Xpert. The AUC for TBM prediction against hospital diagnosis were  `r classifierplots:::calculate_auc(test.y = !data_19EI$other_dis_dx, pred.prob = m3$p$theta$mean) |> round(2)`% and calibration plots show over-estimation at the centre (figure \@ref(fig:theta-metrics)). 
+Selected model showed good discrimination with cross-validated AUCs of `r classifierplots:::calculate_auc(test.y = data_19EI$csf_smear, pred.prob = m3$p$p_Smear$mean) |> round(0)`% for ZN Smear, `r classifierplots:::calculate_auc(test.y = data_19EI$csf_mgit, pred.prob = m3$p$p_Mgit$mean) |> round(0)`% for culturing, and  `r classifierplots:::calculate_auc(test.y = data_19EI$csf_xpert, pred.prob = m3$p$p_Xpert$mean) |> round(0)`% for Xpert (figure \@ref(fig:best-metrics)). The model was decently calibrated, estimated probabilities and observed frequency of test positive showed overall agreement [@VanCalster2019], with slight drop at the upper tail of for MGIT culturing and Xpert. The AUC for TBM prediction against hospital diagnosis were  `r classifierplots:::calculate_auc(test.y = !data_19EI$other_dis_dx, pred.prob = m3$p$theta$mean) |> round(2)`% and calibration plots show over-estimation at the centre (figure \@ref(fig:theta-metrics)). 
 
 ```{r best-metrics, fig.align='center', fig.cap='ROC curves (upper half) and calibration plots (lower half) for the selected model, against observed test results. Results from individual CV repetitions are shown in fainted grey and the average curves are in colour.', fig.dim=c(8,6), dpi=600, message=FALSE, warning=FALSE, out.width='90%'}
 m3_roc = readRDS(file.path(data_dir, '..', 'export', 'm3_roc.RDS')) 
@@ -430,11 +430,11 @@ post_test$get_est <- function(name, hiv = FALSE, inv=FALSE){
   name = paste0("time", name, "_neg")
   if (!hiv) return (glue::glue("{round(2^f(post_test$est[name]),2)} ({round(2^f(post_test$confint[name, first]),2)}, {round(2^f(post_test$confint[name,second]),2)})"))
   name2 = paste0(name,":hivTRUE")
-  glue::glue("{round(2^f(post_test$est[name]+post_test$est[name2]),2)} ({round(2^f(post_test$confint[name,first]+post_test$confint[name2,first]),2)}, {round(2^f(post_test$confint[name,second]+post_test$confint[name2,second]),2)})")
+  glue::glue("{round(2^f(post_test$est[name]+post_test$est[name2]),2)} ({round(2^f(post_test$confint[name,first]+post_test$confint[name2,first]),2)} -  {round(2^f(post_test$confint[name,second]+post_test$confint[name2,second]),2)})")
 }
 # post_test_tbl <- data.frame(Scenario = NULL, HIV_neg = NULL, HIV_postivive=NULL)
 post_test_tbl = data.frame(
-    Scenario = 1:5,
+    Scenario = letters[1:5],
     Smear = c('-', '?', '-', '-', '-'),
     MGIT = c('?', '?', '-', '?', '-'),
     Xpert = c('?', '-', '?', '-', '-'),
@@ -454,7 +454,7 @@ post_test_tbl = data.frame(
   )
 
 post_test_tbl_inv = data.frame(
-    Scenario = 1:5,
+    Scenario = letters[1:5],
     Smear = c('-', '?', '-', '-',  '-'),
     MGIT = c('?', '?', '-', '?', '-'),
     Xpert = c('?', '-', '?', '-','-'),
@@ -477,15 +477,17 @@ post_test_tbl_inv = data.frame(
   )
 ```
  
-<!--Figure \@ref(fig:fit-post-test-change) demonstrates TBM probability in our population given a chronological scenario where ZN Smear, Xpert, and MGIT culture results sequentially returned negative over time. --> Relative changes in TBM probability compared with pre-test values are shown in table \@ref(tab:tbl-post-test). Briefly, a negative Smear only was associated with `r post_test_tbl_inv$HIV_neg[1]`-fold reduction in TBM. Combined negative Smear and either MGIT or Xpert was associated with 2.9-time decrease of TBM risk for HIV negative and 4-time for HIV positive population. With all tests negative, the TBM probability reduced by `r post_test_tbl_inv$HIV_neg[5]` and `r post_test_tbl_inv$HIV_pos[5]` for HIV negative and postive respectively. 
+<!--Figure \@ref(fig:fit-post-test-change) demonstrates TBM probability in our population given a chronological scenario where ZN Smear, Xpert, and MGIT culture results sequentially returned negative over time. --> Change in TBM probability relative to pre-test values are shown in table \@ref(tab:tbl-post-test). Briefly, a negative Smear only was associated with `r post_test_tbl_inv$HIV_neg[1]`-fold reduction in TBM. Combined negative Smear and either MGIT or Xpert was associated with 2.9-time decrease of TBM risk for HIV negative and 4-time for HIV positive population. With all tests negative, the TBM probability reduced by `r post_test_tbl_inv$HIV_neg[5]` and `r post_test_tbl_inv$HIV_pos[5]` for HIV negative and postive respectively. 
 
-```{r tbl-post-test, tab.cap="Average changes in TBM probability given available test result(s), relative to pre-confirmatory test TBM probability", tab.id = "tbl-post-test"}
+```{r tbl-post-test, tab.cap="Average changes in TBM probability given available test result(s), relative to pre-confirmatory test TBM probability. Assume pre-test risk is 1, the values measure post-test risk in each scenario", tab.id = "tbl-post-test"}
 flextable::flextable(post_test_tbl) |> 
   flextable::set_header_labels(values=list(Scenario="Scenario", HIV_neg="HIV (-)", HIV_pos="HIV (+)")) |>
   flextable::bold(j= 1) |>
   flextable::width(width = c(1, 0.7, 0.7, 0.7, 1.5, 1.5)) |>
   flextable::theme_vanilla() |>
-  flextable::align(i=1, part='header', align='center')
+  flextable::align(i=1, part='header', align='center') |>
+  flextable::align(j=1:4, part='body', align='center') |>
+  flextable::add_footer_row(top=F, values="Values are in the form Mean (95% Credible interval)", colwidths = 6)
 ```
 
 \newpage
@@ -510,24 +512,25 @@ ggplot(data=post_test$data, aes(x = time, y = value, color=hiv)) +
 
 ## Simplified model
 
-In the simplified model, HIV+ and symptom duration from onset were associated with a TBM diagnosis (figure \@ref(fig:simplified-model)). Local nerve palsy and cranial nerve palsy, without the existence of laboratorial tests, both showed as positive risk factors, similarly to two additional signs (headache and psychosis). Our simplified model had good AUC against held-out hospital diagnosis. The best cut-point maximising Youden's index of 30.4% had sensitivity of 76.7% and specificity of 79.1%. Based on the cut-point provided a simplified scoring system for an easy estimation of TBM risk at admission.
+In the simplified model, HIV+ and symptom duration from onset were associated with a TBM diagnosis (figure \@ref(fig:simplified-model-plot)). Local neurological deficit and cranial nerve palsy, without the existence of laboratorial tests, both showed as positive risk factors, similarly to two additional signs (headache and psychosis). Our simplified model had good AUC against held-out hospital diagnosis. The best cut-point maximising Youden's index of 30.4% had sensitivity of 76.7% and specificity of 79.1%. Based on the cut-point provided a simplified scoring system for an easy estimation of TBM risk at admission.
 
 
-```{r simplified-model, fig.align='center', fig.cap='Left: Posterior estimates of coefficients of clinical TBM risk factors. Points, thick lines, and thin lines are posterior means, 50\\% and 95\\% credible intervals. Right: ROC curves (upper half) and calibration plots (lower half) for the selected model, against observed test results. Results from individual CV repetitions are shown in fainted grey and the average curves are in colour', message=FALSE, warning=FALSE, out.width='100%', dpi=600, fig.dim=c(8, 6)}
+```{r simplified-model-plot, fig.align='center', fig.cap='Left: Posterior estimates of coefficients of clinical TBM risk factors. Points, thick lines, and thin lines are posterior means, 50\\% and 95\\% credible intervals. Right: ROC curves (upper half) and calibration plots (lower half) for the selected model, against observed test results. Results from individual CV repetitions are shown in fainted grey and the average curves are in colour', message=FALSE, warning=FALSE, out.width='100%', dpi=600, fig.dim=c(8, 6), fig.id = "simplified-model-plot"}
 # tmp_svg <- cowplot::ggdraw() + 
 #   cowplot::draw_image(magick::image_read_svg("includes/a_plog_s.svg", width=212*5, height=159*5))
 # plot(tmp_svg)
 a_plot_s <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS')) + theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "none") 
 metrics_s <- readRDS(file.path(data_dir, '..', 'export', 'metrics', 's1_plots.RDS')) 
-a_plot_s + ((metrics_s$calib + ggtitle("Hospital Diagnosis"))/ (metrics_s$roc + ggtitle('')))
+
+plot(a_plot_s + ((metrics_s$calib + ggtitle("Hospital Diagnosis"))/ (metrics_s$roc + ggtitle(''))))
 ```
 
-```{r score-table, tab.cap="Simplified scoring table ", tab.id = "score-table"}
+```{r score-table, tab.cap="Simplified scoring table", tab.id = "score-table"}
 m = data.frame(
   Criterion = c(
     'HIV +',
     'TB-suggested symptoms',
-    'Local motor palsy',
+    'Local neurological deficit',
     'Cranial nerve palsy',
     'Past noticed TB contact',
     'Glasgow coma score',

@@ -1,4 +1,4 @@
-# Abstract {-}
+# Abstract {.unnumbered}
 
 ### Background {-}
 
@@ -6,12 +6,12 @@
 
 ### Methods {-}
 
-We included 662 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021. We used a Bayesian latent class regression model with local random effects. Models were validated internally and a Shiny app was provided.
+We included 658 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021. We used a Bayesian latent class regression model with local random effects. Models were validated internally and a Shiny app was provided.
 
 ### Results {-}
 
-All current confirmatory had nearly perfect specificity. The sensitivity of ZN Smear was ... , culturing was.., and GeneXpert was.... Stratified by HIV status, ZN Smear was ... sensitive, culturing was ... sensitive, and GeneXpert was ...sensitive for HIV negative population. Amongst HIV patient, the sensitivities of the three tests were in turn ..., ..., and .... Our full diagnosis model showed an AUC of ... and the simplified model showed an AUC of .... The models showed decent calibration. 
+All current confirmatory had near perfect specificity. The sensitivity of ZN Smear was 71% (55%, 86%), culturing was 39% (23%, 55%), and GeneXpert was 23% (10%, 43%). Stratified by HIV status, ZN Smear was 69% (51%, 85%) sensitive, culturing was 35% (18%, 52%) sensitive, and GeneXpert was 18% (04%, 39%) sensitive for HIV negative population. All test sensitivities were better in HIV group at 93% (82%, 99%), 81% (58%, 96%), and 87% (56%, 100%), respectively. All model showed good discrimination and calibration. 
 
 ### Conclusion {-}
 
-The developed models could be practically used as a decision assistants for the clinicians to recognise patients with high risk of TBM at different time points from early admission to after all tests returned.
+Our developed models could be objectively used as a decision assistants for clinicians to detect patients with high risk of TBM at different time points from early admission to later with test results.

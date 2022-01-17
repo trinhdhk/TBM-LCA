@@ -1,8 +1,8 @@
 # Fdb version 3
-["pdflatex"] 1638874748 "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.tex" "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.pdf" "LCApaper" 1638874748
-  "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.aux" 1638874748 0 d41d8cd98f00b204e9800998ecf8427e ""
-  "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.tex" 1638874746 143231 8a96682a9b88468e6d0759fbc14a88d8 ""
-  "/dev/null" 1638874749 0 d41d8cd98f00b204e9800998ecf8427e ""
+["pdflatex"] 1639052068 "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.tex" "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.pdf" "LCApaper" 1639052068
+  "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.aux" 1639052068 8 a94a2480d3289e625eea47cd1b285758 ""
+  "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.tex" 1639052065 173950 c456ea9d90619c1af79c5231ff8d5aea ""
+  "/dev/null" 1639052066 0 d41d8cd98f00b204e9800998ecf8427e ""
   "/usr/local/texlive/2020/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2020/texmf-dist/fonts/tfm/public/lm/ec-lmr10.tfm" 1254269338 12056 7e13df7fe4cbce21b072ba7c4f4deb6e ""
   "/usr/local/texlive/2020/texmf-dist/tex/generic/atbegshi/atbegshi.sty" 1575674566 24708 5584a51a7101caf7e6bbf1fc27d8f7b1 ""
@@ -89,8 +89,8 @@
   "/usr/local/texlive/2020/texmf-dist/web2c/texmf.cnf" 1583102494 39451 60d7debd9ef8ece44cbe965493576c2d ""
   "/usr/local/texlive/2020/texmf-var/web2c/pdftex/pdflatex.fmt" 1603035376 2432458 e3cc52bf2857f4bbe5351f7cd33ac397 ""
   "/usr/local/texlive/2020/texmf.cnf" 1586288231 577 d60164b4589a341208aff7a667fbbdcb ""
-  "LCApaper.tex" 1638874746 143231 8a96682a9b88468e6d0759fbc14a88d8 ""
+  "LCApaper.tex" 1639052065 173950 c456ea9d90619c1af79c5231ff8d5aea ""
   (generated)
-  "LCApaper.log"
   "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.pdf"
+  "LCApaper.log"
   "/Users/trinhdhk/Documents/GitHub/TBM-LCA/papers/clinical/LCApaper.log"

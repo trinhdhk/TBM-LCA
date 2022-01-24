@@ -74,7 +74,7 @@ var[12] <- with(data_dirty, sum(
     na.rm=TRUE))
 ```
 
-Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). There were no significant different in the age of different groups, with the mean of `r quantile(data_dirty$age, .5, na.rm=TRUE) |> round(1)`. HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r round((nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100, 0)`%) enrolled individuals.  <!-- As HIV was only tested for suspected patients who admitted with HIV-related conditions or involved in high-risk activities, we assumed the HIV rate for the untested group to be similar to that of the general population. Missing GCSV due to intubation is a common issue and the practice of using a model-based imputation approach is supported[@Teasdale2014], as all the Glasgow Coma Scale components are usually highly correlated.--> Both HIV prevalence and duration from symptom onset in the test positive groups were consistently higher than those in the test negative groups. Overall, there were `r var[5]` participants with valid TBM confirmatory tests, `r var[7]` were microbiology confirmed \@ref(fig:venn-test). `r var[11]` were later confirmed with another disease. In the untested group, `r var[9]` were microbiologically diagnosed with non-TBM conditions. There were `r var[8]+var[10]` patients were not confirmed with any infection.
+Characteristics of analysed population are shown in table \@ref(tab:test-bl-tbl). There were no significant different in the age of different groups, with the mean of `r quantile(data_dirty$age, .5, na.rm=TRUE) |> round(1)`. HIV were tested for `r nrow(data_dirty) - na(data_dirty$hiv_stat)` (`r round((nrow(data_dirty) - na(data_dirty$hiv_stat))/nrow(data_dirty)*100, 0)`%) enrolled individuals.  <!-- As HIV was only tested for suspected patients who admitted with HIV-related conditions or involved in high-risk activities, we assumed the HIV rate for the untested group to be similar to that of the general population. Missing GCSV due to intubation is a common issue and the practice of using a model-based imputation approach is supported[@Teasdale2014], as all the Glasgow Coma Scale components are usually highly correlated.--> Both HIV prevalence and duration from symptom onset in the test positive groups were consistently higher than those in the test negative groups. Overall, there were `r var[5]` participants with valid TBM confirmatory tests, `r var[7]` were microbiology confirmed \@ref(fig:venn-test). `r var[11]` were later confirmed with another disease. In the untested group, `r var[9]` were microbiologically diagnosed with non-*Mtb* infection There were `r var[8]+var[10]` patients were not confirmed with any condition.
 
 ```{diagrammer patient-flow, fig.show="hold", out.width="100%", out.height="10cm",  fig.align="center", fig.cap="Recruited patient profile", fig.id="patient-flow"}
 digraph patientflow {
@@ -289,8 +289,8 @@ sen.est = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1,
                          post.fn = \(x) paste0(x, '%'))
 
 spc.est2 = purrr::partial(est,
-                         transformation=\(x) (1-x), ci.sep=', ', digits=2)
-sen.est2 = purrr::partial(est, ci.sep=', ', digits=2)
+                         transformation=\(x)  100*(1-x), ci.sep=', ', digits=2)
+sen.est2 = purrr::partial(est, transformation=\(x) 100*x, ci.sep=', ', digits=2)
 
 sen = \(name, hiv=NULL, fn=sen.est) {
   name = paste0(name, '[2]')
@@ -312,8 +312,9 @@ Estimated coefficients for TB risk factors are shown in figure \@ref(fig:coef-es
 Amongst the included bacillary burden impacting factors, HIV and higher CSF protein were both associated with higher burden, with glucose stood on the opposite side. Although higher lymphocyte count in CSF sample means a higher chance of TBM compared with other diagnoses, it was associated with a reduction in the expected mycobacterial burden, presumably a reduction of confirmatory test detection rates.
 
 ```{r mv-posterior, tab.cap="Posterior estimates of test sensitivities and specificities, for overall population, and stratified by HIV", tab.id="mv-posterior"}
+# Use %
 pr_neg <- matrix(c(
-  c('Test', rep(c('Specificity'),1), rep(c('Sensitivity'),1)),
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
   # c('Test', rep(c('Estimates'),2)),
   c('Smear',
     # est('z_Smear[1]', tab = p_hiv_neg_summary,  transformation =\(x) 1-(x)), 
@@ -333,7 +334,7 @@ pr_neg <- matrix(c(
 ), byrow=T, nrow=4)
 
 pr_pos <- matrix(c(
-  c('Test', rep(c('Specificity'),1), rep(c('Sensitivity'),1)),
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
   # c('Test', rep(c('Estimates'),2)),
   c('Smear',
     spc("z_Smear", hiv=TRUE, fn=spc.est2),
@@ -351,7 +352,7 @@ pr_pos <- matrix(c(
 ), byrow=T, nrow=4)
 
 pr <- matrix(c(
-  c('Test', rep(c('Specificity'),1), rep(c('Sensitivity'),1)),
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
   # c('Test', rep(c('Estimates'),2)),
   c('Smear',
     # est('z_Smear[1]', tab = p_summary,  transformation =\(x) 1-(x)), 
@@ -387,7 +388,7 @@ huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
 (a_plot + ggtitle('TBM Risk factor')) /
   (b_plot + ggtitle('Bacillary burden predictors')) + 
   plot_layout(nrow=2, heights=c(7,2))&
-  theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "right") 
+  theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "none") 
 ```
 
 ## Model validation 
@@ -413,25 +414,46 @@ theta_rocs+theta_calib
 
 ```{r load-fit, include=FALSE}
 post_test = list()
-post_test$fit <- readRDS(file.path(data_dir, '..', 'export', 'post_test.RDS'))$fit2
-post_test$est <- coef(summary(post_test$fit))[, 'Estimate']
-post_test$confint <- confint(post_test$fit)
-
-post_test$get_est <- function(name, hiv = FALSE, inv=FALSE){
-  if (inv){ 
-    f = \(x) -x
-    first = "97.5 %"
-    second = "2.5 %"
-  } else {
-    f = \(x) x
-    first = "2.5 %"
-    second = "97.5 %"
-  }
-  name = paste0("time", name, "_neg")
-  if (!hiv) return (glue::glue("{round(2^f(post_test$est[name]),2)} ({round(2^f(post_test$confint[name, first]),2)}, {round(2^f(post_test$confint[name,second]),2)})"))
-  name2 = paste0(name,":hivTRUE")
-  glue::glue("{round(2^f(post_test$est[name]+post_test$est[name2]),2)} ({round(2^f(post_test$confint[name,first]+post_test$confint[name2,first]),2)} -  {round(2^f(post_test$confint[name,second]+post_test$confint[name2,second]),2)})")
+# post_test$fit <- readRDS(file.path(data_dir, '..', 'export', 'post_test.RDS'))$fit2
+# post_test$est <- coef(summary(post_test$fit))[, 'Estimate']
+# post_test$confint <- confint(post_test$fit)
+post_test$dat <- readRDS(file.path(data_dir, '..', 'export', 'post_test_fraction.RDS'))
+post_test$get_sample <- function(name, hiv=FALSE){
+  n = switch(name, 
+             smear = 'a', xpert = 'b', smear_mgit = 'c', smear_xpert = 'd', all = 'e')
+  with(post_test, {
+    hiv.pop = dat$hiv == hiv
+    target.pop = dat[[n]]
+    # if (inv) target.pop = 1/(target.pop)
+    target.pop[!hiv.pop] = NA
+    apply(target.pop,1,mean,na.rm=T)
+  })
 }
+
+post_test$get_est <- function(name, hiv=FALSE, inv=FALSE){
+  est = post_test$get_sample(name, hiv)
+  f = if (inv) {\(x) 1/x} else I
+  
+  mean = mean(est) |> f() |> formatC(digits=2, format='f')
+  ci = quantile(est, c(.025, .975)) |> f() |> sort() |> formatC(digits=2, format='f')
+  glue::glue('{mean} ({ci[[1]]} - {ci[[2]]})')
+}
+
+# post_test$get_est <- function(name, hiv = FALSE, inv=FALSE){
+#   if (inv){ 
+#     f = \(x) -x
+#     first = "97.5 %"
+#     second = "2.5 %"
+#   } else {
+#     f = \(x) x
+#     first = "2.5 %"
+#     second = "97.5 %"
+#   }
+#   name = paste0("time", name, "_neg")
+#   if (!hiv) return (glue::glue("{round(2^f(post_test$est[name]),2)} ({round(2^f(post_test$confint[name, first]),2)}, {round(2^f(post_test$confint[name,second]),2)})"))
+#   name2 = paste0(name,":hivTRUE")
+#   glue::glue("{round(2^f(post_test$est[name]+post_test$est[name2]),2)} ({round(2^f(post_test$confint[name,first]+post_test$confint[name2,first]),2)} -  {round(2^f(post_test$confint[name,second]+post_test$confint[name2,second]),2)})")
+# }
 # post_test_tbl <- data.frame(Scenario = NULL, HIV_neg = NULL, HIV_postivive=NULL)
 post_test_tbl = data.frame(
     Scenario = letters[1:5],
@@ -477,9 +499,9 @@ post_test_tbl_inv = data.frame(
   )
 ```
  
-<!--Figure \@ref(fig:fit-post-test-change) demonstrates TBM probability in our population given a chronological scenario where ZN Smear, Xpert, and MGIT culture results sequentially returned negative over time. --> Change in TBM probability relative to pre-test values are shown in table \@ref(tab:tbl-post-test). Briefly, a negative Smear only was associated with `r post_test_tbl_inv$HIV_neg[1]`-fold reduction in TBM. Combined negative Smear and either MGIT or Xpert was associated with 2.9-time decrease of TBM risk for HIV negative and 4-time for HIV positive population. With all tests negative, the TBM probability reduced by `r post_test_tbl_inv$HIV_neg[5]` and `r post_test_tbl_inv$HIV_pos[5]` for HIV negative and postive respectively. 
+<!--Figure \@ref(fig:fit-post-test-change) demonstrates TBM probability in our population given a chronological scenario where ZN Smear, Xpert, and MGIT culture results sequentially returned negative over time. --> Change in TBM probability relative to pre-test values are shown in table \@ref(tab:tbl-post-test). Briefly, a negative Smear only was associated with `r post_test_tbl_inv$HIV_neg[1]`-fold reduction in TBM risk for HIV-uninfected patients and `r post_test_tbl_inv$HIV_pos[1]`-fold reduction for HIV-infected. Combined negative Smear and MGIT was associated with roughly `r round(1/.4,2)` times lower probability of TBM. With all tests negative, the TBM probability reduced by `r post_test_tbl_inv$HIV_neg[5]` and `r post_test_tbl_inv$HIV_pos[5]` for HIV negative and positive respectively. 
 
-```{r tbl-post-test, tab.cap="Average changes in TBM probability given available test result(s), relative to pre-confirmatory test TBM probability. Assume pre-test risk is 1, the values measure post-test risk in each scenario", tab.id = "tbl-post-test"}
+```{r tbl-post-test, tab.cap="Average changes in TBM probability given available test result(s), relative to pre-confirmatory test TBM probability. Assume pre-test risk is 1, the values measure post-test risk in each scenario.", tab.id = "tbl-post-test"}
 flextable::flextable(post_test_tbl) |> 
   flextable::set_header_labels(values=list(Scenario="Scenario", HIV_neg="HIV (-)", HIV_pos="HIV (+)")) |>
   flextable::bold(j= 1) |>

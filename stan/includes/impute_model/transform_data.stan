@@ -30,6 +30,7 @@ int obs_csf = sum2d(obs_Xc[:,2:7]);
 // * GCS
 int obs_gcs_compartments = sum2d(obs_Tc[:,1:3]);
 int obs_gcs = sum(obs_Xc[:,8]);
+vector<lower=0, upper=1>[3] gcs_a0 = [0, 0, 0]';
 
 // * Blood test
 int obs_bld = sum2d(obs_Tc[:,4:5]);

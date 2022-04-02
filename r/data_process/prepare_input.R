@@ -120,24 +120,25 @@ Xd <- data_19EI %$% cbind(
   xray_pul_tb,                                                              #6
   xray_miliary_tb,                                                          #7
   csf_ink | csf_crypto ,                                                    #8
-  # ISPSYCHOSIS=='C49488',
-  # ISHEADACHE=='C49488',
-  GRAM = csf_gram
+  GRAM = csf_gram,                                                          #9
+  eos = csf_eos_corrected > 0                                               #10
 )
 
+scale.nonzero = function(x, ...) {
+  x[x==0] = NA;
+  scale(x, ...)
+}
 Xc <- data_19EI %$% tibble(
-  # age=scale(age, scale=T),                                           #1    #9 
-  id=scale(log2(clin_illness_day),scale=T),                          #2    #10
-  glu=scale(log2(BLDGLU), scale=T),                                  #3    #11 
-  csfglu=scale(log2(.1+csf_glucose), scale=T),                       #4    #12
-  csflym=scale(log10(csf_lympho_corrected+1), scale=T),              #5    #13   
-  csfpro=scale(log2(csf_protein_corrected), scale=T),                #6    #14   
-  csflac=scale(log2(csf_lactate), scale=T),                          #7    #15   
-  # csfneu=scale(log10(csf_neutro_corrected+1), scale=T),            #8.   #16
-  csfwbc=scale(log10(csf_wbc_corrected+1), scale=T),                 #8    #16
-  gcs=scale(15-clin_gcs, scale=T),                                   #9    #17
-  csfeos=scale(log10(csf_eos_corrected+1), scale=T),                 #10   #18
-  csfred=scale(log10(csf_rbc+1), scale=T)                            #11   #19
+  id=scale(log2(clin_illness_day),scale=T),                          #1    #11
+  glu=scale(log2(BLDGLU), scale=T),                                  #2    #12 
+  csfglu=scale(log2(.1+csf_glucose), scale=T),                       #3    #13
+  csflym=scale(log10(csf_lympho_corrected+1), scale=T),              #4    #14   
+  csfpro=scale(log2(csf_protein_corrected), scale=T),                #5    #15   
+  csflac=scale(log2(csf_lactate), scale=T),                          #6    #16   
+  csfwbc=scale(log10(csf_wbc_corrected+1), scale=T),                 #7    #17
+  gcs=structure((15-clin_gcs - 3)/3, dim=c(658,1), `scaled:center`=3, `scaled:scale`=3),  #8    #18
+  csfeos=scale.nonzero(log10(csf_eos_corrected+1), scale=T),                 #9   #19
+  csfred=scale(log10(csf_rbc+1), scale=T)                            #10   #20
 )
 
 scale_Xc <- summarise(Xc, across(everything(), attributes)) |> as.list() 

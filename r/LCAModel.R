@@ -28,6 +28,7 @@ LCAModel <- R6::R6Class(
       # self$params <- model$.META$params
       private$.META <- model$.META
       self$update_misc()
+      invisible(model)
     },
     print = function(){
       cat("TBM LCA model", self$model_name, "\n")
@@ -142,7 +143,7 @@ LCAModel <- R6::R6Class(
     ),
     calibration_plot = function(
       which = c("Y", "C"),
-      method = c("loess", "splines"),
+      method = c("loess", "splines", "gam"),
       C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       span = .75,
       knots = 3,
@@ -150,7 +151,8 @@ LCAModel <- R6::R6Class(
       plot_rep = FALSE, theme = ggplot2::theme_bw(),
       ...
     ){
-      which <- match.arg(which); method <- match.arg(method)
+      which <- match.arg(which);
+      method <- match.arg(method)
       require(ggplot2)
       require(patchwork)
       est <- match.arg(est)
@@ -200,13 +202,14 @@ LCAModel <- R6::R6Class(
       }
     },
     roc_plot = function(
-      which = c("Y", "C"),
+      which = c("Y", "C", "simulated_C", "smear", "mgit", "xpert"),
       C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       resamps = 2000,
       force_bootstrap = NULL,
       est = c("mean", "median"),
       plot_rep = FALSE,
-      theme = ggplot2::theme_bw()
+      theme = ggplot2::theme_bw(),
+      ...
     ){
       which <- match.arg(which)
       require(ggplot2)
@@ -223,17 +226,29 @@ LCAModel <- R6::R6Class(
         
         suppressMessages(
           patch <-
-            private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("Smear") + ggplot2::theme(axis.title = element_blank()) + # + scale_x_continuous(name="") +
-            private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("Mgit") + ggplot2::theme(axis.title = element_blank()) + #+ scale_y_continuous(name="") +  
-            private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("Xpert") + ggplot2::theme(axis.title = element_blank())#+ scale_x_continuous(name="") + scale_y_continuous(name="")
+            private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Smear") + ggplot2::theme(axis.title = element_blank()) + # + scale_x_continuous(name="") +
+            private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Mgit") + ggplot2::theme(axis.title = element_blank()) + #+ scale_y_continuous(name="") +  
+            private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Xpert") + ggplot2::theme(axis.title = element_blank())#+ scale_x_continuous(name="") + scale_y_continuous(name="")
         )
         
         gt <- patchwork::patchworkGrob(patch)
-        gridExtra::grid.arrange(gt, left = "True Positive Rate (%)    (Sensitivity)", bottom = "False Positive Rate (%)    (1-Specificity)")
+        x <- list(gt, left = "True Positive Rate (%)    (Sensitivity)", bottom = "False Positive Rate (%)    (1-Specificity)")
+        class(x) <- 'multggplotGrob'
+        x
+      } else if (which == "smear") {
+        Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
+        private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Smear")
+      } else if (which == "mgit") {
+        Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
+        private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap,...) + theme + ggplot2::ggtitle("Mgit")  
+      } else if (which == "xpert") {
+        Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
+        private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Xpert")
       } else {
         not.na <- which(!is.na(C))
         C <- na.omit(C)
-        private$.misc$my_roc_plot(C, p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("Positive TBM")
+        plt <- private$.misc$my_roc_plot(C, p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Positive TBM")
+        # ggplot2::ggplotGrob(plt)
       }  
     }
   ),
@@ -276,3 +291,11 @@ LCAModel <- R6::R6Class(
     }
   )
 )
+
+print.multggplotGrob <- plot.multggplotGrob <- function(x, ...){
+  do.call(gridExtra::grid.arrange, x)
+}
+
+print.ggplotGrob <- plot.ggplotGrob <- function(x, ...){
+  plot(x, ...)
+}

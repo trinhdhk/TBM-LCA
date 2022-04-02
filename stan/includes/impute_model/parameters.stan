@@ -32,7 +32,7 @@
   real csf_imp[N*6 - obs_csf];
   
   //Impute GCS
-  vector<lower=0, upper=1>[3] gcs_a0;
+  // vector<lower=0, upper=1>[3] gcs_a0;
   cholesky_factor_corr[3] L_Omega_gcs;
   vector<lower=0>[3] L_sigma_gcs;
   real<lower=0, upper=1> gcs_imp[N*3 - obs_gcs_compartments];

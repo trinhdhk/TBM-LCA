@@ -44,8 +44,8 @@ parameters {
   //Penalty terms
   vector<lower=0>[adapt_penalty] sp;
   real a0; //intercept
-  vector<lower=0>[1] a_pos;
-  vector[nX-1] a_; //coefs
+  vector<lower=0>[2] a_pos;
+  vector[nX-2] a_; //coefs
 }
 
 transformed parameters{
@@ -54,19 +54,19 @@ transformed parameters{
   
   {
     real SP = (adapt_penalty == 1) ? sp[1] : penalty_term;
-    a_raw = append_row(a_pos, a_);
+    a_raw = append_row(append_row(append_row(a_pos[1], a_[1:5]), a_pos[2]), a_[6:]);
     a = a_raw * SP;
   }
 }
 
 model {
-  int nu = 4;
+  int nu = 5;
   matrix[N, nX] X = append_col(to_matrix(Xd), to_matrix(Xc));
    // Imputation model ---------------------------------------------------------
   
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/penalty.stan
-  a0 ~ student_t(nu, 0, 5);
+  a0 ~ student_t(nu, 0, 3);
   
  if (penalty_family == 0){
     a_raw[1:nXd] ~ student_t(nu, 0, 2);

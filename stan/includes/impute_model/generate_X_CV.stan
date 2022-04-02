@@ -7,14 +7,6 @@
   
   //HIV and Blood
   {
-    // vector[2] Bld_imp[N_all];
-    // if (sum(keptin) < N_all){
-    //   vector[3] bld_mu_valid[N_valid] = rep_array(bld_a0, N_valid) ;
-    //   Bld_imp[which_not(keptin),:] = multi_normal_cholesky_partial_pos_rng(Tc_all[which_not(keptin),4:5], obs_Tc_all[which_not(keptin),4:5], bld_mu_valid, L_Omega_bld);
-    // }
-    // Bld_imp[which(keptin),:] = impute_cont_2d(Tc[:,4:5], obs_Tc[:,4:5], bld_imp);
-    // vector[N_all] z_HIV = HIV_a0 + append_all(Bld_imp)*HIV_a;
-    
     real z_HIV[N_all];
     for (n in 1:N_all){
       if (Td_all[n,7]==0) {
@@ -90,9 +82,10 @@
   
   // CSF lab
   {
+    matrix[6,6] L_Sigma_csf = diag_pre_multiply(L_sigma_csf, L_Omega_csf);
     if (sum(keptin) < N_all){
       vector[6] csf_mu_valid[N_valid] = rep_array(rep_vector(0, 6), N_valid) ;
-      Xc_imp[which_not(keptin),2:7] = multi_normal_cholesky_partial_rng(Xc_all[which_not(keptin),2:7], obs_Xc_all[which_not(keptin),2:7], csf_mu_valid, L_Omega_csf);
+      Xc_imp[which_not(keptin),2:7] = multi_normal_cholesky_partial_rng(Xc_all[which_not(keptin),2:7], obs_Xc_all[which_not(keptin),2:7], csf_mu_valid, L_Sigma_csf);
     }
     
     Xc_imp[which(keptin),2:7] = impute_cont_2d(Xc[:,2:7], obs_Xc[:,2:7], csf_imp);
@@ -101,16 +94,18 @@
   // GCS
   {
     vector[3] GCS_imp[N_all];
+    matrix[3,3] L_Sigma_gcs = diag_pre_multiply(L_sigma_gcs, L_Omega_gcs);
     if (sum(keptin) < N_all){
       vector[3] gcs_mu_valid[N_valid] = rep_array(gcs_a0, N_valid) ;
-      GCS_imp[which_not(keptin),:] = multi_normal_cholesky_partial_unit_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Omega_gcs);
+      GCS_imp[which_not(keptin),:] = multi_normal_cholesky_partial_unit_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Sigma_gcs);
     }
     GCS_imp[which(keptin),:] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], gcs_imp);
     for (n in 1:N_all){
-      Xc_imp[n,8] = obs_Xc_all[n,8] ? Xc_all[n,8] : (GCS_imp[n,1]*3 + GCS_imp[n,2]*5 + GCS_imp[n,3]*4)/3;
+      real tmp;
+      tmp = obs_Xc_all[n,8] ? (Xc_all[n,8]*3) : (GCS_imp[n,1]*3 + GCS_imp[n,2]*5 + GCS_imp[n,3]*4 - 3);
       // Xc_imp[n,9] = obs_Xc_all[n,9] ? Xc_all[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
+      Xc_imp[n,8] = round(tmp)/3;
     }
-    Xc_imp[:,8] = round(Xc_imp[:,8]);
   }
   
   if (nXc > 8) // Other if exists

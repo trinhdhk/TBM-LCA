@@ -36,7 +36,7 @@ parameters {
   
   // Parameters of the logistics regression -----------------------------------
 #include includes/parameters/a.stan
-  real b_HIV_raw; //adjustment of RE with HIV Xd[,1]
+  real<lower=0> b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
   vector<lower=0>[1] b_RE_raw;
   vector[N] RE; //base random effect;
@@ -51,7 +51,7 @@ parameters {
 
 transformed parameters {
 #include includes/transform_parameters/a_variable_declaration.stan
-  real b_HIV;
+  real<lower=0> b_HIV;
   vector[nB] b;
   vector<lower=0>[1] b_RE;
 #include includes/impute_model/transform_parameters.stan
@@ -194,8 +194,8 @@ model {
         }
       }
       target += log_mix(p_HIV[n], 
-      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_1[1] + ll_Xc_imp_2[1],
-      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_1[2] + ll_Xc_imp_2[2]);
+      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_2[1],
+      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_2[2]);
     }
   }
 }
@@ -206,13 +206,15 @@ generated quantities {
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
   vector[3] pairwise_corr;
+  vector[N_all] z_theta;
   vector[N_all] theta;
   matrix[N_all, nA] X;
 
   {
 #include includes/impute_model/generate_X_CV.stan
     
-    theta = inv_logit(a0 + X*a);
+    z_theta = a0 + X*a;
+    theta = inv_logit(z_theta);
     
     {
       vector[N_all] RE_all;

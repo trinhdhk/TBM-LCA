@@ -105,13 +105,16 @@ generated quantities {
   vector[N_all] p_Smear;
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
+  vector[3] pairwise_corr;
+  vector[N_all] z_theta;
   vector[N_all] theta;
   matrix[N_all, nA] X;
 
   {
 #include includes/impute_model/generate_X_CV.stan
     
-    theta = inv_logit(a0 + X*a);
+    z_theta = a0 + X*a;
+    theta = inv_logit(z_theta);
     
     {
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta * inv_logit(z_Smear[2]);

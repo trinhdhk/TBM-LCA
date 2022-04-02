@@ -12,6 +12,7 @@ args <-
   # add_argument("--help", help = "print this help page and exit", short = "-h", flag = TRUE)
   add_argument("--input", help = "input Rdata file", 
                default = "data/cleaned/data_input.Rdata", short = "-i") %>%
+  add_argument("--config-file", help = "configuration file, in yaml format, replace all argument", short = "-c", default = "") %>%
   add_argument("--sampler", help = "sampler file, default to stan/<model>.stan", short = "-s") %>% 
   add_argument("--mode", help = "mode, either sampling, optimizing, or vb. Apart from sampling, only iteration number is tweakable", default = "sampling", short="-m") %>%
   add_argument("--output-dir", help = "output folder", default = "outputs", short = "-o") %>%
@@ -43,6 +44,7 @@ args <-
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
   add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf) %>%
+  add_argument("--append", help = "Where the list in include-pars be appended or replace the default", flag = TRUE) %>%
   add_argument("--hiv-missing", help = "HIV missing treating condition, 0: all is 0, 1: MAR for suspected, 2: MAR for all ", default=1, nargs=1)
 argparser <- parse_args(args)
 
@@ -94,9 +96,16 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
   folds
 }
 
-
+if (nchar(argparser$config_file)) {
+  config <- try(yaml::read_yaml(argparser$config_file))
+  if (inherits(config, 'try-error')) cli::cli_alert_danger('Config file parsing failed!')
+  else {
+    argparser <- modifyList(argparser, config)
+  }
+}
 results <- new.env(parent=emptyenv())
 results$.META <- argparser
+
 with(
   argparser,
   {
@@ -250,7 +259,7 @@ with(
       "mp_a0", "mp_a", "L_Omega_mp",
       # "age_a0", "age_a", "age_sigma",
       "id_a0", "id_a", "id_sigma",
-      if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
+      if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf", "L_sigma_gcs", "L_Omega_gcs") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
     if (model_no > 1) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
@@ -264,7 +273,10 @@ with(
     if (include_d) pars <- c(pars, c('d'))
     if (grepl('missing$', model)) pars <- c(pars, 'z_obs') 
     if (grepl('missingXpert$', model)) pars <- c(pars, 'z_obs_Xpert') 
-    if (!all(is.na(include_pars))) pars <- include_pars 
+    if (!all(is.na(include_pars))) {
+      if (append) pars <- c(pars, include_pars)
+      else pars <- include_pars
+    }
     
     if (mode == "sampling"){
       results$outputs <- misc$stan_kfold(sampler = sampler,

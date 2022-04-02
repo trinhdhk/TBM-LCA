@@ -1,0 +1,12 @@
+cores: 8
+thin: 40
+chains: 1
+iter: 6000 
+warmup: 2000
+init_r: 1
+adapt_delta: 0.75
+penalty_family: t
+penalty-term: 0
+all_params: yes
+clean_state: yes
+extra_x: !expr c( "clin_headache", "clin_psychosis")

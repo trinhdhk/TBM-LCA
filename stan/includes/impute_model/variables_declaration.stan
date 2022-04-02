@@ -34,7 +34,7 @@ Xc_imp[:,1]   = impute_cont_1d(Xc[:,1], obs_Xc[:,1], id_imp); //Illness day
 Xc_imp[:,2:7] = impute_cont_2d(Xc[:,2:7], obs_Xc[:,2:7], csf_imp); //CSF Lab tests
 for (n in 1:N){
   // Xc_imp[n,9] = obs_Xc[n,9] ? Xc[n,9] : to_array_1d(to_vector(GCS_imp[:,1])*3 + to_vector(GCS_imp[:,2])*5 + to_vector(GCS_imp[:,3])*4)[n];
-  Xc_imp[n,8] = obs_Xc[n,8] ? Xc[n,8] : (GCS_imp[n,1]*3 + GCS_imp[n,2]*5 + GCS_imp[n,3]*4)/3;
+  Xc_imp[n,8] = obs_Xc[n,8] ? Xc[n,8] : ((GCS_imp[n,1]*3 + GCS_imp[n,2]*5 + GCS_imp[n,3]*4)/3 - 1);
 }
 
 if (nXc > 8) // Other if exists
@@ -54,6 +54,13 @@ X_compl = append_col(to_matrix(Xd[:,4:nXd]), append_all(Xc_imp)); //complement p
 //   sd_X[ii] = sd(Xd_imp[:,ii]);
 // }
 
-for (ii in 1:(nXc+nQ)){
+for (ii in 1:8){
   sd_X[ii] = sd(Xc_imp[:,ii]);
 }
+for (ii in 9:nXc){
+  sd_X[ii] = 1;
+}
+for (ii in (nXc+1):(nXc+nQ)){
+  sd_X[ii] = sd(Xc_imp[:,ii]);
+}
+

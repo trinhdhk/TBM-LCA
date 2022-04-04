@@ -52,7 +52,7 @@ simulate_data =
     Xd[Td[,7]==1,1] = rbinom(sum(Td[,7]), size = 1, pnorm(hiv_a0))
     browser()
     # Illness_day
-    Xc[,1] = rnorm(N, mean = id_a0 + id_a*Xd[,1], sd = id_sigma)
+    Xc[,1] = sapply(id_a0 + id_a*Xd[,1], function(iii) rnorm(1, mean = iii, sd = id_sigma))
     
     # Clinical symptoms
     mu_cs =  cs_a0 + cs_a[,1]%.*%Xd[,1] + cs_a[,2]%.*%Xc[,1]

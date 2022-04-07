@@ -97,7 +97,7 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
 }
 
 if (nchar(argparser$config_file)) {
-  config <- try(yaml::read_yaml(argparser$config_file))
+  config <- try(yaml::read_yaml(argparser$config_file, eval.expr = TRUE))
   if (inherits(config, 'try-error')) cli::cli_alert_danger('Config file parsing failed!')
   else {
     argparser <- modifyList(argparser, config)

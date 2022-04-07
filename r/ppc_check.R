@@ -21,25 +21,29 @@ simulate_data =
       sapply(x, "*", y)
     }
     hiv_a0 = get_par('HIV_a0', id)
+    hiv_a  = get_par('HIV_a', id)
     
     id_a0  = get_par('id_a0', id) 
     id_a   = get_par('id_a', id) 
     id_sigma   = get_par('id_sigma',id) 
     
     cs_a0   = get_par('cs_a0', id) 
-    cs_a   = get_par('cs_a', id)
+    cs_a    = get_par('cs_a', id)
     L_omega_cs   = get_par('L_Omega_cs', id)
     
     mp_a0   = get_par('mp_a0', id)
-    mp_a   = get_par('mp_a', id)
+    mp_a    = get_par('mp_a', id)
     L_omega_mp   = get_par('L_Omega_mp', id) 
     
     L_omega_csf   = get_par('L_Omega_csf', id) 
     L_sigma_csf   = get_par('L_sigma_csf', id) 
+    csf_a0        = get_par('csf_a0', id)
+    csf_a.        = get_par('csf_a', id)
     
     L_sigma_gcs   = get_par('L_sigma_gcs', id) 
     L_omega_gcs   = get_par('L_Omega_gcs', id) 
-    # gcs_a0   = get_par('gcs_a0', id) 
+    gcs_a0        = get_par('gcs_a0', id)
+    gcs_a         = get_par('gcs_a', id)
     
     load('data/cleaned/data_input.Rdata')
     N = dim(Xc)[1]
@@ -47,43 +51,43 @@ simulate_data =
     # nXd = dim(Xd)[2]
     # Xc = matrix(N, nXc)
     # Xd = matrix(N, nXd)
-    
+    # browser()
+    obs = with(data_19EI, obs_smear + obs_mgit + obs_xpert) > 0
+    test = with(data_19EI, csf_smear + csf_mgit + csf_xpert) > 0
     # HIV
-    Xd[Td[,7]==1,1] = rbinom(sum(Td[,7]), size = 1, pnorm(hiv_a0))
-    browser()
+    Xd[Td[,7]==1,1] = sapply(hiv_a0 + hiv_a[1]*obs[Td[,7]==1] + hiv_a[2]*test[Td[,7]==1],
+                             function(iii) rbinom(1, size = 1, pnorm(iii)))
+    # browser()
     # Illness_day
-    Xc[,1] = sapply(id_a0 + id_a*Xd[,1], function(iii) rnorm(1, mean = iii, sd = id_sigma))
+    Xc[,1] = sapply(id_a0 + id_a[1]*Xd[,1] + id_a[2]*obs + id_a[3]*test,
+                    function(iii) rnorm(1, mean = iii, sd = id_sigma))
     
     # Clinical symptoms
-    mu_cs =  cs_a0 + cs_a[,1]%.*%Xd[,1] + cs_a[,2]%.*%Xc[,1]
+    mu_cs =  cs_a0 + cs_a[,1]%.*%Xd[,1] + cs_a[,2]%.*%Xc[,1] + cs_a[,3]%.*%obs + cs_a[,4]%.*%test
     cs = apply(mu_cs, 1,
-                function(mu) LaplacesDemon::rmvnc(1, mu = rep(0, 3), U = t(L_omega_cs))) |> pnorm() 
+                function(mu) LaplacesDemon::rmvnc(1, mu = mu, U = t(L_omega_cs))) |> pnorm() 
     cs = apply(cs, 2, \(x) sapply(x, rbinom, n=1, size=1))
     Xd[,2] = cs[1,] | cs[2,] | cs[3,]
     # Motor palsy
     
-    mu_mp =  mp_a0 + mp_a[,1]%.*%Xd[,1] + mp_a[,2]%.*%Xc[,1]
+    mu_mp =  mp_a0 + mp_a[,1]%.*%Xd[,1] + mp_a[,2]%.*%Xc[,1] + mp_a[,3]%.*%obs + mp_a[,4]%.*%test
     mp = apply(mu_mp, 1,
-               function(mu)  LaplacesDemon::rmvnc(1, mu = rep(0, 3), U = t(L_omega_mp))) |> pnorm() 
+               function(mu)  LaplacesDemon::rmvnc(1, mu = mu, U = t(L_omega_mp))) |> pnorm() 
     mp = apply(mp, 2, \(x) sapply(x, rbinom, n=1, size=1))
     Xd[,3] = mp[1,] | mp[2,] | mp[3,]
-    # CSF
-    # browser()
-    # L_Sigma_csf = diag(L_sigma_csf) %*% L_omega_csf
-    # Xc[, 2:7] = LaplacesDemon::rmvnc(N, mu = rep(0, 3), U = t(L_Sigma_csf))
-    
     
     # GCS
     L_Sigma_gcs = diag(L_sigma_gcs) %*% L_omega_gcs
+    mu_gcs = gcs_a0 + gcs_a[,1] %.*% obs + gcs_a[,2] %.*% test
     # GCS = mvtnorm::rmvnorm(N, mean = gcs_a0, sigma = L_Sigma_gcs %*% t(L_Sigma_gcs), method = 'chol')
     
     GCS = sapply(seq_len(N), 
-                 function(...) {
-                   gcs = LaplacesDemon::rmvnc(1, mu = rep(0, 3), U = t(L_Sigma_gcs))
-                   while (any(gcs < 0 | gcs > 1)) gcs =  LaplacesDemon::rmvnc(1, mu = rep(0, 3), U = t(L_Sigma_gcs))
+                 function(n) {
+                   gcs = LaplacesDemon::rmvnc(1, mu = mu_gcs[n,], U = t(L_Sigma_gcs))
+                   while (any(gcs < 0 | gcs > 1)) gcs =  LaplacesDemon::rmvnc(1, mu = mu_gcs[n,], U = t(L_Sigma_gcs))
                    gcs
                  }) |> t()
-    # browser()
+    # brower()
     
     Xc[, 8] = round(3*GCS[,1] + 5*GCS[,2] + 4*GCS[,3] - 3)/3;
     
@@ -136,7 +140,7 @@ cli::cli_alert_info('Load sampler')
 model <- misc$my_stan_model('stan/m3.stan')
 
 cli::cli_alert_info('Get pretrained model')
-pretrained <- readRDS('outputs/m3_t00_b345678_q7_r1_k1.RDS')
+pretrained <- readRDS('outputs/m3_t00_b345678_q7_r1_k1_2.RDS')
 # set.seed(1223433)
 misc <- new.env()
 source('r/include/functions.R', local=misc)

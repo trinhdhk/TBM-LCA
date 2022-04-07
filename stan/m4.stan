@@ -10,6 +10,9 @@ data {
   matrix[N_all, nD] D_all; 
   int<lower=0, upper=1> unsure_spc;
   int<lower=0, upper=1> quad_RE;
+  int<lower=0, upper=1> obs_Smear_all[N_all];
+  int<lower=0, upper=1> obs_Mgit_all [N_all];
+  int<lower=0, upper=1> obs_Xpert_all[N_all];
   
 #include includes/data/a.stan 
 #include includes/data/X.stan

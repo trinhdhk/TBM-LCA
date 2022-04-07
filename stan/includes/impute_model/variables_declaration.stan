@@ -19,7 +19,7 @@ for (n in 1:N){
       z_HIV[n] = inv_Phi(0.0032);
     }
   } else{
-    z_HIV[n] = HIV_a0;
+    z_HIV[n] = HIV_a0 + HIV_a[1]*obs_test[n] + HIV_a[2]*test[n];
   }
 }
 // z_HIV         = HIV_a0 + append_all(Bld_imp)*HIV_a;

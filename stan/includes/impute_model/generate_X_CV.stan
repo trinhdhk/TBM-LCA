@@ -16,7 +16,7 @@
           z_HIV[n] = inv_Phi(0.0032);
         }
       } else{
-        z_HIV[n] = HIV_a0;
+        z_HIV[n] = HIV_a0 + HIV_a[1]*obs_test_all[n] + HIV_a[2]*test_all[n];
       }
     }
     Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], z_HIV), obs_Xd_all[:,1]);
@@ -31,7 +31,7 @@
       //   j+=1;
       // }
       if (obs_Xc_all[n,1] == 0) {
-        id_imp_valid[k]  = normal_rng(id_a0  + id_a*(Xd_imp[n,1]) , id_sigma );
+        id_imp_valid[k]  = normal_rng(id_a0  + id_a[1]*(Xd_imp[n,1]) + id_a[2]*obs_test_all[n] + id_a[3]*test_all[n], id_sigma );
         k+=1;
       }
     }
@@ -53,7 +53,7 @@
     int j = 1;
     if (sum(keptin) < N_all){
       for (n in which_not(keptin)){
-        Mu_cs[j] = cs_a0 + cs_a[:,1]*Xd_imp[n,1] + cs_a[:,2]*Xc_imp[n,1];
+        Mu_cs[j] = cs_a0 + cs_a[:,1]*Xd_imp[n,1] + cs_a[:,2]*Xc_imp[n,1] + cs_a[:,2]*obs_test_all[n] + cs_a[:,3]*test_all[n];
         j += 1;
       }
       CS_imp_valid = multi_probit_partial_rng(Td_cs_valid, obs_cs_valid, Mu_cs, L_Omega_cs);
@@ -71,7 +71,7 @@
     int j = 1;
     if (sum(keptin) < N_all){
       for (n in which_not(keptin)){
-        Mu_mp[j] = mp_a0 + mp_a[:,1]*Xd_imp[n,1] + mp_a[:,2]*Xc_imp[n,1];
+        Mu_mp[j] = mp_a0 + mp_a[:,1]*Xd_imp[n,1] + mp_a[:,2]*Xc_imp[n,1] + mp_a[:,2]*obs_test_all[n] + mp_a[:,3]*test_all[n];
         j += 1;
       }
       mp_imp_valid = multi_probit_partial_rng(Td_mp_valid, obs_mp_valid, Mu_mp, L_Omega_mp);
@@ -84,7 +84,12 @@
   {
     matrix[6,6] L_Sigma_csf = diag_pre_multiply(L_sigma_csf, L_Omega_csf);
     if (sum(keptin) < N_all){
-      vector[6] csf_mu_valid[N_valid] = rep_array(rep_vector(0, 6), N_valid) ;
+      vector[6] csf_mu_valid[N_valid];
+      int k = 1;
+      for (n in which_not(keptin)){
+        csf_mu_valid[k] = csf_a0 + csf_a[:,1]*Xd_imp[n,1]+ csf_a[:,2]*obs_test_all[n] + csf_a[:,3]*test_all[n];
+        k += 1;
+      }
       Xc_imp[which_not(keptin),2:7] = multi_normal_cholesky_partial_rng(Xc_all[which_not(keptin),2:7], obs_Xc_all[which_not(keptin),2:7], csf_mu_valid, L_Sigma_csf);
     }
     
@@ -96,7 +101,12 @@
     vector[3] GCS_imp[N_all];
     matrix[3,3] L_Sigma_gcs = diag_pre_multiply(L_sigma_gcs, L_Omega_gcs);
     if (sum(keptin) < N_all){
-      vector[3] gcs_mu_valid[N_valid] = rep_array(gcs_a0, N_valid) ;
+      vector[3] gcs_mu_valid[N_valid]; //= rep_array(gcs_a0, N_valid) ;
+      int k = 1;
+      for (n in which_not(keptin)){
+        gcs_mu_valid[k] = gcs_a0 + gcs_a[:,1]*Xd_imp[n,1] + gcs_a[:,2]*obs_test_all[n] + gcs_a[:,3]*test_all[n];
+        k += 1;
+      }
       GCS_imp[which_not(keptin),:] = multi_normal_cholesky_partial_unit_rng(Tc_all[which_not(keptin),1:3], obs_Tc_all[which_not(keptin),1:3], gcs_mu_valid, L_Sigma_gcs);
     }
     GCS_imp[which(keptin),:] = impute_cont_2d(Tc[:,1:3], obs_Tc[:,1:3], gcs_imp);

@@ -2,253 +2,36 @@
 
 ## Participants
 
-We used data from an observational study of brain infection conducted on the neuro-infection ward of the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam. HTD is a 550-bed centre providing secondary and tertiary treatment for a wide range of tropical infections from all of southern Vietnam [@thwaites2002]. The study received ethical approvals from HTD and the Oxford Tropical Research Ethics Committee [@donovan2020]. Participants were enrolled between 29th August 2017 and 22nd January 2021. Inclusion criteria included a minimum age of 16 years, having suspected brain infection of any cause, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). Specifically for this analysis, we also excluded patients with contaminated mycobacterial culture results and with no subsequent culture in the first week since admission.
+We used data from an observational study of brain infection conducted on the neuro-infection ward of the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam. HTD is a 550-bed centre providing secondary and tertiary treatment for a wide range of tropical infections from all of southern Vietnam [@thwaites2002]. The study received ethical approvals from HTD and the Oxford Tropical Research Ethics Committee [@donovan2020]. Participants were enrolled between 29th August 2017 and 22nd January 2021. Inclusion criteria were a minimum age of 16 years, having suspected brain infection of any cause, and undergoing lumbar puncture at baseline as a routine diagnostic procedure. Patients were ineligible for enrolment if performing a lumbar puncture was contraindicated, or if informed consent to join the study was not given (by the patient, or by a relative if the patient lacked capacity to consent). For this study, we also excluded patients with contaminated mycobacterial culture results and without a subsequent culture in the first week since admission.
 
-## Data collection and testing procedures
+## Data collection and pre-processing
 
-At enrolment time, demographic information and medical history were collected. HIV testing was performed on a case-by-case basis by the treating clinicians. Patients were tested for HIV if they presented with a condition suggestive of immune deficiency (e.g. tuberculosis, or cryptococcal meningitis) or had been involved in activities that increased HIV risk (e.g. injecting drug use). Patients with either known HIV infection or a new positive HIV test result, were considered HIV positive. Patients underwent clinical examination, chest X-Ray - but no brain imaging session, and laboratory investigations including blood tests, sputum ZN staining, and lumbar puncture, unless contra-indicated, with routine CSF analysis including white blood cells and cellular differential, CSF protein, CSF glucose (with paired blood glucose), and CSF lactate. Ideally at least 6mls CSF was used for mycobacterial testing by Ziehl--Neelsen (ZN) stain, mycobacterial culture using Mycobacteria Growth Indicator Tube (MGIT), and Xpert or Xpert MTB/RIF Ultra (XpertUltra). Since Xpert and XpertUltra were found diagnostically comparable in a subset of these data [@donovan2020], they were combined and denoted as Xpert. If CSF was repeatedly sampled (performed based on clinical need), only the first sample with at least 3mls of CSF collected, not later than the first week since admission, were used. Methods of CSF processing have been described elsewhere [@nhu2013, @donovan2020]. Briefly: CSF samples were centrifuged at 3000g for 15 minutes, and most of the CSF supernatant was removed. The CSF deposit was resuspended in 500µL of remaining supernatant, with this resuspended pellet then used for ZN smear (100µL), MGIT (200µL), and either Xpert or XpertUltra (200 µL). Laboratory tests for differential diagnoses routinely used were Gram stain for other bacterial meningitis, eosinophilic cell count in the CSF as an indicator for eosinophilic meningitis, Indian-ink stain or CSF lateral flow antigen providing confirmatory evidence for Cryptococcal meningitis. 
+At enrolment, demographic information and medical history were collected. Patients with unknown HIV status were tested for HIV if they presented with a condition suggestive of immune deficiency (e.g. tuberculosis, or cryptococcal meningitis) or had been involved in activities that increased HIV risk (e.g. injecting drug use). Patients underwent clinical examination and chest X-Ray - but no brain imaging session. Laboratory investigations included blood, sputum ZN staining and lumbar puncture. Routine CSF analysis included  white blood cells and cellular differential, protein, glucose (with paired blood glucose), and lactate. Ideally at least 6mls CSF was used for mycobacterial testing by Smear, MGIT, and GeneXpert MTB/RIF (Xpert) or Xpert MTB/RIF Ultra (XpertUltra). Since Xpert and XpertUltra were found diagnostically comparable [@donovan2020], they were combined and denoted as Xpert. If CSF was repeatedly sampled (performed based on clinical need), we only used the first sample with at least 3mls of CSF collected, and not later than the first week since admission. Methods of CSF processing have been described in details [@donovan2020]. Briefly: CSF samples were centrifuged at 3000g for 15 minutes, and most of the CSF supernatant was removed. The CSF deposit was resuspended in 500µL of remaining supernatant, with this resuspended pellet then used for ZN smear (100µL), MGIT (200µL), and Xpert (200 µL). Laboratory tests for differential diagnoses routinely used were Gram stain for other bacterial meningitis, eosinophilic cell count in the CSF as an indicator for eosinophilic meningitis, and Indian-ink stain or CSF lateral flow antigen providing confirmatory evidence for Cryptococcal meningitis.
 
-All patients with confirmed or suspected TBM received 4-drug anti-TB chemotherapy regimens according to national and local treatment guidelines. At the time of discharge or death, all patients received a final diagnosis. If at least one of ZN Smear, Xpert, or MGIT was positive from CSF at any time during the follow-up, the patient was considered to have confirmed TBM. Otherwise, if TBM was clinically suspected and treated, with confirmatory microbiological and molecular tests negative, the patient was considered to have suspected TBM. If the patient recovered without anti-TB chemotherapy, or an alternative diagnosis was confirmed microbiologically, they were reassigned to another diagnosis (i.e. not TBM).
+All patients with confirmed or suspected TBM received 4-drug anti-TB chemotherapy regimens according to national and local treatment guidelines. At the time of discharge or death, all patients received a final diagnosis (hospital diagnosis). If at least one of Smear, Xpert, or MGIT from CSF was positive at any time during the follow-up, the patient was considered to have confirmed TBM. the patient was considered to have suspected TBM if confirmatory microbiological and molecular tests were negative, but TBM was clinically suspected and treated. Patients that recovered without anti-TB chemotherapy, or had an alternative diagnosis confirmed microbiologically, were assigned another diagnosis (i.e. not TBM).
 
-## Statistical analysis
+The inclusion of relevant risk factors for TBM based on prior knowledge [@marais2010]. Prior knowledge of the association of these factors with TBM status and bacterial burden is shown in Supplementary Table \@ref(tab:predictor-tab). We added three variables indicating alternative diagnoses: (1) CSF eosinophil count - a strong biomarker for eosinophilic meningitis, a relatively common condition in Vietnam, usually caused by *Angiostrongylus cantonensis*; (2) CSF lateral flow antigen/Indian Ink tests for cryptococcal meningitis; and (3) CSF Gram stain for non-acid-fast bacterial meningitis. Also added was CSF red cell count whose high numbers being a marker of traumatic lumbar puncture requiring corrections to white cell counts and biochemical features [@greenberg2008; @nigrovic2011; @mehl1986]. Compared to the uniform case definition, we changed past TB contact to “noticeable contact with TB patients within the past year” so all missing answers could be interpreted as "No".
 
-We conducted a Bayesian Latent Class Analysis (LCA) in which the three TBM confirmatory tests (ZN Smear, MGIT, and Xpert) were used as manifest variables. LCA is common in social science and psychology to detect different hidden traits [@Weller2020]. Recently, it has been adopted in several diagnostic studies, especially in Pulmonary Tuberculosis (PTB) and TBM[@schumacher2016; @stout2018; @lahuerta-marin2018; @adams2019]. As all tests are different methods to detect bacteria existence in samples under similar principle: direct visualisation (ZN Smear), DNA detection (Xpert), and culture growth (MGIT), our latent class was defined as the actual disease status (TBM or not TBM). Predictors for the latent class were chosen according to prior knowledge [@marais2010]. We added three differential diagnosis indicators: (1) CSF eosinophil count - a strong bio-marker for eosinophilic meningitis, a relatively common condition in Vietnam, usually caused by *Angiostrongylus cantonensis*; (2) CSF lateral flow antigen/Indian Ink tests for cryptococcal meningitis; and (3) CSF Gram stain for non-acid-fast bacterial meningitis. Also added was CSF red cell count whose high numbers being a marker of traumatic lumbar puncture requiring corrections to white cell counts and biochemical features [@greenberg2008; @nigrovic2011; @mehl1986]. Details of the model design are provided in the supplementary document.
+## Statistical analysis {#stats-analysis}
 
-```{r predictor-tab, eval=FALSE, tab.id="predictor-tab", include=FALSE, label='tab0', out.width="100%", tab.cap="Anticipated contribution of demographic and clinical features to the likelihood of TBM and CSF mycobacterial burden based on prior knowledge. Cell values are the expected direction of association and level of confidence; empty cells mean no association assumed"}
-tibble::tribble(
-  ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
-  'Age'                            , '+, weak'  , ''                  ,
-  'HIV infection'                  , '+, strong', '+, strong'         ,
-  'Past TB contact'                , '+, weak'  , ''                  ,
-  'TB-suggested symptoms'          , '+, weak'  , ''                  ,
-  'Local motor deficit'            , '+, weak'  , ''                  ,         
-  'Cranial nerve palsy'            , '+, weak'  , ''                  ,
-  'Days from onset'                , '+, weak'  , ''                  ,
-  'PTB/X-Ray'                      , '+, weak'  , ''                  ,
-  'MTB/X-Ray'                      , '+, strong', ''                  ,
-  'Glasgow Coma Score'             , '-, weak'  , ''                  ,
-  'Cryptococcus Antigen/Indian Ink', '-, strong', ''                  ,
-  'Blood Glucose'                  , '-, weak'  , ''                  ,
-  'CSF Glucose'                    , '-, weak'  , '?, weak'     ,
-  'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
-  'CSF Total While cell Count'     , '+-^[Risk of TBM peaks with intermediate CSF white cell count], weak' , '+, weak'    ,
-  'CSF Protein'                    , '+, weak'  , '+, weak'    ,
-  'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
-  'CSF Eosinophil Count'           , '-, strong', ''                  ,
-  'CSF RBC Count'                  , '?, weak'   , ''                 
-) |>
-  flextable::flextable() |>
-  ftExtra::colformat_md(2) |>
-  # flextable::footnote(i=16, j=2, 
-    # value=flextable::as_paragraph('')) |>
-  flextable::width(j=1, width=2) |>
-  flextable::width(j=2:3, width=1.2) |>
-  flextable::theme_zebra() |>
-  flextable::bold(bold = FALSE, part = "footer") |>
-  flextable::italic(italic = TRUE, part = "footer" )
-```
+The basic design of our model is shown in Figure \@ref(fig:skeleton-model) and explained in detail in Supplementary Section \@ref(appendix-model-spec). In the middle is TBM status, which is unknown for many individuals. The fundamental component in the latent class model (LCM) links TBM status to the test results from Xpert, MGIT and Smear; they are called the manifest variables. In LCM, he important assumption is that these test results are independent given TBM status and the additional variables. To achieve this, we added bacillary burden as variable for individuals with TBM. Since we didn’t measure this value, it was modelled as a combination of an unmeasured random effect [@qu1996] and a set of known covariates. We allowed bacterial burden to depend on HIV status and the CSF values of glucose, lymphocyte count, total white blood-cell (WBC) count, protein, and lactate. The second component is a logistic regression prevalence model that relates TBM status to the set of risk factors that we described in Section \@ref(data-collection-and-pre-processing).
+If TBM status were known for every individual, the prevalence model would be all we need to come up with a diagnostic score. We need the LCM to provide additional information on unknown TBM status. The LCM provides individual estimates of the probability to have TBM based on the test results and the additional characteristics. These individual probabilities provide the data to compute sensitivity and specificity of each of the three test procedures and to relate TBM status to the diagnostic variables in the prevalence model. 
 
-```{aligned_formula eval=FALSE, fml.lab='eq:fml-gcs', include=FALSE, results='asis'}
-\begin{aligned}
-RGCS &= 15 - GCS \\
-RGCS_{Eyes} &= 4 - GCS_{Eyes} \\
-RGCS_{Verbal} &= 5 - GCS_{Verbal} \\
-RGCS_{Motor} &= 6 - GCS_{Motor}
-\end{aligned}
-```
+An important issue in latent class models is identifiability [@berzofsky2012]. We chose a Bayesian approach, which has the advantage that we can use prior knowledge on test sensitivity and specificity via more informative priors. We used results from earlier studies [@thwaites2004; @nhu2013; @heemskerk2018]. Weakly informative prior distributions were used for all model coefficients. Posterior estimations were obtained via Hamiltonian Markov Chain Monte Carlo using probabilistic package Stan version 2.27 [@stan-doc]. Convergence was evaluated by the Brooks-Gelman-Rubin statistic [@stan-doc]. Results are presented as means and 50%/95% credible intervals. Further details are given in Supplementary Section \@ref(appendix-prior-choices). 
 
+Using estimates from the model, we additionally *(1)* fitted a simplified logistic regression prevalence model (simplified model) against the allocated TBM status that excluded laboratory information based on the estimates of which we provided a quick screening score table and *(2)* calculated an updated probability to have TBM after retrieving results of some or all confirmatory assays, relative to the pre-test TBM probability outputted from our prevalence model. Because any positive test means definite TBM and MGIT is usually the most delayed test, we limited to five scenarios where different sets of confirmatory test were available and negative at diagnosis: _(a)_ only Smear, _(b)_ only Xpert, _(c)_ Smear and MGIT, _(d)_ Smear and Xpert, and _(e)_ all three tests. 
 
-<!-- Glasgow Coma Score (GCS) and Glasgow Coma Scale components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* as demonstrated in formula `r my_fn$labEq.docx('fml-gcs')`, so that a GCS of 15 is equal to a RGCS of 0 and a GCS of 3 is equal to RGCS of 12. Binary variables were dummy-coded into 0 for "Negative"/"No" and 1 for "Positive"/"Yes". -->
+By protocol, the three TBM tests were not performed if patients were not suspected of TBM. As these tests are known to have high specificity [@nhu2013, @heemskerk2018], we assumed that they were all negative. These assumptions will be tested by sensitivity analyses (Supplementary Section \@ref(appendix-senanalysis)). Missing values were handled based on their expected missingness mechanism (Supplementary Section \@ref(appendix-data)).
 
-```{r gcs-tab, eval=FALSE, include=FALSE, out.width='100%', tab.cap='Conversion table from clasic Glasgow Coma Score (GCS) to Reversed GCS (RGCS)', tab.id='gcs-tab'}
+We considered five different models with increasing complexity, somewhat similar to an earlier study on childhood pulmonary tuberculosis [@schumacher2016]. We selected the best model out of five using the expected log point-wise predictive density (elpd) [@vehtari2016]. We evaluated diagnostic model performance in several ways: visualised calibration curves [@VanCalster2019], receiver operating characteristic (ROC) curves and computed area under the ROC curve (AUC) for all three confirmatory tests (LCM). We additionally used the hospital diagnosis made by physicians as a pseudo-gold standard to validate our prevalence model. The optimal cut point for TBM classification was chosen using Youden’s Index. For model selection and all evaluations, we used 20-fold cross validations with 5 repetitions for the LCA model and 20 repetitions for the simplified model.
 
-tibble::tribble(
-  ~ Feature,                     ~ Response, ~ GCS, ~ RGCS,
-  'Eye response',        'Open sponatenously', 4, 0,
-  'Eye response',     'Open to voice command', 3, 1,
-  'Eye response',              'Open to pain', 2, 2,
-  'Eye response',               'No eye open', 1, 3,
-  'Verbal response',             'Orientated', 5, 0,
-  'Verbal response',               'Confused', 4, 1,
-  'Verbal response',     'Inappopriate words', 3, 2,
-  'Verbal response','Incomprehensible sounds', 2, 3,
-  'Verbal response',     'No verbal response', 1, 4,
-  'Motor response',            'Obey command', 6, 0,
-  'Motor response',         'Localising pain', 5, 1,
-  'Motor response',    'Withdrawal from pain', 4, 2,
-  'Motor response',                 'Flexing', 3, 3,
-  'Motor response',               'Extending', 2, 4,
-  'Motor response',       'No motor response', 1, 5
-) |>
-  flextable::flextable() |>
-  flextable::merge_v(j = 1) |>  
-  flextable::width(j=1, width=2) |>
-  flextable::width(j=2, width=2)
-```
+All analyses were performed on statistical package R, version 4.1.2 [@rcoreteam]. All code were published on project's github repo [@tbmrepo].
 
-```{r model-archs, eval=FALSE, include=FALSE, tab.cap="Model architectures and extensions", tab.id="model-archs"}
-model_archs <-
-  data.frame(
-    Model=1:5,
-    Def=c(
-      'No bacillary burden; everyone in the same class has equal risk of tested positive',
-      'Added individual bacillary burden; impacts of bacillary burden on test results are the same',
-      'Impacts of bacillary burden are different for different tests',
-      'Added technical fluctuation as a second random effect; fixed effects only contributes to bacillary burden',
-      'Added fixed effects for technical fluctuation'
-    )
-  ) 
-
-model_archs |> 
-  flextable::flextable() |>
-  flextable::set_header_labels(
-    Model='Model', 
-    Def='Base definition (Only added effects compared to lower number are mentioned)'
-  ) |>
-  flextable::width(j=1, width=.5)|>
-  flextable::width(j=2, width=5) |>
-  flextable::theme_zebra()
-```
-
-The basic design of our model is shown in figure \@ref(fig:skeleton-model) and in supplementary document. In brief, this consisted of one logistic regression estimating the prevalence of TBM in the population (prevalence model), a LCA estimating test sensitivity and specificity from that prevalence, and a linear regression estimating the latent bacillary burden among TBM positive patients (bacillary burden model), which added valued to the test results. All variables were scale-matched using Gelman's method [@gelman2008]. Weakly informative prior distributions were used for all coefficients. For TBM confirmatory test sensitivity and specificity, sufficient prior distributions capturing past estimates from earlier studies involving Vietnamese cohorts [@thwaites2004; @nhu2013; @heemskerk2018] were used. 
-
-Using estimates from the model, we analysed *(1)* a simplified logistic regression against the latent TBM status that excluded laboratory information <!-- and added two clinical covariates (headache and psychosis) --> and *(2)* an estimation TBM prevalence given confirmatory tests results, relative to pre-test TBM probability, based on Bayes' formula. Because any positive test means definite TBM and MGIT is usually the most delayed test, we limited to five scenarios where different sets of confirmatory test were available and negative at diagnosis: _(a)_ only ZN Smear, _(b)_ only Xpert, _(c)_ ZN Smear and MGIT, _(d)_ ZN Smear and Xpert, and _(e)_ all three tests. 
-
-By protocol, three TBM tests were missing if patients were not suspected. However, as these tests are known to have high specificity [@nhu2013, @heemskerk2018], we assumed that they were all negative. These assumptions will be tested by sensitivity analyses (supplementary document). Missing predictors were handled case by case basing on their expected missing mechanisms (supplementary document). Note that compared to the uniform case definition, we also made a change to *Past TB contact* to "*noticeable* contact with TB patients within the past year so all missing answer could be interpreted as "No". 
-
-Several model complexity were considered [@schumacher2016]. Expected log point-wise predictive density (elpd) [@vehtari2016] was calculated from 5 repeated 20-fold cross validations and model maximising the metric were selected. Convergence were evaluated by Brooks-Gelman-Rubin statistic [@stan-doc]. We visualise calibration curves [@rms; @VanCalster2019], receiver operating characteristic (ROC) curves and area under the curve (AUC) to demonstrate the prediction accuracy and discrimination value. Best cut point for ROC was chosen by Youden's Index. <!--We also used the hospital diagnosis as a pseudo-gold standard to visualise the correlation of our model-based prediction and the standard approach.--> All analyses were performed on statistical package R, version 4.1.1 [@rcoreteam]. Posterior estimations were obtained via Hamiltonian Markov Chain Monte Carlo with 8000 effective iterations x 4 chains, using RStan package, version 2.27 [@stan-doc; @stan]. All code were published on [project's github repo](github.com/TBM-LCA).
-
-```{r skeleton-model, fig.show='hold', out.width="100%", fig.align="center", fig.cap="Model basic design: TBM risk factors predict individuals' TBM statuses. TBM statuses are linked with test results. Bacillary burden additional modifies the probability of postive tests. Test positive probabilities are for demonstration only and do not correspond to the real ones.", fig.id='skeleton-model'}
+```{r skeleton-model, fig.show='hold', out.width="100%", fig.align="center", fig.cap="Basic model design: TBM risk factors predict individual's TBM status. Unknown TBM status is linked with test results. The probability of a positive test depends on bacillary burden. Test positive probabilities are for demonstration only and do not correspond to the real one.", fig.id='skeleton-model'}
 
 fig_svg <- cowplot::ggdraw() + 
-  cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5, height=159*5))
+  cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5))
 plot(fig_svg)
-```
-
-```{r mv-priors, eval=FALSE, fig.align='center', fig.cap="Density plots for prior distributions and their adherence to prior knowledge of sensitivity and specificity for TBM confirmation tests against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval", fig.height=8, fig.id="mv-priors", warning=FALSE, dpi=300, include=FALSE, out.width='90%'}
-sen_tbl <-
-  tibble::tibble(
-    'Test' = rep(c('ZN', 'Culture', 'Xpert'), 3),
-    'Study' = rep(c('Thwaites 2004', 'Nhu 2013', 'Heemskerk 2018'), each=3),
-    'est' = c(58/100, 64/100, NA, 78.64/100, 66.54/100, 59.34/100, 34.54/100, 31.84/100, 25.14/100),
-    'lower.ci' = c(NA, NA, NA, 71.94/100, 59.14/100, 51.84/100, 29.94/100, 27.34/100, 21.04/100),
-    'upper.ci' = c(NA, NA, NA, 84.34/100, 73.34/100, 66.54/100, 39.44/100, 36.74/100, 29.74/100)
-  )
-
-spc_tbl <-
-  tibble::tibble(
-    'Test' = rep(c('ZN', 'Culture', 'Xpert'), 3),
-    # Test_id = rep(c(3,1,2), 2),
-    'Study' = rep(c('Thwaites 2004','Nhu 2013', 'Heemskerk 2018'), each=3),
-    'est' = c(NA, NA, NA, 0, 0, 0.05/100, 0, 0, 0),
-    'upper.ci' = c(NA, NA, NA, NA, NA, (100-97.2)/100, (100-97.1)/100, (100-96.9)/100, (100-96.1)/100),
-    'lower.ci' = c(NA, NA, NA, NA, NA, 0, 0, 0, 0)
-  )
-
-spc_rng = rbind(
-  data.frame(
-    Test = 'ZN',
-    Test_id = 1,
-    logit = rlogis(1000000,qlogis(.001),1.1),
-    linear = rlogis(1000000,qlogis(.001),1.1) |> plogis()
-  ),
-  data.frame(
-    Test = 'Culture',
-    Test_id = 2,
-    logit = rlogis(1000000,qlogis(.001),1.1),
-    linear = rlogis(1000000,qlogis(.001),1.1) |> plogis()
-  ),
-  data.frame(
-    Test = 'Xpert',
-    Test_id = 3,
-    logit = rlogis(1000000,qlogis(.005),.7),
-    linear = rlogis(1000000,qlogis(.005),.7) |> plogis()
-  )
-) |>
-  filter(linear<.1)
-  
-
-sen_rng = rbind(
-  data.frame(
-    Test = 'ZN',
-    Test_id = 1,
-    logit = rlogis(500000, 0,.3),
-    linear = rlogis(500000, 0,.3) |> plogis()
-  ),
-  data.frame(
-    Test = 'Culture',
-    Test_id = 2,
-     logit = rlogis(500000, 0,.3),
-    linear = rlogis(500000, 0,.3) |> plogis()
-  ),
-  data.frame(
-    Test = 'Xpert',
-    Test_id = 3,
-    logit = rlogis(500000, 0,.3),
-    linear = rlogis(500000, 0,.3) |> plogis()
-  )
-) 
-
-spc_linear_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=linear), data=spc_rng) +
-  geom_point(aes(y= est, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2), shape=18, size=3) + 
-  geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2)) +
-  coord_flip(ylim=c(0,.05))+
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  scale_color_discrete(drop=FALSE)+
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-
-spc_logit_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=logit), data=spc_rng) +
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  coord_flip(ylim=c(-15, 2.5)) +
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-
-sen_linear_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=linear), data=sen_rng) +
-  geom_point(aes(y= est, color = Study, x = -.2), data=sen_tbl, position=position_dodge(.2), shape=18, size=3) + 
-  geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=sen_tbl, position=position_dodge(.2)) +
-  coord_flip()+
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-
-sen_logit_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=logit), data=sen_rng) +
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  coord_flip() +
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-  
-
-plt <- (spc_linear_plt + ggtitle('FPR (1-Specificity)') + theme(legend.position = "none") | spc_logit_plt) /
-  (sen_linear_plt + ggtitle('TPR (Sensitivity)') + theme(legend.position = "bottom") | sen_logit_plt) 
-
-for (i in 1:2) plt[[i]] <- plt[[i]] + plot_layout(tag_level = 'new')
-color_me <- list("#000000", "#E69F00", "#56B4E9", c("#000000", "#E69F00", "#56B4E9", "#009E73"))
-withr::with_options(
-  list(ggplot2.discrete.colour = color_me),
-
-  plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% inter-percentile range') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
-)
 ```
 
 <!--Since latent class analysis models unobserved characteristics, results may be strongly dependent on our assumptions. Therefore, we conducted sensitivity analyses where some assumptions were lifted or changed. We first increased the standard deviation of our prior for specificities of all confirmatory tests so that every value in the range of 90%-100% were accepted. We also changed the prior distributions of the parameters in the prevalence and bacillary burden models from *normal* to a more skeptical one *Student's t* with 4 degrees of freedom; means and scales, however, were kept as-is. Their *elpd*s were compared. Thirdly, as recent studies suggested a sup-optimal specificity of Xpert test on CSF samples [@nhu2013; @chen2020], we considered a Missing-At-Random scenario, where observation chance of confirmation tests depend on the unknown TBM status and locally independent to the value of confirmation tests. Observation status was then included in the model as a separated manifest variables. We visualised the estimates of this model with the best performing one in our main analysis.

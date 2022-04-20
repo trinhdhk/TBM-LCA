@@ -1,0 +1,918 @@
+\newpage
+
+# (APPENDIX) Supplementary Documents {.unnumbered}
+<!-- :::{custom-style="Title"} -->
+<!-- Supplementary document -->
+<!-- ::: -->
+\setcounter{table}{0}
+\setcounter{figure}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+# Model Specification Details {#appendix-model-spec}
+
+<!-- ## Overview -->
+## Mathematical parametrisation
+
+Our model consists of two components:
+
+1.  *Prevalence model*: A logistic regression model regressing the prevalence of TBM ($\theta$) on a set risk factors ($X$):
+  $$
+    logit(\theta) \sim X^T\alpha
+  $$
+  
+*where $X$ and $\alpha$ are vectors of covariates and coefficients.*
+
+2.  *Latent class model (LCM)*: three logistic models that regress the probability of having a positive test result on TBM status. We extended this model as described in Table \@ref(tab:model-archs). Similar to previous studies [@qu1996; @hadgu2002; @schumacher2016], we allowed the test results to depend on a latent variable i.e. bacillary burden and systematic noise of the procedures ($B$), each of which were in turn regressed by relevant bio-markers ($V$) and an unknown random effect. We assumed that, amongst TBM-positive patients, those who have lower bacillary burden are less likely to be tested positive. Our models 1,2 and 5 are similar in spirit to models M1, M3 and M4 in [@schumacher2016]. In their models they didn’t make the direct link between the covariates and bacillary burden, which is what we do in our models 3 and 4. This yields two models that are in-between their models M3 and M4. 
+
+The structures of our LCM is formulated in details below. Briefly, for $1 \leq i \leq 658$, $C \in {0,1}$, and $\theta_i = P(C_i=1)$ are the true TBM status* and the *individual probability of TBM*; $y^{Smear}_i$, $y^{Mgit}_i$, and $y^{Xpert}_i$} are the *observed values* for Smear, MGIT, and Xpert, respectively. The joint distribution of the test observations is:
+
+```{aligned_formula, fml.lab='eq:lca-fml', results='asis'}
+\begin{aligned}
+P_i &= P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) \\
+&= \theta_i * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C_i=1)\\ 
+ &\ \ \ \ + (1-\theta_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C_i=0) 
+\end{aligned} 
+```
+
+Under the local independence assumption that all individuals with the same TBM status have equal probability to test positive (model 1), we obtain:
+
+```{aligned_formula, fml.lab='eq:classic-lca-fml'}
+\begin{aligned}
+P_i &= \theta_i * P(y^{Smear}_i | C=1) * P(y^{Mgit}_i | C=1) * P(y^{Xpert}_i | C=1) \\
+&\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C=0) * P(y^{Mgit}_i | C=0) * P(y^{Xpert}_i | C=0)
+\end{aligned}
+```
+
+For models and 2 and 3, we assume that local independence holds conditionally on TBM status and on bacillary burden ($B$) [@schumacher2016]. Bacillary burden in turn depends on a set of covariable (denoted as $X^{(t)}_i$) via a logistic regression. Formula `r my_fn$labEq.docx('eq:lca-fml')` and `r my_fn$labEq.docx('eq:classic-lca-fml')` become:
+
+```{aligned_formula, fml.lab='eq:re-lca-fml', results='asis'}
+\begin{aligned}
+P_i &= P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i) \\
+&= \theta_i * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C_i=1, X^{(t)}_i)\\ 
+&\ \ \ \ + (1-\theta_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C_i=0) \\
+&= \theta_i * P(y^{Smear}_i | C_i=1,X^{(t)}_i) * P(y^{Mgit}_i | C_i=1,X^{(t)}_i) * P(y^{Xpert}_i | C_i=1, X^{(t)}_i) \\
+&\ \ \ \ + (1-\theta_i) *  P(y^{Smear}_i | C_i=0) * P(y^{Mgit}_i | C_i=0) * P(y^{Xpert}_i | C_i=0)
+\end{aligned} 
+```
+
+We use a mixed-effects logistic regression to quantify the relation with test result:
+
+```{aligned_formula, fml.lab='eq:bd', results='asis'}
+\begin{aligned}
+logit(P(y^{(t)}_i)) &= z^T_0 + B_i * \beta^{(t)} \\
+&= z^{(t)}_0 + (V_i^T \gamma + r_i) \beta^{(t)}
+\end{aligned} 
+```
+
+where *(t)={Smear, Mgit, Xpert}* $z^{(t)}_0$ is the intercept, and $b^{(t)}_{B}$ is the coefficient of bacillary burden on the result of test (t), $\beta$ is the vector of coefficients for bacillary burden impacting factors ($V_i$), and individual random effect $r_i$ is individual random effect quantifies the bacillary burden that is not explained by $V_i$. $C_i$ and $r_i$ are assumed to be independent of each other. Compared to [@schumacher2016], this design guaranteed that for each pair of features, although their impact on test results could be different, the ratio between their corresponding parameters are constrained to be the same.
+
+
+```{aligned_formula, fml.lab='eq:model-4', results='asis'}
+\begin{aligned}
+logit(P(y^{Smear}_i))
+&= z^{Smear}_0 + B_i * \beta^{Smear} + u_i * \beta^{Smear}_u\\
+&= z^{Smear}_0 + ((X^{(t)}_i)^T * B + r_i) * \beta^{Smear} + u_i * b^{Smear}_u\\
+logit(P(y^{Mgit}_i))  
+&= z^{Mgit}_0 + B_i  * \beta^{Mgit} + u_i * b^{Mgit}_u\\
+&= z^{Mgit}_0 + ((X^{(t)}_i)^T * B + r_i)  * \beta^{Mgit} + u_i * b^{Mgit}_u\\
+logit(P(y^{Xpert}_i)) 
+&= z^{Xpert}_0 + B_i * \beta^{Xpert} + u_i * b^{Xpert}_u\\
+&= z^{Xpert}_0 + ((X^{(t)}_i)^T * B + r_i) * \beta^{Xpert} + u_i * b^{Xpert}_u\\
+\end{aligned} 
+```
+
+In model 4, we additionally capture the sample-wise fluctuation that cannot be explained by the bacillary burden alone (Formula `r my_fn$labEq.docx('eq:model-4')`. This fluctuation is modelled by one extra random effect ($u$) unique for each individual that is not related to the variables $V$.
+
+```{aligned_formula, fml.lab='eq:model-5', results='asis'}
+\begin{aligned}
+logit(P(y^{Smear}_i)) &= z^{Smear}_0 + V_i^T \beta + r_i * b^{Smear}_r \\
+logit(P(y^{Mgit}_i)) &= z^{Mgit}_0 + V_i^T \beta   + r_i * b^{Mgit}_r \\
+logit(P(y^{Xpert}_i)) &= z^{Xpert}_0 + V_i^T \beta + r_i * b^{Xpert}_r
+\end{aligned} 
+```
+In model 5 (Formula `r my_fn$labEq.docx('eq:model-5')`), we explored all potential impacts of $V$ to test results by linking them directly to  . This is the most flexible design and most similar to model M4 in [@schumacher2016].
+
+Model performances were estimated and compared using expected log point-wise density (elpd) [@vehtari2016]. This measure quantifies how likely an unseen observation ($y_{new}$) can be observed given the data $y$, model $\mathcal{M}$, and posterior distributions of the parameters $\theta$.A larger elpd means that the predicted posterior distribution concentrates around the observed response value. 
+
+$$
+elpd = u(\mathcal{M}) = \int_{y_{new}} p_t(y_{new}) \log p(y_{new} \mid y, \mathcal{M}) dy_{new}
+$$
+
+All elpd, ROC curves, AUCs, and calibration metrics are calculated using 5 repetitions of 20-fold cross validation. For each repetition, we pooled all held-out folds together to recover a complete dataset, with their predictions coming from the model that was based on the complement of the held-out folds. The averaged performance measures was acquired by pooling all held-out folds over the 5 repetitions together.
+
+```{r model-archs, tab.cap="Different model designs", tab.id="model-archs"}
+model_archs <-
+  data.frame(
+    Model=1:5,
+    Def=c(
+      'No bacillary burden; everyone in the same TBM class has equal risk to test positive',
+      'Test results depend on individual bacillary burden; impacts of bacillary burden on test results is the same across all tests',
+      'Impacts of bacillary burden differs between tests',
+      'Added technical fluctuation as a second random effect; fixed effects only contributes to bacillary burden',
+      'Fixed effects also contribute to technical fluctuation (i.e. direct associtations between V and P(Y))'
+    )
+  ) 
+
+model_archs |> 
+  flextable::flextable() |>
+  flextable::set_header_labels(
+    Model='Model', 
+    Def='Base description (Only additional effects compared to lower number are mentioned)'
+  ) |>
+  flextable::width(j=1, width=.5)|>
+  flextable::width(j=2, width=5) |>
+  flextable::theme_vanilla()
+```
+
+## Simplified model
+
+The simplified model is a logistic regression that fits a simplified set of risk factors that does not involve a lumbar puncture. The response variable for this simplified model was generated from the posterior distribution of TBM prevalence $\theta$ fitted from the selected model above.
+
+$$
+\begin{aligned}
+logit(\hat{Y}) &\sim U^T\kappa \\
+\hat{Y} &\sim Bernoulli(\theta)
+\end{aligned}
+$$
+
+*where $\kappa$ is the vector of coefficients for the covariates $U$*
+
+To do this in Stan, we simulated 500 $\hat{Y}$ and combined all MCMC chains into one model. The cross validation procedure for this model was done in the same manner; as we simulated a different response vector $\hat{Y}_i^k$ for every fold $k$ in each repetition $i$ in which $1 \leq k \leq 20$ and $1 \leq i \leq 20$. The final AUC, ROC, and calibration were averaged over these 400 experiments, in which the confidence interval or confidence band was provided.
+
+## Preprocessing and imputation {#appendix-data}
+
+### Data preprocessing
+
+The inclusion of predictors was mainly based on the uniform definition [@marais2010]. Prior knowledges of different predictors were shown in table \@ref(tab:predictor-tab). Days from onset to admission and CSF biomarkers were transformed to logarithmic scale as they were count data and right-skewed. We followed Gelman's scale-matching method [@gelman2008], in which continuous predictors were centred by their empirical means and subsequently scaled by 2 times their standard deviations (sd) while binary ones were kept as-in.<!--In favour of numerical stability, we rather divided continuous variables by $sd$ and multiply binary variables by 2.--> Since CSF eosinophil count was an exception, as it was heavily zero-inflated, we created an extra indicator for count > 0 and rescaled the positive values by their sd. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* (RGCS = RGCSV + RGCSE + RGCSM) so that a $GCS = 15$ would be equivalent to $RGCS = 0$, while $GCS = 3$ would be translated to $RGCS = 12$ (table \@ref(tab:gcs-tab)). Binary variables were dummy-coded into 0 for "Negative" / "No" and 1 for "Positive" / "Yes". To facilitate the imputation model, we scaled down the auxilliary variables RGCSE, RGCSM, and RGCSV down to a full range of $[0, 1]$. Hence $RGCS = 3 * RGCSE + 4 * RGCSV + 5 * RGCSM$.
+
+```{r gcs-tab, out.width='100%', tab.id='gcs-tab', tab.cap='Conversion table from classic Glasgow Coma Score (GCS) to Reversed GCS (RGCS)'}
+
+tibble::tribble(
+  ~ Feature,                     ~ Response, ~ GCS, ~ RGCS,
+  'Eye response',        'Open sponatenously', 4, 0,
+  'Eye response',     'Open to voice command', 3, 1,
+  'Eye response',              'Open to pain', 2, 2,
+  'Eye response',               'No eye open', 1, 3,
+  'Verbal response',             'Orientated', 5, 0,
+  'Verbal response',               'Confused', 4, 1,
+  'Verbal response',     'Inappopriate words', 3, 2,
+  'Verbal response','Incomprehensible sounds', 2, 3,
+  'Verbal response',     'No verbal response', 1, 4,
+  'Motor response',            'Obey command', 6, 0,
+  'Motor response',         'Localising pain', 5, 1,
+  'Motor response',    'Withdrawal from pain', 4, 2,
+  'Motor response',                 'Flexing', 3, 3,
+  'Motor response',               'Extending', 2, 4,
+  'Motor response',       'No motor response', 1, 5
+) |>
+  flextable::flextable() |>
+  flextable::merge_v(j = 1) |>  
+  flextable::width(j=1, width=2) |>
+  flextable::width(j=2, width=2) |> 
+  flextable::theme_vanilla()
+```
+
+### Imputation strategy
+
+Our approach to  handling missing values depended on the variable and the reason for missingness. By design, most patients with a very high chance of and/or evidently diagnosed with other diseases were not tested with the TBM microbiological assays (namely ZN Smear, MGIT, and Xpert), unless there wes an excessive amount of CSF collected. The same applied to Gram stain and the cryptococcal antigen/Indian ink test. In all these cases we assumed that patients who had no pathogen confirmatory tests were all negative for the TBM microbiological assays as these are assumed to have high specificity [@nhu2013, @heemskerk2018]. Since HIV tests were done for all patients with suspected infection and/or involvement in high-risk activities, we could safely assumed that amongst those who were untested, the prevalence of HIV was close to zero, as the population prevalence of HIV in Vietnam is 0.3% [@UNAIDS2020]. 
+
+A summary of the suspected mechanisms of missingness and our method to handle them were shown in table \@ref(tab:missing-handling). In case predictors is missing at random, we performed a model-based imputation within the main model as part of the MCMC procedure. Composite variables (*TB-suggested symptoms*, *Local neurological deficit*, and *Glasgow Coma Score (GCS)*) were imputed per their corresponding compartments. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Due to Stan not supporting Multivariate Logistic Distribution, all binary predictors were imputed using Probit models [@stan-doc, @albert1993] for consistency. Numeric predictors were imputed using Multivariate Linear Regression. Our imputation models are summarised in Figure \@ref(fig:impute-model), together with their auxiliary variables. Note that due to technical limitation, imputed RGCS were treated as if they were continuous in the sampling step, but were rounded to nearest integers when estimating the model performance. Hence, we assumed
+
+$$
+\begin{aligned}
+ X_{cont} &\sim \mathcal{N}(U_{X_{cont}}^TG, \Sigma) \\
+ Probit(X_{binary}) &\sim \mathcal{N}(U_{X_{binary}}^TG, I)
+\end{aligned}
+$$
+
+*where $X_{cont}$ and $X_{binary}$ are vectors of continuous and binary variables to be imputed, and $U^T_{X_{cont}}$ and $U^T_{X_{binary}}$ are vector of auxiliary covariates used in the respective imputation model, with coefficients $G$. $\mathcal{N}$ is the *Normal *distribution in univariate case and *Multivariate Normal *distribution otherwise with $\Sigma$ as the variance-covariance matrix; in the binary case, $\Sigma$ is the identity matrix $I$ [@albert1993].*
+
+```{r missing-handling, tab.cap="Rationales for chosen methods to handle missing values", tab.id="missing-handling"}
+na = \(x) sum(is.na(x))
+data_dirty$csf_neutro <- data_dirty$NEUPER * data_dirty$csf_wbc / 100
+data_dirty |>
+  dplyr::filter(pop) %$%
+  # dplyr::filter(!(wrong_name %in% TRUE) & !(csf_mgit_contaminated %in% TRUE)) %$%
+  tibble::tribble(
+     ~ 'Variable'           , ~ 'N\n missing'     ,  ~ 'Expected Reason of Missingness'                      , ~ 'Mechanism',        ~ 'Handling method' ,
+    'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'HIV Status'            , na(hiv_stat)        , 'Not suspected HIV'                                     , 'MNAR'           , 'Set = 0'       ,
+    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR'       , 'Imputation'       ,
+    'Focal neuro-deficit'   , na(clin_motor_palsy), 'Unconscious'                                            , 'MAR/MCAR'           , 'Imputation'       ,
+    'Glasgow Coma Score'    , na(clin_gcs)        , 'Ventilated (GCSV) / Data input error'       , 'MAR'                , 'Imputation'       ,
+    'Symptoms duration from onset'          , na(clin_illness_day), 'Patients forget / Unconscious'                          , 'MAR'                , 'Imputation'       ,
+    # 'Blood Lymphocyte'      , na(LYMP)            , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    # 'Blood Neutrophil'      , na(NEUTRO)          , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    'Blood Glucose'         , na(BLDGLU)          , 'Most likely input error / Unmeasured (premature death)', 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF glucose'           , na(csf_glucose)     , 'Unmeasured (premature death)'                           , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lymphocyte count'  , na(csf_lympho)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set if implicit zeros/Imputation otherwise',
+    'CSF white-cell count'  , na(csf_wbc)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set if implicit zeros/Imputation otherwise',
+    'CSF protein'           , na(csf_protein)     , 'Data input error / Unmeasured (premature death)'       , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lactate'           , na(csf_lactate)     , 'Unmeasured (premature death)'                              , 'MAR/MCAR'           , 'Imputation' ,    
+    # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0',
+    # 'CSF eosinophil count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0',
+    'Cryptococcal test'         , sum(!(CRYTO=='NOT DONE'&INDIAINK=='NOT DONE')%in%F) , 'Not suspected cryptococcal meningitis'                                        , 'MNAR'               , 'Set = 0',
+    'Gram stain'         , sum(is.na(GRAM) | GRAM=='NOT DONE') , 'Not suspected bacterial meningitis'                                        , 'MNAR'               , 'Set = 0'
+  ) |>
+  flextable::flextable() |>
+  # flextable::set_caption('Rationale and method of missing values handling') |>
+  flextable::width(width = 1.25) |>
+  # flextable::footnote(i = c(14,15),j = 1,inline=FALSE,
+  #                     value=flextable::as_paragraph(rep('CSF Lymphocyte count was calculated by CSF white-cell count x Percentage of lymphocyte / 100; if very low, then either lymphocytes or neutrophils had values, the other were left missing')),
+  #                     part = 'body') |>
+  flextable::add_footer_row(values = 'MAR: missing at random; MNAR: missing not at random; MCAR: missing completely at random', colwidths = 5) |>
+  flextable::merge_v(part='footer') |>
+  flextable::theme_vanilla() |>
+  flextable::bold(bold=FALSE, part='footer') |>
+  flextable::italic(italic=TRUE, part='footer')
+```
+
+```{dot impute-model, echo=FALSE, out.width="100%", fig.align="center", fig.cap="Imputation strategy for predictors. Variables in white boxes with solid borders were used in the model. Variables in ovals with dashed borders were only contributed in the imputation model as donors and were not directly included in the main model. Variables in the same grey boxes were imputed together via a multivariate regression. Arrows demonstrate a covariate $\\rightarrow$ response relation.", fig.id="impute-model"}
+
+digraph imp_model{
+  rankdir = TB;
+  resolution=500;
+  compound=true;
+  graph[fontname="CMU Serif", concentrate=true];
+  node[fontname = "CMU Serif"];
+  edge[fontname = "CMU Serif"];
+  
+  subgraph cluster_csf{
+    rank=same;
+    bgcolor = lightgrey;
+    node[style=filled fillcolor=white];
+    subgraph glu{
+      peripheries=0;
+      CsfGlu;
+      CsfLymp;
+    }
+    BldGlu;
+    CsfNeu;
+    subgraph bio{
+      peripheries=0;
+      CsfPro;
+      CsfLac;
+    }
+  }
+  
+  subgraph cluster_clinsymp{
+    rank=same;
+    label = "TB-suggested symptoms";
+    bgcolor = lightgrey;
+    node[style="filled,dashed" fillcolor=white];
+    Cough[label="Coughing"];
+    subgraph lowerz{
+      peripheries=0;
+      Nsweats[label="Night Sweats"];
+      WLoss[label="Weight Loss"];
+    }
+  }
+  
+  subgraph cluster_motor{
+    rank=same;
+    label = "Local motor deficit";
+    bgcolor = lightgrey;
+    node[style="filled,dashed" fillcolor=white];
+    Hemi[label="Hemiplegia"];
+    subgraph lowerz{
+      peripheries=0;
+      Para[label="Paraplegia"];
+      Tetra[label="Tetraplegia"];
+    }
+  }
+  
+  subgraph cluster_gcs{
+    label = "Reversed Glagow Coma Score";
+    bgcolor = lightgrey;
+    node[style="filled,dashed" fillcolor=white];
+    RGCSV; RGCSM; RGCSE;
+  }
+  # 
+  # subgraph cluster_bld{
+  #   # peripheries=0;
+  #   bgcolor = lightgrey;
+  #   rank=same;
+  #   node[style="filled,dashed" fillcolor=white];
+  # }
+  
+ 
+    
+  HIV[label="HIV Status", shape="box"];
+  # Age[label="Age", shape="box"];
+  TBDays[label="Illness days", shape="box"]; 
+  BldGlu[label="Blood Glucose", shape="box"];
+  CsfGlu[label="CSF Glucose", shape="box"]; 
+  CsfLymp[label="CSF Lymphocytes", shape="box"];
+  CsfNeu[label="CSF Neutrophils", shape="box"];
+  CsfPro[label="CSF Protein", shape="box"];
+  CsfLac[label="CSF Lactate", shape="box"];
+  # GCS[label="Glasgow Coma Score", shape="box"];
+  
+  HIV -> TBDays;
+  HIV -> Hemi[lhead=cluster_motor];
+  HIV -> Cough[lhead=cluster_clinsymp];
+  HIV -> RGCSV[lhead=cluster_gcs];
+  HIV -> CsfLymp[lhead=cluster_csf];
+  
+  TBDays -> Cough[lhead=cluster_clinsymp];
+  TBDays -> Hemi[lhead=cluster_motor];
+  
+  Cough -> Nsweats[dir=both];
+  Nsweats -> WLoss[dir=both];
+  WLoss -> Cough[dir=both];
+  Hemi -> Para[dir=both];
+  Para -> Tetra[dir=both]; 
+  Tetra -> Hemi[dir=both];
+  CsfGlu -> BldGlu[dir=both];
+  CsfGlu -> CsfLymp[dir=both];
+  CsfLymp -> CsfNeu[dir=both];
+  CsfNeu ->CsfPro[dir=both];
+  CsfPro -> CsfLac[dir=both];
+  BldGlu -> CsfLac[dir=both];
+
+  RGCSV -> RGCSE[dir=both];
+  RGCSE -> RGCSM[dir=both];
+  RGCSM -> RGCSV[dir=both];
+}  
+```
+
+## Prior choices {#appendix-prior-choices}
+
+### Main model
+
+For the prevalence model, we chose Student's t distribution with 5 degrees of freedom ($t_5$) for intercept, in which we fixed the mean to 0 and scale to 3 because its absolute value was unlikely to be higher than 6 (which is equivalent to an probability range of (0.002 - 0.998)) [@boonstra2019]. For the regression coefficients, we used the same t distribution family with means set to 0. For the scales we incorporated a penalty term sampled from $Normal(0, 1.5)$ as we did not expect coefficient norms to be larger than 6 in absolute value [@prior-choice, @vanerp2019], but we left some room for our expectations to be wrong. For high-impact risk factors (marked as "strong" in Table \@ref(tab:predictor-tab)), priors were further truncated at 0, so that only values in the expected direction were possible as posterior. We rescaled continuous variables by their sd after imputation. 
+$$
+\begin{aligned}
+s &\sim Normal(0, 1.5) \\
+a_0 &\sim t_5(0, 3)\\
+a_{binary} &\sim t_5(0, s)\\
+a_{continuous} &\sim t_5(0, \frac{s}{2sd})
+\end{aligned}
+$$
+
+*where $s$ is the adaptive penalty term, $a_0$, $a_{binary}$, and $a_{continuous}$ are the intercept, coefficients for the binary covariates , and continuous covariates included in the prevalence model. $sd$ is the empirical standard deviation of each continuous variables after the imputation and is different between those variables.*
+
+```{aligned_formula eval=FALSE, fml.lab='eq:fml-gcs', include=FALSE, results='asis'}
+\begin{aligned}
+RGCS &= 15 - GCS \\
+RGCS_{Eyes} &= 4 - GCS_{Eyes} \\
+RGCS_{Verbal} &= 5 - GCS_{Verbal} \\
+RGCS_{Motor} &= 6 - GCS_{Motor}
+\end{aligned}
+```
+
+```{r predictor-tab, tab.id="predictor-tab", label='tab0', out.width="100%", tab.cap="Anticipated contribution of demographic and clinical features to the likelihood of TBM and CSF mycobacterial burden based on prior knowledge. Cell values + and - denote the expected direction of association, followed by the level of confidence; ? mean unknown, empty cells mean no association assumed"}
+tibble::tribble(
+  ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
+  'HIV infection'                  , '+, strong', '+, strong'         ,
+  'Past TB contact'                , '+, weak'  , ''                  ,
+  'TB-suggested symptoms'          , '+, weak'  , ''                  ,
+  'Local motor deficit'            , '+, weak'  , ''                  ,         
+  'Cranial nerve palsy'            , '+, weak'  , ''                  ,
+  'Days from onset'                , '+, weak'  , ''                  ,
+  'PTB/X-Ray'                      , '+, weak'  , ''                  ,
+  'MTB/X-Ray'                      , '+, strong', ''                  ,
+  'Glasgow Coma Score'             , '-, weak'  , ''                  ,
+  'Cryptococcus Antigen/Indian Ink', '-, strong', ''                  ,
+  'Gram stain +'                   , '-, strong', ''                  ,
+  'Blood Glucose'                  , '-, weak'  , ''                  ,
+  'CSF Glucose'                    , '-, weak'  , '?, weak'     ,
+  'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
+  'CSF Total While cell Count'     , '+-^[Risk of TBM peaks with intermediate CSF white cell count], weak' , '+, weak'    ,
+  'CSF Protein'                    , '+, weak'  , '+, weak'    ,
+  'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
+  'CSF Eosinophil Count > 0'       , '-, strong', ''                  ,
+  'CSF Eosinophil Count'           , '-, strong', ''                  ,
+  'CSF RBC Count'                  , '?, weak'   , ''
+) |>
+  flextable::flextable() |>
+  ftExtra::colformat_md(2) |>
+  # flextable::footnote(i=16, j=2, 
+    # value=flextable::as_paragraph('')) |>
+  flextable::width(j=1, width=2) |>
+  flextable::width(j=2:3, width=1.2) |>
+  flextable::theme_vanilla() |>
+  flextable::bold(bold = FALSE, part = "footer") |>
+  flextable::italic(italic = TRUE, part = "footer" )
+```
+
+```{aligned_formula, fml.lab='eq:priors_response', results='asis'}
+\begin{aligned}
+  1-Spc_{Xpert} &\sim Logistic(logit(0.005), .7) \\
+  1-Spc_{MGIT}  &\sim Logistic(logit(0.001), 1) \\
+  1-Spc_{ZN\ Smear} &\sim Logistic(logit(0.001), 1) \\ 
+  Sen_{Xpert,\ MGIT,\ ZN\ Smear} &\sim Logistic(0,0.35)
+\end{aligned}
+```
+
+For the latent class model, our choice of priors was based on information collected from several previous studies [@nhu2013, @thwaites2004, @heemskerk2018]. A summary of these choices is shown in Figure \@ref(fig:mv-priors)), on logistic and linear scale, and how good they covered corresponding results derived from the previous studies. As suggested by the literature, we used highly informative priors for False Positive Rate ($FPR = 1-Specificity$) and weakly informative priors for True Positive Rate ($TPC = Sensitivity$) on the logit scale (formula `r my_fn$labEq.docx('eq:priors_response')`), given the discrepancies between the studies.
+
+```{r mv-priors, fig.align='center', fig.cap="Density plots for prior distributions and their adherence to prior knowledge of sensitivity and specificity for TBM confirmation tests against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval", fig.height=8, fig.id="mv-priors", warning=FALSE, dpi=300, out.width='90%'}
+sen_tbl <-
+  tibble::tibble(
+    'Test' = rep(c('ZN', 'MGIT', 'Xpert'), 3),
+    'Study' = rep(c('Thwaites 2004', 'Nhu 2013', 'Heemskerk 2018'), each=3),
+    'est' = c(58/100, 64/100, NA, 78.64/100, 66.54/100, 59.34/100, 34.54/100, 31.84/100, 25.14/100),
+    'lower.ci' = c(NA, NA, NA, 71.94/100, 59.14/100, 51.84/100, 29.94/100, 27.34/100, 21.04/100),
+    'upper.ci' = c(NA, NA, NA, 84.34/100, 73.34/100, 66.54/100, 39.44/100, 36.74/100, 29.74/100)
+  )
+
+spc_tbl <-
+  tibble::tibble(
+    'Test' = rep(c('ZN', 'MGIT', 'Xpert'), 3),
+    # Test_id = rep(c(3,1,2), 2),
+    'Study' = rep(c('Thwaites 2004','Nhu 2013', 'Heemskerk 2018'), each=3),
+    'est' = c(NA, NA, NA, 0, 0, 0.05/100, 0, 0, 0),
+    'upper.ci' = c(NA, NA, NA, NA, NA, (100-97.2)/100, (100-97.1)/100, (100-96.9)/100, (100-96.1)/100),
+    'lower.ci' = c(NA, NA, NA, NA, NA, 0, 0, 0, 0)
+  )
+
+spc_rng = rbind(
+  data.frame(
+    Test = 'ZN',
+    Test_id = 1,
+    logit = rlogis(1000000,qlogis(.001),1.),
+    linear = rlogis(1000000,qlogis(.001),1.) |> plogis()
+  ),
+  data.frame(
+    Test = 'MGIT',
+    Test_id = 2,
+    logit = rlogis(1000000,qlogis(.001),1.),
+    linear = rlogis(1000000,qlogis(.001),1.) |> plogis()
+  ),
+  data.frame(
+    Test = 'Xpert',
+    Test_id = 3,
+    logit = rlogis(1000000,qlogis(.005),.7),
+    linear = rlogis(1000000,qlogis(.005),.7) |> plogis()
+  )
+) |>
+  filter(linear<.1)
+  
+
+sen_rng = rbind(
+  data.frame(
+    Test = 'ZN',
+    Test_id = 1,
+    logit = rlogis(500000, 0,.38),
+    linear = rlogis(500000, 0,.38) |> plogis()
+  ),
+  data.frame(
+    Test = 'MGIT',
+    Test_id = 2,
+     logit = rlogis(500000, 0,.38),
+    linear = rlogis(500000, 0,.38) |> plogis()
+  ),
+  data.frame(
+    Test = 'Xpert',
+    Test_id = 3,
+    logit = rlogis(500000, 0,.38),
+    linear = rlogis(500000, 0,.38) |> plogis()
+  )
+) 
+
+spc_linear_plt <- ggplot() + 
+  ggdist::stat_halfeye(mapping=aes(y=linear), data=spc_rng) +
+  geom_point(aes(y= est, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2), shape=18, size=3) + 
+  geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2)) +
+  coord_flip(ylim=c(0,.05))+
+  facet_grid(Test~.)+
+  xlab('') + ylab('') +
+  scale_color_discrete(drop=FALSE)+
+  theme_minimal() +
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+spc_logit_plt <- ggplot() + 
+  ggdist::stat_halfeye(mapping=aes(y=logit), data=spc_rng) +
+  facet_grid(Test~.)+
+  xlab('') + ylab('') +
+  coord_flip(ylim=c(-15, 2.5)) +
+  theme_minimal() +
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+sen_linear_plt <- ggplot() + 
+  ggdist::stat_halfeye(mapping=aes(y=linear), data=sen_rng) +
+  geom_point(aes(y= est, color = Study, x = -.2), data=sen_tbl, position=position_dodge(.2), shape=18, size=3) + 
+  geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=sen_tbl, position=position_dodge(.2)) +
+  coord_flip()+
+  facet_grid(Test~.)+
+  xlab('') + ylab('') +
+  theme_minimal() +
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+sen_logit_plt <- ggplot() + 
+  ggdist::stat_halfeye(mapping=aes(y=logit), data=sen_rng) +
+  facet_grid(Test~.)+
+  xlab('') + ylab('') +
+  coord_flip() +
+  theme_minimal() +
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+  
+
+plt <- (spc_linear_plt + ggtitle('FPR (1-Specificity)') + theme(legend.position = "none") | spc_logit_plt) /
+  (sen_linear_plt + ggtitle('TPR (Sensitivity)') + theme(legend.position = "bottom") | sen_logit_plt) 
+
+for (i in 1:2) plt[[i]] <- plt[[i]] + plot_layout(tag_level = 'new')
+color_me <- list("#000000", "#E69F00", "#56B4E9", c("#000000", "#E69F00", "#56B4E9", "#009E73"))
+withr::with_options(
+  list(ggplot2.discrete.colour = color_me),
+
+  plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% inter-percentile range') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
+)
+```
+
+We generally applied the same rules used in the prevalence model to choose prior distribution for coefficients $\gamma$ that take part in latent bacillary burden model $(B_i = V_i^T\gamma* + r) * \beta^{(t)} + u_i * \beta_{u}^{(t)}$ where $u$ only exists in Model 4. Both latent random effect $r$ and $u$ were assumed following *Standard Normal* distribution. To avoid sign switching, we constrained $\beta^{(t)}$ to be non-negative As coefficients $\gamma$ and $\beta^{(t)}$ were multiplied together, to provide a fair penalisation, we divided the penalty term $s_2$ for $\gamma$ by the average of $\beta^{(t)}$ over three tests *t = {Smear, Mgit, Xpert}*.
+
+$$
+\begin{aligned}
+r &\sim Normal(0, 1) \\
+u &\sim Normal(0, 1) \\
+s_2 &\sim Normal(0, 1.5) \\
+\beta^{(t)} &\sim Normal(0, s_2) \\
+\gamma_{HIV} &\sim t_5(0, s_2) \\
+\gamma_{continuous} &\sim t_5(0, \frac{s_2}{sd * \overline{\beta^{(t)}}})
+\end{aligned}
+$$
+
+*where $\gamma_{HIV}$ is the coefficient for HIV status, $\gamma_{continuous}$ is the vector of coefficients for other CSF biomarkers, $s_2$ is the penalty term for the bacillary burden model. $\overline{\beta^{(t)}}$ is the average of $\beta^{(t)}$ over (t).*
+
+
+### Imputation model
+
+For imputation, $Normal(0,5)$ was chosen as prior distributions for all intercepts and $Normal(0,2,5)$ for coefficients [@prior-choice], except for RGCS (E, V, and M) as their domains were two-sided constrained (section \@ref(data-preprocessing)) - in which case, the mode of RGCSV, RGCSM, and RGCSE were fixed at $0$, and $Normal(0, 0.25)$ was chosen as the prior distribution for their standard deviation.
+
+In cases where imputed variables were assumed multivariably correlated, Cholesky decomposition of the variance-covariance matrix was sampled from a *Cholesky Lewandowski-Kurowicka-Joe Correlation* prior with $\eta = 4$ [@stan-doc].
+
+# Model estimates in details
+
+This Supplementary Section outlines all the estimates of the selected model, if not mentioned in the main text.
+
+## Prevalence model
+
+```{r prev-model-est, tab.id = 'prev-model-est', tab.cap = 'Estimates and credible intervals of TBM odd ratios, with respects to risk factors'}
+prev_model_est <- 
+  a_plot$data |> 
+  mutate(
+    Parameter = 
+      rev(a_plot$scales$get_scales('y')$labels) |>
+      stringr::str_replace_all(pattern = '<\\/?sup>', '^') |>
+      stringr::str_replace_all(pattern = '<\\/?sub>', '~'),
+    ll = round(plogis(ll), 2), hh = round(plogis(hh), 2), m = round(plogis(m), 2)) |>
+  select(Parameter, Mean = m, `Lower 95% CrI` = ll, `Higher 95% CrI` = hh)
+
+prev_model_est |>
+  flextable::flextable() |>
+  ftExtra::colformat_md(j=1) |>
+  flextable::width(j = 1, width = 2) |>
+  flextable::theme_vanilla()
+
+```
+## Bacillary burden model
+
+```{r bd-model-est, tab.id = 'bd-model-est', tab.cap = 'Estimates and credible intervals of standardised bacillary burden, with respects to impacting factor'}
+
+bd_model_est <- 
+  b_plot$data |> 
+  mutate(
+    Parameter = 
+      rev(b_plot$scales$get_scales('y')$labels) |>
+      stringr::str_replace_all(pattern = '<\\/?sup>', '^') |>
+      stringr::str_replace_all(pattern = '<\\/?sub>', '~'),
+    ll = round(ll, 2), hh = round(hh, 2), m = round(m, 2)) |>
+  select(Parameter, Mean = m, `Lower 95% CrI` = ll, `Higher 95% CrI` = hh)
+
+bd_model_est |>
+  flextable::flextable() |>
+  ftExtra::colformat_md(j=1) |>
+  flextable::width(j = 1, width = 2) |>
+  flextable::theme_vanilla()
+```
+## Estimated log-pointwise density
+
+```{r elpd-tbl, tab.id='elpd-tbl', tab.cap = 'Expected elpd of considered models and their standard errors'}
+elpd_tbl =
+  data.frame(
+    Model = 1:5,
+    elpd = c(-379.7, -351.9, -347.0, -348.4, -355.3),
+    SE = c(26.5, 25.5, 25.0, 25.1, 25.7)
+  )
+
+elpd_tbl |>
+  flextable::flextable()|>
+  flextable::width(width=1.5) |>
+  flextable::theme_vanilla()
+```
+
+# Assumption check and sensitivity analysis {#appendix-senanalysis}
+
+## Methods
+
+### Latent class model 
+
+Apart from model performance metrics, we also checked for our conditional independence assumptions, before (model 1) and after correction for bacillary burden (2). To do this, we plot the residual pairwise correlation between confirmatory tests, effectively comparing predicted pairwise correlation and observed pairwise correlation [@qu1996].
+
+As observed by [@nhu2013], GeneXpert might not have perfect specificity, hence our assumption of imputing missing Xpert as Negative might not hold. To check this, we did a sensitivity analysis where we incorporate the imcompleteness of Xpert into our model. We assumed observation (or missingness) of Xpert was dependent and only dependent on TBM allocation of the patients. We hence included it as the fourth manifest variables, denoted as obs, apart from Smear, MGIT, and Xpert. When Xpert is missing, obs = 0, and vice versa. The likelihood function `r my_fn$labEq.docx('eq:lca-fml')` hence became:
+
+```{aligned_formula, fml.lab='eq:lca-missingXpert-fml', results='asis'}
+\begin{aligned}
+P_i &= P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i, {obs}_i)\\
+&= \theta_i * P(obs_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=1, obs=1)\\ 
+&\ \ \ \ + \theta_i * (1-P(obs_i)) * P(y^{Smear}_i,y^{Mgit}_i|C=1, obs=0)\\ 
+&\ \ \ \ + (1-\theta_i) * P(obs_i) * P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i|C=0, obs=1) \\
+&\ \ \ \ + (1-\theta_i) * (1-P(obs_i)) * P(y^{Smear}_i,y^{Mgit}_i|C=0, obs=0) 
+\end{aligned} 
+```
+
+given that _obs_ is locally independent to the three confirmatory tests. We used a weakly informative prior distribution for non-TBM group and an informative prior distribution for TBM group (Supplementary Figure \@ref(fig:prior-obs)) as we believed most patients in the TBM group have been tested with confirmatory tests. However, we widen the scale in the latter case enough so that a 20% of untested TBM patients were allowed.
+
+```{r prior-obs, fig.align='center', out.width='100%', fig.cap = "Prior distribution for Xpert response rate, in non-TBM patients (left) and TBM patients (right)"}
+
+obs_rng = rbind(
+  data.frame(
+    Test = 'Xpert Observation (non-TBM)',
+    Test_id = 1,
+    logit = rlogis(500000, 0,.5),
+    linear = rlogis(500000, 0,.5) |> plogis()
+  ),
+  data.frame(
+    Test = 'Xpert Observation (TBM)',
+    Test_id = 2,
+    logit = rlogis(500000, qlogis(.99),1),
+    linear = rlogis(500000, qlogis(.99),1) |> plogis()
+  )
+) 
+
+
+obs_logit_plt <- ggplot() + 
+  ggdist::stat_halfeye(mapping=aes(y=logit), data=obs_rng) +
+  facet_grid(Test~.)+
+  scale_y_continuous(breaks = qlogis(c(0.01, .1, .5, .9, .99, .999)), 
+                     labels = c(0.01, .1,.5, .9, .99, .999),
+                     limits = qlogis(c(0.0005, .999995))) +
+  xlab('') + ylab('') +
+  coord_flip() +
+  theme_minimal() +
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+  
+```
+<!--
+To look at the validity of this method, we performed a simulation study. In this study, we created $X, X_2, X_3$ as three covariates for latent class $C$. For simplicity, $Y_1, Y_2$, and $Y_3$ were three manifest variables whose data generation processes are locally independent w.r.t. $C$. $Y_3$, however were not completely observed; its observation rate (represented by the binary variable obs_rate) are different for $C=0$ and $C=1$. 
+
+The data generation process was done in **R** version 4.1 [@rcoreteam] as below. We performed 1000 simulations for each scenarios. For each scenario we extracted the expected values from posterior distributions, visualised them to see whether they concentrated around the real values.All models were fitted under the probabilistic language **Stan** version 2.27 [@stan-doc].
+
+``` r
+# Misc function
+generate_Y = \(C, probs){
+  Cs = sort(unique(C))
+  sapply(C, \(c) rbinom(1,1, probs[Cs==c]))
+}
+
+# Sample size
+N        = 1000 
+
+# Create data with 3 predictors, X, X2, and X3
+X        =  rnorm(N, 0, 1 )
+X2       =  rnorm(N, 0, 1 )
+X3       = rbinom(N, 1, .3)
+
+# Create latent class
+probs    = plogis(3*X+X2+5*X3-1)
+C        = sapply(probs, \(p) rbinom(1,1,p))
+
+# Manifest variables
+Y1       = generate_Y(C, c(.1 ,.3))
+Y2       = generate_Y(C, c(.01,.5))
+Y3       = generate_Y(C, c(.05,.8))
+
+# Simulate class-aware missing data for Y3. If obs3==1, Y3 is observed
+obs_rate = c(.1, .95)
+obs3     = generate_Y(C, obs_rate)
+```
+
+The likelihood function of the model shall be
+$$
+P(Y_1,Y_2,Y_3,obs_3|X,X_2,X_3) = \prod_{n=1}^N \sum_{c=0}^1 (P_n(Y_1,Y_2,Y_3,obs_3|C=1)P(C=c|X,X_2,X_3)
+$$ 
+Consider an individual $n$: If $obs3=1$: 
+$$
+\begin{aligned}
+P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},y_3=Y_3^{(n)},obs_3=1|X_n,X_2^{(n)},X_3^{(n)}) &= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|obs_3=1,C=c)P(obs_3=1)P(C=c)\\
+&= \sum_{c=0}^1 \prod_{i=1}^3 P(y_i=Y_i^{(n)}|C=c)P(obs_3=1)P(C=c)
+\end{aligned}
+$$
+(as $Y_1, Y_2, Y_3, obs_3$ are conditionally independent on $C$).
+
+Similarly, for those whose $obs_3=0$: $$
+\begin{aligned}
+P(y_1=Y_1^{(n)},y_2=Y_2^{(n)},obs_3=0|X^{(n)},X_2^{(n)},X_3^{(n)} &= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|obs_3=0,C=c)P(obs_3=0)P(C=c)\\
+&= \sum_{c=0}^1 \prod_{i=1}^2 P(y_i=Y_i^{(n)}|C=c)P(obs_3=0)P(C=c)
+\end{aligned}
+$$
+
+We considered five sets of prior distribution for $X, X_2, X_3, Y_1, Y_2, Y_3$, and $obs_3$ corresponding for the level of prior knowledge. The formulation of priors follow the syntax in formula `r my_fn$labEq.docx('eq:priors_response')`.
+
+1.  Weak prior:
+
+$$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(0,.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
+
+2.  Good but conservative knowledge for observation rate, weak prior for manifest variables:
+
+$$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
+
+3.  Good but conservative knowledge for observation rate and manifest variables:\
+$$
+\begin{aligned}
+(1-Spc_{X}) &\sim Logistic(logit(.1),.7) \\
+(1-Spc_{X_2}) &\sim Logistic(logit(.01),.7) \\
+(1-Spc_{X_3}) &\sim Logistic(logit(.05),.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.7) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
+
+4.  Very strong knowledge for observation rate, weak prior for manifest variables:\
+$$
+\begin{aligned}
+(1-Spc_{X,X_2,X_3}) &\sim Logistic(0,.7) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
+
+5.  Very strong knowledge for observation rate and manifest variables:\
+$$
+\begin{aligned}
+(1-Spc_{X}) &\sim Logistic(logit(.1),.2) \\
+(1-Spc_{X_2}) &\sim Logistic(logit(.01),.2) \\
+(1-Spc_{X_3}) &\sim Logistic(logit(.05),.2) \\
+Sen_{X,X_2,X_3} &\sim Logistic(0,.7) \\
+obs\_rate|{C=0} &\sim Logistic(logit(.1),.25) \\
+obs\_rate|{C=1} &\sim Logistic(0,.7)
+\end{aligned}
+$$
+
+
+
+```{stan_code simulation-stan-code, pyg.ext='stan'}
+data {
+  int<lower=1> N;
+  int<lower=0> nX;
+  matrix[N,nX] X;
+  int<lower=0, upper=1> Y1[N];
+  int<lower=0, upper=1> Y2[N];
+  int<lower=0, upper=1> Y3[N];
+  int<lower=0, upper=1> obs3[N];
+  int<lower=0, upper=2> good_prior[2]; 
+  //0: weak, 1:moderate, 2: strong. First position is for obs_rate, second is for tests
+}
+
+parameters {
+  ordered[2] z1;
+  ordered[2] z2;
+  ordered[2] z3;
+  ordered[2] zo;
+  vector[nX] a;
+  real a0;
+}
+
+model{
+  
+  if (good_prior[1]==0){
+    zo[1] ~ logistic(0, .7);
+    zo[2] ~ logistic(0, .7);
+  } else if (good_prior[1]==1) {
+    zo[1] ~ logistic(logit(0.01), .7);
+    zo[2] ~ logistic(logit(0.95), .7);
+  } else {
+    zo[1] ~ logistic(logit(0.01), .25);
+    zo[2] ~ logistic(logit(0.95), .25);
+  }
+  
+  if (good_prior[2]==0){
+    z1    ~ logistic(0,.7);
+    z2    ~ logistic(0,.7);
+    z3    ~ logistic(0,.7);
+  } else if (good_prior[2]==1){
+    z1[1] ~ logistic(-2.19,.7);
+    z2[1] ~ logistic(-4.59,.7);
+    z3[1] ~ logistic(-2.94,.7);
+    z1[2] ~ logistic(0,.7);
+    z2[2] ~ logistic(0,.7);
+    z3[2] ~ logistic(0,.7);
+  } else {
+    z1[1] ~ logistic(-2.19,.2);
+    z2[1] ~ logistic(-4.59,.2);
+    z3[1] ~ logistic(-2.94,.2);
+    z1[2] ~ logistic(0,.7);
+    z2[2] ~ logistic(0,.7);
+    z3[2] ~ logistic(0,.7);
+  }
+  for (n in 1:N){
+      real z = a0 + X[n,:]*a;
+      real p = inv_logit(z);
+      real ll3[2] = 
+        obs3[n] == 1 ? 
+        {bernoulli_logit_lpmf(Y3[n]|z3[1]), bernoulli_logit_lpmf(Y3[n]|z3[2])} :
+        {0, 0};
+      target += log_mix(p,
+        bernoulli_logit_lpmf(obs3[n]|zo[2]) + 
+        bernoulli_logit_lpmf(Y1[n]|z1[2]) + bernoulli_logit_lpmf(Y2[n]|z2[2])+ll3[2],
+        bernoulli_logit_lpmf(obs3[n]|zo[1]) + 
+        bernoulli_logit_lpmf(Y1[n]|z1[1]) + bernoulli_logit_lpmf(Y2[n]|z2[1])+ll3[1]);
+  }
+}
+```
+-->
+
+### Imputation model
+
+To diagnose the validity and impact of our imputation model, we (i) visually compared the distributions of the imputed data and observed data, conditional on the response propensity: to do this, for each variable of interest $Y_v$ first we fitted a logistic regression with the indicator of missingness as the response variable and the completed variables apart from $Y_v$ (denoted as $Y_{-v}$) as the independent variables, then we plot the propensity of response ($e_v$) against $Y_v$, on different colours depending on whether they are imputed values or not; and (ii) compared the residual kernel density of $Y_v^{imputed}$ and $Y_v^{observed}$ conditionally on $e_v$; <!--and (iii) performed a posterior predictive check in which we compared the expected coefficients of our completed variables (which contained observed and imputed values) and 100 replicated variables (which contained only generated values from our imputed model). For a good imputation we would expect the likelihood to witness the former is not extreme.--> The details of the methods are outlined and discussed elsewhere [@nguyen2017; @bondarenko2016]. We only check for variables that had more than 10 missing observations.
+
+## Results
+
+### Latent class model
+
+The expected residual correlations between 3 pairs of confirmatory tests for 5 model choices are shown in Supplementary Figure \@ref(fig:resid-pwcorr). Except for model 1 which underestimated the observed values, other models that incorporated random effects showed a good correspondence between predicted and observed correlation, in which case all residual values fluctuated around 0. This suggested that a correction for local dependence was indeed necessary.
+
+```{r resid-pwcorr, fig.align='center', fig.cap="Residual correlation plots for five different model choices", fig.id="resid-pwcorr", warning=FALSE, out.width='50%', fig.width=4, message=FALSE}
+rpc_plot = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'rpc_plot.RDS'))
+rpc_plot + theme(legend.position = 'bottom')
+```
+
+```{r plot-missing, out.width='100%', fig.dim=c(10, 12.5), fig.align='center', fig.cap='Estimates of model 3 (denoted as Original model) and model 3 with missing Xpert (denoted as Missing model), for prevalence model, bacillary burden model, and sensitivity (TPR) and (1 - Specificity) (FPR) for 3 confimatory tests and the response rates of Xpert for TBM and non-TBM patients. In all plots: dots, thick lines, and thin lines are the means, 50\\%, and 95\\% credible intervals.'}
+
+plot_m <- readRDS(file.path(data_dir, '..', 'export', 'm3m_plot.RDS'))
+
+wrap_plots(plot_m, ncol=1) + 
+  plot_layout(guide='collect', heights = c(7,3,3)) +
+  plot_annotation(tag_levels = 'A') & theme(legend.position='bottom')
+
+```
+
+There were no large difference in the posterior estimates of model with missing Xpert and model 3 (Supplementary Figure \@ref(fig:plot-missing)). 
+The response rate for Xpert in non-TBM group is estimated as `r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]') |> select(m) |> unlist() |> plogis() |> round(2)` (`r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]') |> select(ll) |> unlist() |> plogis() |> round(2)` - `r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]') |> select(hh) |> unlist() |> plogis() |> round(2)`). The credible intervals were wider for the prevalence model in the missing case; this reflected a higher level of uncertainty when less information was provided.
+
+### Imputation of covariates
+
+```{r load_impute_data}
+library(ggfx)
+load(file.path(data_dir, '..', 'export', 'impute_cv_plot.Rdata'))
+```
+
+Residual kernel density against response propensity scores for imputed and observed values in general shows good correspondence (Supplementary Figure \@ref(fig:impute-plot)). We could see that the residual kernel density between observed and missing values were not different. The loess line of missing values of HIV was a little bit lower than those observed, however the difference was very small (< 0.002).
+
+```{r impute-plot, out.width='100%', fig.dim=c(10,12), fig.cap = "Diagnosis plot for imputation model. On the left are scatter plots between the reponse propensity and the values predicted by the model, stratified by their missingness. On the right hand side are the kernel density plots of the residuals of the linear regression model $y \\sim e_y$ where $y$ is the variable of interest and $e_y$ is the response propensity of that variable."}
+
+hiv_plot$name = 'HIV'
+cs_plot$name = 'TB symptoms'
+mp_plot$name = 'Local neuro-deficit'
+gcs_plot$name = 'GCS'
+id_plot$name = 'Duration since onset'
+impute_plots <- 
+  lapply(
+    list(hiv_plot, cs_plot, mp_plot, id_plot, gcs_plot),
+    function(plt){
+     # wrap_elements(grid::textGrob(plt$name, rot=90)) + 
+        wrap_ggplot_grob(plt$plot1)  + wrap_ggplot_grob(plt$plot2) + plot_layout(widths=c(4,2))
+      # wrap_elements(gridExtra::arrangeGrob(, nrow=1, left=plt$name))
+    }
+  )
+
+plt <- wrap_plots(impute_plots, ncol=1) + plot_annotation(tag_levels = list("HIV", "TB_symptoms", "Local_neuro-defict", "Duration since onset", "GCS")) + plot_layout(guides='collect')
+  
+plt
+```

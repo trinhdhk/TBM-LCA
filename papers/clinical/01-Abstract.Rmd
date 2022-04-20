@@ -1,17 +1,27 @@
-# Abstract {.unnumbered}
+<!-- ::: {custom-style="Unnumbered H1"} -->
+# Abstract {-}
+<!-- ::: -->
 
-### Background {-}
+<!-- ::: {custom-style="Unnumbered H2"} -->
+## Background {-}
+<!-- ::: -->
 
-*Tuberculous meningitis* (TBM) is the one most mortal form of tuberculosis. Current expertise-based diagnosis comes with high uncertainty and performance of Ziehl-Neelsen smear (ZN Smear), cuturing, and GeneXpert are suboptimal. We developed a diagnosis model that provides a statistically calibrated scoring system, on full and simplified scales, estimations of individual TBM risk, bacillary burden, and sensitivity and specificity of current confirmatory tests amongst adults with suspected brain infection.
+*Tuberculous meningitis* (TBM) is the one most mortal form of tuberculosis. Current expertise-based diagnosis comes with high uncertainty and performance of Ziehl-Neelsen smear (ZN Smear), mycobacterial culturing, and GeneXpert are suboptimal. We developed a diagnosis model that provides a statistically calibrated scoring system, on full and simplified scales, that estimates individual TBM risk, bacillary burden, and sensitivity and specificity of current confirmatory tests amongst adults with suspected brain infection.
 
-### Methods {-}
+<!-- ::: {custom-style="Unnumbered H2"} -->
+## Methods {-}
+<!-- ::: -->
 
-We included 658 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021. We used a Bayesian latent class regression model with local random effects. Models were validated internally and a Shiny app was provided.
+We included 658 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021. We used a Bayesian latent class regression model with bacillary burden as random effects. Models were validated internally and a Shiny app was provided.
 
-### Results {-}
+<!-- ::: {custom-style="Unnumbered H2"} -->
+## Results {-}
+<!-- ::: -->
 
-All current confirmatory had near perfect specificity. The sensitivity of ZN Smear was 71% (55%, 86%), culturing was 39% (23%, 55%), and GeneXpert was 23% (10%, 43%). Stratified by HIV status, ZN Smear was 69% (51%, 85%) sensitive, culturing was 35% (18%, 52%) sensitive, and GeneXpert was 18% (04%, 39%) sensitive for HIV negative population. All test sensitivities were better in HIV group at 93% (82%, 99%), 81% (58%, 96%), and 87% (56%, 100%), respectively. All model showed good discrimination and calibration. 
+All current confirmatory had over 99% specificity. The sensitivity of ZN Smear was 74% (57% - 88%), culturing was 40% (23% - 57%), and GeneXpert was 25% (11% - 47%). Stratified by HIV status, ZN Smear was 72% (55% - 87%) sensitive, culturing was 36% (18% - 54%) sensitive, and GeneXpert was 19% (04% - 43%) sensitive for HIV negative population. All test sensitivities were better in HIV group at 94% (85% - 99%), 86% (65% - 98%), and 92% (67% - 100%), respectively. All model showed good discrimination and calibration. 
 
-### Conclusion {-}
+<!-- ::: {custom-style="Unnumbered H2"} -->
+## Conclusion {-}
+<!-- ::: -->
 
-Our developed models could be objectively used as a decision assistants for clinicians to detect patients with high risk of TBM at different time points from early admission to later with test results.
+Our developed models could be objectively used as a decision assistant for clinicians to detect patients with high risk of TBM at different time points from early admission to later with test results.

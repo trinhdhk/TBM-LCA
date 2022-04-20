@@ -1,29 +1,36 @@
 ---
-title: 'In search of a novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach'
+title: 'A novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach'
 author:
-  - Trinh Dong Huu Khanh:
+  - Trinh Huu-Khanh Dong:
       email: trinhdhk@oucru.org
       institute: [oucru, kcl]
       correspondence: true
   - Joseph Donovan:
       institute: [oucru, lshtm]
+  - Thu Dang-Anh Do:
+      institute: [oucru]
+  - Ngoc My Nghiem:
+      institute: [oucru, htd]
   - Guy Thwaites:
       institute: [oucru, oxford]
-  - Ronald Geskus:
+  - Ronald B. Geskus:
       institute: [oucru, oxford]
 institute:
   - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam 
   - kcl: King's College London, London, United Kingdom
   - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
   - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
+  - htd: Hospital of Tropical Diseases, Ho Chi Minh City, Viet Nam
 site: bookdown::bookdown_site
 bibliography: includes/references.bib
 csl: includes/clinical-infectious-diseases.csl
+params:
+  dev: "pdf"
 ---
 
 ```{r setup, include=FALSE}
 options(tinytex.engine_args = '-shell-escape')
-knitr::opts_chunk$set(echo = FALSE, dpi=300) #, dev = 'png'
+knitr::opts_chunk$set(echo = FALSE, dpi=300, dev=params$dev) #, dev = 'png'
 flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='fixed')
 ```
 
@@ -101,6 +108,7 @@ my_fn$diagrammer_engine <- \(options){
   options$code <- out$x$diagram
   options$engine <- 'dot'
   options$echo <- FALSE
+  
   knitr::knit_engines$get('dot')(options)
   # options$results <- 'asis'
   # knitr::engine_output(options, options$code, '')
@@ -115,7 +123,6 @@ my_fn$plot_theme <-
         axis.ticks.y = element_blank())
 
 na = \(x) sum(is.na(x))
-
 ```
 
 ```{r data, include=FALSE}
@@ -123,7 +130,15 @@ data_dir <- '../../data/cleaned/'
 load(file.path(data_dir, 'data_input.Rdata'))
 data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
 setDT(data_dirty)
+
+# Load model 3's fit and metrics
 load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
 load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
-m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS'))
+# m3 = new.env()
+m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS')) |> as.environment()
+load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = m3)
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
+# m3$rocs = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_roc_iscb.RDS'))
+m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib.RDS'))
+m3$roc = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_ROC.RDS'))
 ```

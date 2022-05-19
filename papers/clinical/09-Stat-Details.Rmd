@@ -1,6 +1,6 @@
 \newpage
 
-# (APPENDIX) Supplementary Documents {.unnumbered}
+# (APPENDIX) Statistical supplementary Documents {.unnumbered}
 <!-- :::{custom-style="Title"} -->
 <!-- Supplementary document -->
 <!-- ::: -->
@@ -12,7 +12,7 @@
 # Model Specification Details {#appendix-model-spec}
 
 <!-- ## Overview -->
-## Mathematical parametrisation
+## Mathematical parametrisation {#mathematical-parametrisation}
 
 Our model consists of two components:
 
@@ -23,7 +23,7 @@ Our model consists of two components:
   
 *where $X$ and $\alpha$ are vectors of covariates and coefficients.*
 
-2.  *Latent class model (LCM)*: three logistic models that regress the probability of having a positive test result on TBM status. We extended this model as described in Table \@ref(tab:model-archs). Similar to previous studies [@qu1996; @hadgu2002; @schumacher2016], we allowed the test results to depend on a latent variable i.e. bacillary burden and systematic noise of the procedures ($B$), each of which were in turn regressed by relevant bio-markers ($V$) and an unknown random effect. We assumed that, amongst TBM-positive patients, those who have lower bacillary burden are less likely to be tested positive. Our models 1,2 and 5 are similar in spirit to models M1, M3 and M4 in [@schumacher2016]. In their models they didn’t make the direct link between the covariates and bacillary burden, which is what we do in our models 3 and 4. This yields two models that are in-between their models M3 and M4. 
+2.  *Indicator model*: three logistic models that regress the probability of having a positive test result on TBM status. We extended this model as described in Table \@ref(tab:model-archs). Similar to previous studies [@qu1996; @hadgu2002; @schumacher2016], we allowed the test results to depend on a latent variable i.e. bacillary burden and systematic noise of the procedures ($B$), each of which were in turn regressed by relevant bio-markers ($V$) and an unknown random effect. We assumed that, amongst TBM-positive patients, those who have lower bacillary burden are less likely to be tested positive. Our models 1,2 and 5 are similar in spirit to models M1, M3 and M4 in [@schumacher2016]. In their models they didn’t make the direct link between the covariates and bacillary burden, which is what we do in our models 3 and 4. This yields two models that are in-between their models M3 and M4. 
 
 The structures of our LCM is formulated in details below. Briefly, for $1 \leq i \leq 658$, $C \in {0,1}$, and $\theta_i = P(C_i=1)$ are the true TBM status* and the *individual probability of TBM*; $y^{Smear}_i$, $y^{Mgit}_i$, and $y^{Xpert}_i$} are the *observed values* for Smear, MGIT, and Xpert, respectively. The joint distribution of the test observations is:
 
@@ -175,7 +175,7 @@ tibble::tribble(
 
 ### Imputation strategy
 
-Our approach to  handling missing values depended on the variable and the reason for missingness. By design, most patients with a very high chance of and/or evidently diagnosed with other diseases were not tested with the TBM microbiological assays (namely ZN Smear, MGIT, and Xpert), unless there wes an excessive amount of CSF collected. The same applied to Gram stain and the cryptococcal antigen/Indian ink test. In all these cases we assumed that patients who had no pathogen confirmatory tests were all negative for the TBM microbiological assays as these are assumed to have high specificity [@nhu2013, @heemskerk2018]. Since HIV tests were done for all patients with suspected infection and/or involvement in high-risk activities, we could safely assumed that amongst those who were untested, the prevalence of HIV was close to zero, as the population prevalence of HIV in Vietnam is 0.3% [@UNAIDS2020]. 
+Our approach to handling missing values depended on the variable and the reason for missingness. By design, most patients with a very high chance of and/or evidently diagnosed with other diseases were not tested with the TBM microbiological assays (namely ZN Smear, MGIT, and Xpert), unless there wes an excessive amount of CSF collected. The same applied to Gram stain and the cryptococcal antigen/Indian ink test. In all these cases we assumed that patients who had no pathogen confirmatory tests were all negative for the TBM microbiological assays as these are assumed to have high specificity [@nhu2013, @heemskerk2018]. Since HIV tests were done for all patients with suspected infection and/or involvement in high-risk activities, we could safely assumed that amongst those who were untested, the prevalence of HIV was close to zero, as the population prevalence of HIV in Vietnam is 0.3% [@UNAIDS2020]. 
 
 A summary of the suspected mechanisms of missingness and our method to handle them were shown in table \@ref(tab:missing-handling). In case predictors is missing at random, we performed a model-based imputation within the main model as part of the MCMC procedure. Composite variables (*TB-suggested symptoms*, *Local neurological deficit*, and *Glasgow Coma Score (GCS)*) were imputed per their corresponding compartments. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Due to Stan not supporting Multivariate Logistic Distribution, all binary predictors were imputed using Probit models [@stan-doc, @albert1993] for consistency. Numeric predictors were imputed using Multivariate Linear Regression. Our imputation models are summarised in Figure \@ref(fig:impute-model), together with their auxiliary variables. Note that due to technical limitation, imputed RGCS were treated as if they were continuous in the sampling step, but were rounded to nearest integers when estimating the model performance. Hence, we assumed
 
@@ -215,7 +215,9 @@ data_dirty |>
     # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0',
     # 'CSF eosinophil count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0',
     'Cryptococcal test'         , sum(!(CRYTO=='NOT DONE'&INDIAINK=='NOT DONE')%in%F) , 'Not suspected cryptococcal meningitis'                                        , 'MNAR'               , 'Set = 0',
-    'Gram stain'         , sum(is.na(GRAM) | GRAM=='NOT DONE') , 'Not suspected bacterial meningitis'                                        , 'MNAR'               , 'Set = 0'
+    'Gram stain'         , sum(is.na(GRAM) | GRAM=='NOT DONE') , 'Not suspected bacterial meningitis'                                        , 'MNAR'               , 'Set = 0',
+    'Headache'           , 2      , 'Unconcious/Not sure',                                     'MAR/MNAR'            , 'Imputation due to small missing',
+    'Psychosis'           , 3       , 'Unconcious/Not sure',                                     'MAR/MNAR'            , 'Imputation due to small missing' #bad code now and update later
   ) |>
   flextable::flextable() |>
   # flextable::set_caption('Rationale and method of missing values handling') |>
@@ -339,7 +341,7 @@ digraph imp_model{
 }  
 ```
 
-## Prior choices {#appendix-prior-choices}
+## Prior choices {#appendix-stat-prior-choices}
 
 ### Main model
 
@@ -355,50 +357,6 @@ $$
 
 *where $s$ is the adaptive penalty term, $a_0$, $a_{binary}$, and $a_{continuous}$ are the intercept, coefficients for the binary covariates , and continuous covariates included in the prevalence model. $sd$ is the empirical standard deviation of each continuous variables after the imputation and is different between those variables.*
 
-```{aligned_formula eval=FALSE, fml.lab='eq:fml-gcs', include=FALSE, results='asis'}
-\begin{aligned}
-RGCS &= 15 - GCS \\
-RGCS_{Eyes} &= 4 - GCS_{Eyes} \\
-RGCS_{Verbal} &= 5 - GCS_{Verbal} \\
-RGCS_{Motor} &= 6 - GCS_{Motor}
-\end{aligned}
-```
-
-```{r predictor-tab, tab.id="predictor-tab", label='tab0', out.width="100%", tab.cap="Anticipated contribution of demographic and clinical features to the likelihood of TBM and CSF mycobacterial burden based on prior knowledge. Cell values + and - denote the expected direction of association, followed by the level of confidence; ? mean unknown, empty cells mean no association assumed"}
-tibble::tribble(
-  ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
-  'HIV infection'                  , '+, strong', '+, strong'         ,
-  'Past TB contact'                , '+, weak'  , ''                  ,
-  'TB-suggested symptoms'          , '+, weak'  , ''                  ,
-  'Local motor deficit'            , '+, weak'  , ''                  ,         
-  'Cranial nerve palsy'            , '+, weak'  , ''                  ,
-  'Days from onset'                , '+, weak'  , ''                  ,
-  'PTB/X-Ray'                      , '+, weak'  , ''                  ,
-  'MTB/X-Ray'                      , '+, strong', ''                  ,
-  'Glasgow Coma Score'             , '-, weak'  , ''                  ,
-  'Cryptococcus Antigen/Indian Ink', '-, strong', ''                  ,
-  'Gram stain +'                   , '-, strong', ''                  ,
-  'Blood Glucose'                  , '-, weak'  , ''                  ,
-  'CSF Glucose'                    , '-, weak'  , '?, weak'     ,
-  'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
-  'CSF Total While cell Count'     , '+-^[Risk of TBM peaks with intermediate CSF white cell count], weak' , '+, weak'    ,
-  'CSF Protein'                    , '+, weak'  , '+, weak'    ,
-  'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
-  'CSF Eosinophil Count > 0'       , '-, strong', ''                  ,
-  'CSF Eosinophil Count'           , '-, strong', ''                  ,
-  'CSF RBC Count'                  , '?, weak'   , ''
-) |>
-  flextable::flextable() |>
-  ftExtra::colformat_md(2) |>
-  # flextable::footnote(i=16, j=2, 
-    # value=flextable::as_paragraph('')) |>
-  flextable::width(j=1, width=2) |>
-  flextable::width(j=2:3, width=1.2) |>
-  flextable::theme_vanilla() |>
-  flextable::bold(bold = FALSE, part = "footer") |>
-  flextable::italic(italic = TRUE, part = "footer" )
-```
-
 ```{aligned_formula, fml.lab='eq:priors_response', results='asis'}
 \begin{aligned}
   1-Spc_{Xpert} &\sim Logistic(logit(0.005), .7) \\
@@ -409,132 +367,6 @@ tibble::tribble(
 ```
 
 For the latent class model, our choice of priors was based on information collected from several previous studies [@nhu2013, @thwaites2004, @heemskerk2018]. A summary of these choices is shown in Figure \@ref(fig:mv-priors)), on logistic and linear scale, and how good they covered corresponding results derived from the previous studies. As suggested by the literature, we used highly informative priors for False Positive Rate ($FPR = 1-Specificity$) and weakly informative priors for True Positive Rate ($TPC = Sensitivity$) on the logit scale (formula `r my_fn$labEq.docx('eq:priors_response')`), given the discrepancies between the studies.
-
-```{r mv-priors, fig.align='center', fig.cap="Density plots for prior distributions and their adherence to prior knowledge of sensitivity and specificity for TBM confirmation tests against then-made clinical diagnosis. Note that Thwaites 2004 was descriptive only while ZN and Culture in Nhu 2013 were references hence no Confidence Interval", fig.height=8, fig.id="mv-priors", warning=FALSE, dpi=300, out.width='90%'}
-sen_tbl <-
-  tibble::tibble(
-    'Test' = rep(c('ZN', 'MGIT', 'Xpert'), 3),
-    'Study' = rep(c('Thwaites 2004', 'Nhu 2013', 'Heemskerk 2018'), each=3),
-    'est' = c(58/100, 64/100, NA, 78.64/100, 66.54/100, 59.34/100, 34.54/100, 31.84/100, 25.14/100),
-    'lower.ci' = c(NA, NA, NA, 71.94/100, 59.14/100, 51.84/100, 29.94/100, 27.34/100, 21.04/100),
-    'upper.ci' = c(NA, NA, NA, 84.34/100, 73.34/100, 66.54/100, 39.44/100, 36.74/100, 29.74/100)
-  )
-
-spc_tbl <-
-  tibble::tibble(
-    'Test' = rep(c('ZN', 'MGIT', 'Xpert'), 3),
-    # Test_id = rep(c(3,1,2), 2),
-    'Study' = rep(c('Thwaites 2004','Nhu 2013', 'Heemskerk 2018'), each=3),
-    'est' = c(NA, NA, NA, 0, 0, 0.05/100, 0, 0, 0),
-    'upper.ci' = c(NA, NA, NA, NA, NA, (100-97.2)/100, (100-97.1)/100, (100-96.9)/100, (100-96.1)/100),
-    'lower.ci' = c(NA, NA, NA, NA, NA, 0, 0, 0, 0)
-  )
-
-spc_rng = rbind(
-  data.frame(
-    Test = 'ZN',
-    Test_id = 1,
-    logit = rlogis(1000000,qlogis(.001),1.),
-    linear = rlogis(1000000,qlogis(.001),1.) |> plogis()
-  ),
-  data.frame(
-    Test = 'MGIT',
-    Test_id = 2,
-    logit = rlogis(1000000,qlogis(.001),1.),
-    linear = rlogis(1000000,qlogis(.001),1.) |> plogis()
-  ),
-  data.frame(
-    Test = 'Xpert',
-    Test_id = 3,
-    logit = rlogis(1000000,qlogis(.005),.7),
-    linear = rlogis(1000000,qlogis(.005),.7) |> plogis()
-  )
-) |>
-  filter(linear<.1)
-  
-
-sen_rng = rbind(
-  data.frame(
-    Test = 'ZN',
-    Test_id = 1,
-    logit = rlogis(500000, 0,.38),
-    linear = rlogis(500000, 0,.38) |> plogis()
-  ),
-  data.frame(
-    Test = 'MGIT',
-    Test_id = 2,
-     logit = rlogis(500000, 0,.38),
-    linear = rlogis(500000, 0,.38) |> plogis()
-  ),
-  data.frame(
-    Test = 'Xpert',
-    Test_id = 3,
-    logit = rlogis(500000, 0,.38),
-    linear = rlogis(500000, 0,.38) |> plogis()
-  )
-) 
-
-spc_linear_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=linear), data=spc_rng) +
-  geom_point(aes(y= est, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2), shape=18, size=3) + 
-  geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=spc_tbl, position=position_dodge(.2)) +
-  coord_flip(ylim=c(0,.05))+
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  scale_color_discrete(drop=FALSE)+
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-
-spc_logit_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=logit), data=spc_rng) +
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  coord_flip(ylim=c(-15, 2.5)) +
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-
-sen_linear_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=linear), data=sen_rng) +
-  geom_point(aes(y= est, color = Study, x = -.2), data=sen_tbl, position=position_dodge(.2), shape=18, size=3) + 
-  geom_linerange(aes(ymin = lower.ci, ymax = upper.ci, color = Study, x = -.2), data=sen_tbl, position=position_dodge(.2)) +
-  coord_flip()+
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-
-sen_logit_plt <- ggplot() + 
-  ggdist::stat_halfeye(mapping=aes(y=logit), data=sen_rng) +
-  facet_grid(Test~.)+
-  xlab('') + ylab('') +
-  coord_flip() +
-  theme_minimal() +
-  theme(text = element_text('serif', size = 9), 
-        plot.tag = element_text('serif', size = 9),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
-  
-
-plt <- (spc_linear_plt + ggtitle('FPR (1-Specificity)') + theme(legend.position = "none") | spc_logit_plt) /
-  (sen_linear_plt + ggtitle('TPR (Sensitivity)') + theme(legend.position = "bottom") | sen_logit_plt) 
-
-for (i in 1:2) plt[[i]] <- plt[[i]] + plot_layout(tag_level = 'new')
-color_me <- list("#000000", "#E69F00", "#56B4E9", c("#000000", "#E69F00", "#56B4E9", "#009E73"))
-withr::with_options(
-  list(ggplot2.discrete.colour = color_me),
-
-  plt + plot_annotation(tag_levels = list(c('',''), 'A'), caption='A: Linear scale, B: Logistic Scale \n Black dots, thick lines and thin lines are median, IQR, and 95% inter-percentile range') + plot_layout(guides = 'collect') & theme(text = element_text('serif', size = 9), plot.tag = element_text('serif', size = 9), legend.position = "bottom") 
-)
-```
 
 We generally applied the same rules used in the prevalence model to choose prior distribution for coefficients $\gamma$ that take part in latent bacillary burden model $(B_i = V_i^T\gamma* + r) * \beta^{(t)} + u_i * \beta_{u}^{(t)}$ where $u$ only exists in Model 4. Both latent random effect $r$ and $u$ were assumed following *Standard Normal* distribution. To avoid sign switching, we constrained $\beta^{(t)}$ to be non-negative As coefficients $\gamma$ and $\beta^{(t)}$ were multiplied together, to provide a fair penalisation, we divided the penalty term $s_2$ for $\gamma$ by the average of $\beta^{(t)}$ over three tests *t = {Smear, Mgit, Xpert}*.
 
@@ -558,67 +390,25 @@ For imputation, $Normal(0,5)$ was chosen as prior distributions for all intercep
 
 In cases where imputed variables were assumed multivariably correlated, Cholesky decomposition of the variance-covariance matrix was sampled from a *Cholesky Lewandowski-Kurowicka-Joe Correlation* prior with $\eta = 4$ [@stan-doc].
 
-# Model estimates in details
-
-This Supplementary Section outlines all the estimates of the selected model, if not mentioned in the main text.
-
-## Prevalence model
-
-```{r prev-model-est, tab.id = 'prev-model-est', tab.cap = 'Estimates and credible intervals of TBM odd ratios, with respects to risk factors'}
-prev_model_est <- 
-  a_plot$data |> 
-  mutate(
-    Parameter = 
-      rev(a_plot$scales$get_scales('y')$labels) |>
-      stringr::str_replace_all(pattern = '<\\/?sup>', '^') |>
-      stringr::str_replace_all(pattern = '<\\/?sub>', '~'),
-    ll = round(plogis(ll), 2), hh = round(plogis(hh), 2), m = round(plogis(m), 2)) |>
-  select(Parameter, Mean = m, `Lower 95% CrI` = ll, `Higher 95% CrI` = hh)
-
-prev_model_est |>
-  flextable::flextable() |>
-  ftExtra::colformat_md(j=1) |>
-  flextable::width(j = 1, width = 2) |>
-  flextable::theme_vanilla()
-
-```
-## Bacillary burden model
-
-```{r bd-model-est, tab.id = 'bd-model-est', tab.cap = 'Estimates and credible intervals of standardised bacillary burden, with respects to impacting factor'}
-
-bd_model_est <- 
-  b_plot$data |> 
-  mutate(
-    Parameter = 
-      rev(b_plot$scales$get_scales('y')$labels) |>
-      stringr::str_replace_all(pattern = '<\\/?sup>', '^') |>
-      stringr::str_replace_all(pattern = '<\\/?sub>', '~'),
-    ll = round(ll, 2), hh = round(hh, 2), m = round(m, 2)) |>
-  select(Parameter, Mean = m, `Lower 95% CrI` = ll, `Higher 95% CrI` = hh)
-
-bd_model_est |>
-  flextable::flextable() |>
-  ftExtra::colformat_md(j=1) |>
-  flextable::width(j = 1, width = 2) |>
-  flextable::theme_vanilla()
-```
-## Estimated log-pointwise density
+# Estimated log-pointwise density of each considered model
 
 ```{r elpd-tbl, tab.id='elpd-tbl', tab.cap = 'Expected elpd of considered models and their standard errors'}
 elpd_tbl =
   data.frame(
     Model = 1:5,
-    elpd = c(-379.7, -351.9, -347.0, -348.4, -355.3),
-    SE = c(26.5, 25.5, 25.0, 25.1, 25.7)
+    elpd = c(-379.7, -351.9, -344.6, -345.5, -351.6),
+    SE = c(26.5, 25.5, 25.0, 25.0, 25.8)
   )
 
 elpd_tbl |>
   flextable::flextable()|>
   flextable::width(width=1.5) |>
+  flextable::set_header_labels(SE = 'Standard error') |>
+  flextable::highlight(i = 3, j = 2) |>
   flextable::theme_vanilla()
 ```
 
-# Assumption check and sensitivity analysis {#appendix-senanalysis}
+# Assumption check and sensitivity analysis {#appendix-sen-analysis}
 
 ## Methods
 
@@ -640,17 +430,17 @@ P_i &= P(y^{Smear}_i,y^{Mgit}_i,y^{Xpert}_i, {obs}_i)\\
 
 given that _obs_ is locally independent to the three confirmatory tests. We used a weakly informative prior distribution for non-TBM group and an informative prior distribution for TBM group (Supplementary Figure \@ref(fig:prior-obs)) as we believed most patients in the TBM group have been tested with confirmatory tests. However, we widen the scale in the latter case enough so that a 20% of untested TBM patients were allowed.
 
-```{r prior-obs, fig.align='center', out.width='100%', fig.cap = "Prior distribution for Xpert response rate, in non-TBM patients (left) and TBM patients (right)"}
+```{r prior-obs, fig.align='center', out.width='100%', warning=FALSE, message=FALSE, fig.cap = "Prior distribution for Xpert response rate, in non-TBM patients (left) and TBM patients (right). Point, thick lines, and thin lines are the median, 50\\% and 95\\% inter-quantile ranges."}
 
 obs_rng = rbind(
   data.frame(
-    Test = 'Xpert Observation (non-TBM)',
+    Test = 'Xpert observed / non-TBM',
     Test_id = 1,
     logit = rlogis(500000, 0,.5),
     linear = rlogis(500000, 0,.5) |> plogis()
   ),
   data.frame(
-    Test = 'Xpert Observation (TBM)',
+    Test = 'Xpert observed / TBM',
     Test_id = 2,
     logit = rlogis(500000, qlogis(.99),1),
     linear = rlogis(500000, qlogis(.99),1) |> plogis()
@@ -671,6 +461,7 @@ obs_logit_plt <- ggplot() +
         plot.tag = element_text('serif', size = 9),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
+obs_logit_plt
   
 ```
 <!--

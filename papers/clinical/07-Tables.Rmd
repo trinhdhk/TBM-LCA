@@ -1,0 +1,242 @@
+<!-- Resutl -->
+\newpage
+
+\blandscape
+
+<!---BLOCK_LANDSCAPE_START--->
+
+```{r test-bl-tbl, echo=FALSE, tab.cap="Baseline characteristics of all study patients", tab.id="test-bl-tbl"}
+bl_tbl <- 
+  data_dirty |>
+  filter(pop) |>
+  as_tibble() |>
+  # dplyr::filter(!(wrong_name %in% TRUE) & !(csf_mgit_contaminated %in% TRUE))
+  mutate(csf_neutro = csf_wbc - csf_lympho - csf_eos) |>
+  mutate(
+    across(c(csf_smear, csf_xpert, csf_mgit), 
+           ~ factor(.x, 
+                    levels = c(TRUE, FALSE,NA), 
+                    labels = c('Positive', 'Negative', 'Missing'),
+                    exclude = NULL
+           )
+    )
+  ) |>
+  select(age, hiv_stat, clin_illness_day, clin_symptoms, clin_contact_tb, clin_motor_palsy, clin_nerve_palsy, clin_gcs, xray_pul_tb, xray_miliary_tb, csf_lympho, csf_wbc, csf_eos, csf_rbc, csf_protein, csf_lactate, csf_glucose, bld_glucose = BLDGLU, csf_crypto, csf_gram, csf_smear, csf_xpert, csf_mgit) |>
+  tidyr::pivot_longer(
+    c(csf_smear, csf_mgit, csf_xpert),
+    names_to = 'Test',
+    values_to = 'Result'
+  ) |>
+  # mutate(- csf_neutro) |>
+  mutate(
+    Test = case_when(
+      Test == 'csf_smear' ~ 'ZN-Smear',
+      Test == 'csf_mgit'  ~ 'MGIT',
+      Test == 'csf_xpert' ~ 'Xpert',
+    )
+    # Result = ifelse(is.na(Result), 'Missing', Result) |> factor()
+  )
+
+bl_tbl <-
+  bl_tbl |>
+  mutate(Test = 'Overall') |>
+  bind_rows(bl_tbl) |>
+  mutate(Test = factor(Test, levels = c('Overall', 'ZN-Smear', 'MGIT', 'Xpert'))) |>
+  my_fn$add_labels(
+    age               = 'Age (year)',
+    hiv_stat          = 'HIV positive', 
+    clin_illness_day  = 'Symptom duration (day)',
+    clin_symptoms     = 'TB-suggested systemic symptoms',
+    clin_contact_tb   = 'Noticeable TB contact within the last 12 months',
+    clin_motor_palsy  = 'Focal neurological deficit',
+    clin_nerve_palsy  = 'Cranial nerve palsy',
+    # GCSV              = 'Glasgow Coma Scale-Verbal',
+    # GCSM              = 'Glasgow Coma Scale-Motor',
+    # GCSE              = 'Glasgow Coma Scale-Eyes',
+    clin_gcs          = 'Glasgow Coma Score',
+    xray_pul_tb       = 'X-Ray Pulmonary TB (excluding Miliary TB)',
+    xray_miliary_tb   = 'X-Ray Miliary TB',
+    csf_lympho        = 'CSF Lymphocyte Count (cell/mm^3^)',
+    csf_wbc           = 'CSF WBC Count (cell/mm^3^)',
+    # csf_neutro        = 'CSF Neutrophil Count',
+    csf_eos           = 'CSF Eosinophil Count (cell/mm^3^)',
+    csf_rbc           = 'CSF Red blood cell Count (cell/mm^3^)',
+    csf_protein       = 'CSF Protein (g/l)',
+    csf_lactate       = 'CSF Lactate (mmol/l)',
+    csf_glucose       = 'CSF Glucose (mmol/l)',
+    bld_glucose       = 'Paired Blood Glucose (mmol/l)',
+    csf_crypto        = 'Cryptococcal Antigen/Indian Ink +',
+    csf_gram          = 'Positive CSF Gram stain'
+  ) |>
+  tbl_strata(
+    strata = Test,
+    .tbl_fun = ~ tbl_summary(
+      .x, 
+      by = Result,
+      missing_text = '  - Missing',
+      # type = list(GCSV~'continuous', GCSE~'continuous',GCSM~'continuous'),
+      statistic = list(
+        all_continuous() ~ '{mean} ({p25}, {p75})'),
+      digits = list(csf_eos ~ c(0, 0, 0), clin_gcs ~ c(0, 0, 0))
+    )
+  ) |>
+  modify_footnote(
+    update = all_stat_cols() ~ "Mean (1st, 3rd quartiles) for numeric variables; n (%) for categorical variables",
+    text_interpret = "html"
+  )
+
+bl_tbl |> as_flex_table() |>
+  # flextable::set_caption('Baseline characteristics') |>
+  flextable::width(width = .6) |>
+  flextable::width(j = 1, width = .89) |>
+  # flextable::width(j = c(2,6,10), width = .23) |>
+  flextable::fontsize(size=7, part = 'all') |>
+  ftExtra::colformat_md(1, part='body') |>
+  flextable::theme_vanilla()
+```
+
+<!---BLOCK_LANDSCAPE_STOP--->
+
+\elandscape
+
+\newpage
+
+```{r mv-posterior, tab.cap="Posterior estimates of test sensitivities and specificities, for overall population, and stratified by HIV", tab.id="mv-posterior"}
+# Use 
+pr_neg <- matrix(c(
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
+  # c('Test', rep(c('Estimates'),2)),
+  c('Smear',
+    spc("z_Smear", hiv=FALSE, fn=spc.est2, sep='\n'),
+    sen("z_Smear", hiv=FALSE, fn=sen.est2, sep='\n')),
+  c('MGIT',
+    spc("z_Mgit", hiv=FALSE, fn=spc.est2, sep='\n'),
+    sen("z_Mgit", hiv=FALSE, fn=sen.est2, sep='\n')),
+  c('Xpert',
+    spc("z_Xpert", hiv=FALSE, fn=spc.est2, sep='\n'),
+    sen("z_Xpert", hiv=FALSE, fn=sen.est2, sep='\n'))
+), byrow=T, nrow=4)
+
+pr_pos <- matrix(c(
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
+  c('Smear',
+    spc("z_Smear", hiv=TRUE, fn=spc.est2, sep='\n'),
+    sen("z_Smear", hiv=TRUE, fn=sen.est2, sep='\n')),
+  c('MGIT',
+    spc("z_Mgit", hiv=TRUE, fn=spc.est2, sep='\n'),
+    sen("z_Mgit", hiv=TRUE, fn=sen.est2, sep='\n')),
+  c('Xpert',
+    spc("z_Xpert", hiv=TRUE, fn=spc.est2, sep='\n'),
+    sen("z_Xpert", hiv=TRUE, fn=sen.est2, sep='\n'))
+), byrow=T, nrow=4)
+
+pr <- matrix(c(
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
+  c('Smear',
+    spc("z_Smear", hiv=NULL, fn=spc.est2, sep='\n'),
+    sen("z_Smear", hiv=NULL, fn=sen.est2, sep='\n')),
+  c('MGIT',
+    spc("z_Mgit", hiv=NULL, fn=spc.est2, sep='\n'),
+    sen("z_Mgit", hiv=NULL, fn=sen.est2, sep='\n')),
+  c('Xpert',
+    spc("z_Xpert", hiv=NULL, fn=spc.est2, sep='\n'),
+    sen("z_Xpert", hiv=NULL, fn=sen.est2, sep='\n'))
+), byrow=T, nrow=4)
+huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
+  huxtable::as_flextable() |>
+  flextable::add_header_row(values=c("", rep("Overall",2), rep("HIV (-)",2), rep("HIV (+)",2))) |>
+  flextable::merge_h(i=1, part='header') |>
+  flextable::width(width = .8) |>
+  flextable::bold(i=1) |>
+  flextable::theme_vanilla() |>
+  flextable::align(i=1, align='center') |>
+  flextable::align(i=1, align='center', part='header') |>
+  flextable::add_footer_row(top=F, values="Values are in the form Mean (95% Credible interval)", colwidths = 7) -> restab
+# restab_raster = flextable::as_raster(restab |> flextable::width(width=1.2), zoom=1.2)
+restab
+```
+\newpage
+
+```{r tbl-post-test, tab.cap="Average changes in TBM probability given available test result(s), relative to pre-confirmatory test TBM probability. Assume pre-test risk is 1, the values measure post-test risk in each scenario.", tab.id = "tbl-post-test"}
+flextable::flextable(post_test_tbl) |> 
+  flextable::set_header_labels(values=list(Scenario="Scenario", HIV_neg="HIV (-)", HIV_pos="HIV (+)")) |>
+  flextable::bold(j= 1) |>
+  flextable::width(width = c(1, 0.7, 0.7, 0.7, 1.5, 1.5)) |>
+  flextable::theme_vanilla() |>
+  flextable::align(i=1, part='header', align='center') |>
+  flextable::align(j=1:4, part='body', align='center') |>
+  flextable::add_footer_row(top=F, values="Values are in the form Mean (95% Credible interval)", colwidths = 6)
+```
+
+\newpage
+
+```{r fit-post-test-change, fig.align='center', fig.cap='Changes in TBM risk over time in a hypothetical scenario when ZN Smear, Xpert, and MGIT culturing sequentially returned negative', fig.dim=c(10,5), dpi=600, message=FALSE, warning=FALSE, include=F, eval=F}
+post_test$data = post_test$fit@frame |>
+  filter(
+    time %in% c("no_test", "smear_neg", "smear_xpert_neg", "all_neg")
+  ) %>%
+  mutate(
+    time = factor(time, levels = c("no_test", "smear_neg", "smear_xpert_neg", "all_neg")),
+    value = 2^`log2(value)`
+  )
+
+ggplot(data=post_test$data, aes(x = time, y = value, color=hiv)) + 
+  geom_boxplot() + 
+  scale_x_discrete(label = c("Pre-test", "Smear returned (-)", "Smear & Xpert returned (-)", "All returned (-)"), name="Timeline") +
+  scale_y_continuous(breaks = seq(0,1,.25), labels = paste(seq(0,1,.25)*100, '%'), name = "TBM probability") +
+  scale_color_discrete(name="HIV status", labels = c("Negative", "Positive")) + 
+  theme_bw()
+```
+
+\newpage
+
+```{r score-table, tab.cap="Simplified scoring table", tab.id = "score-table"}
+
+m = data.frame(
+  Criterion = c(
+    'HIV',
+    'TB-suggested symptoms',
+    'Local neurological deficit',
+    'Cranial nerve palsy',
+    'Past noticed TB contact',
+    rep('Glasgow coma score',6),
+    'Pulmonary TB/X-ray',
+    'Miliary TB/X-Ray',
+    rep('Days from onset',6),
+    'Headache',
+    'Pyschosis'),
+  Estimated = s_plots$a_plot_s3$data |> filter(parameter %in% paste0('a[',c(1:5, 9, 6:8, 10:11),']')) %>% .$m %>% round(2) %>% (\(x) {c(x[1:5], rep(x[6],6),x[7:8], rep(x[9],6), x[10:11])}),
+  Value  = c(
+    rep('+',5),
+    '3-5',
+    '6-7',
+    '8-9',
+    '10-11',
+    '12-13',
+    '14-15',
+    rep('+', 2),
+    '<1',
+    '1-2',
+    '3-6',
+    '7-14',
+    '15-30',
+    '31+',
+    rep('+', 2)
+    # '63+',3
+  ),
+  # Score = c(1, 0.5, 0, 0.5, 0.5, "GCS/5",  1.5, 1, "$log_2$(Number of days)/2", .5, -.1)
+  Score = c(0.5, 0.5, 1, 0, 1.5, 1, 1.5, 2, 2.5, 3, 3.5, 1.5, 1.5, 0, .5, 1, 1.5, 2, 2.5, .5, -.5)
+  
+)
+flextable::flextable(m) |>
+  flextable::add_footer_row(top=FALSE, 
+                            values = glue::glue("TBM suspected: > {((qlogis(.283) - s_plots$a_plot_s3$data$m[1])/0.5) |> round(0) |> (\\(x) x * 0.5)()}"),
+                            colwidths = 4) |>
+  flextable::merge_v(j=c(1,2)) |>
+  flextable::set_header_labels(Estimated = 'Model estimate') |>
+  ftExtra::colformat_md(j=c(1,2)) |>
+  flextable::width(width=1.1) |>
+  flextable::theme_vanilla()
+
+
+```

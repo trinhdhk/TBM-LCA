@@ -1,3 +1,16 @@
+bookdown::pdf_book:
+  base_format: rmarkdown::latex_document
+  toc: no
+  pandoc_args:
+    - '--lua-filter=includes/scholarly-metadata.lua'
+    - '--lua-filter=includes/author-info-blocks.lua'
+    - '--standalone'
+  latex_engine: xelatex
+  highlight: pygments
+  number_sections: yes
+  includes:
+    in_header: includes/header.tex
+    
 bookdown::word_document2:
   number_sections: no
   fig_caption: yes
@@ -16,19 +29,7 @@ officedown::rdocx_document:
     - '--lua-filter=includes/scholarly-metadata.lua'
     - '--lua-filter=includes/author-info-blocks.lua'
   toc: no
-  
-bookdown::pdf_book:
-  base_format: rmarkdown::latex_document
-  toc: no
-  pandoc_args:
-    - '--lua-filter=includes/scholarly-metadata.lua'
-    - '--lua-filter=includes/author-info-blocks.lua'
-    - '--standalone'
-  latex_engine: xelatex
-  highlight: pygments
-  number_sections: no
-  includes:
-    in_header: includes/header.tex
+
 
 
 

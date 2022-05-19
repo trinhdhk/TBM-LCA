@@ -1,0 +1,203 @@
+\newpage
+
+# Clinical supplementary Documents {.unnumbered}
+
+# Latent class analysis
+
+## Motivation
+
+Providing that we want to build a scoring table which quantifies individual risks of the disease based on a combination of relevant risk factors, the standard statistical workflow is to fit them into a logistic regression model in which the disease of interest is the dependent variable and the risk factors are independent variables. Many extensions can be developed upon the logistic regression, however one crucial element is the certainty of the disease status, as it has been usually referred to as a gold standard. That was not the case for *Tubeculous mengingitis* (*TBM*) as the diagnosis was very uncertain and imply some subjective decisions from the clinicians. We could not use that as a dependent variable for the logistic regression.
+
+On the other hand, there were some myco-biological tests that have been commonly used. There results have direct confirmatory meaning. It is widely accepted that a positive result of any amongst ZN-Smear, MGIT, and Xpert is a proof of the existence of *Mycobacterial tuberculosis* (*Mtb*). The existence of *Mtb* inside the cerebrospinal fluid (*CSF*) by definition determines that the patient has *TBM*. However, any of theses tests when standing alone are not sensitive enough to help rule out *TBM* with their negative result. As a consequence, the *Latent class analysis* is utilised, as it has the ability to look at all combination of test results as a whole to infer whether which patterns are more likely to connect with a TBM diagnosis and vice versa. 
+
+## Classic LCA design
+
+The classic LCA is a clustering statistical technique. Similar to Principal component analysis (PCA), it allocates individuals with a large number of variables into a smaller number of groups. Individuals in one group are supposed to share similar characteristics. In LCA, the former is called manifest variables and the groups are called latent classes. LCA has hence been widely used in psychology and social science to classify individuals into traits of personality from a wide spectrum of behavioural profiles. In medical diagnostic context, we also had the same purpose, as we got some test results in hand and wanted to determine whether those test results - when combined - are more suggestive of the disease of interest.
+
+Assuming we have 3 manifest variables, the optimisation algorithm of classic LCA starts by looking at all patterns of manifest variables available in the dataset. It then calculates the frequency of those patterns appearing in the dataset ($F(T)$). The likelihood of appearance for each pattern in the whole population ($Pr(T)$) is the combination of the likelihood of the corresponding pattern together with the disease ($Pr (T,\ D+)$) and the probability of that same pattern but without the disease $Pr(T,\ D-)$:
+
+$$
+Pr_T = Pr (T,\ D+) + Pr(T,\ D-) = Pr(T\ |\ D+) * Pr(D+) + Pr(T\ |\ D-) * (1 - Pr(D+))
+$$
+
+$$
+F(T) = Pr(T) + \epsilon
+$$
+
+*where $T$ is the pattern appears in our dataset, D+ is the disease group, D- is the non-disease group. Pr(T) is the probability that pattern appears,  F(T) is the frequency that we observed in the dataset, and $\epsilon$ is the error due to sampling fluctuation.*
+
+The classic latent class model assumes that all manifest variables are independent of each other within each latent class (i.e. one test positive does not increase or decrease the likelihood of other test positive), the probability of each pattern is in fact a multiplication of the probability of all compartment ($T_1$, $T_2$, and $T_3$). With three tests, we have 8 combinations:
+
+```{aligned_formula, fml.lab='eq:clin-lca-fml', results='asis'}
+\begin{aligned}
+Pr(T = 000) &= Pr(T_1=0) * Pr(T_2=0) * Pr(T_3=0)\\
+Pr(T = 001) &= Pr(T_1=0) * Pr(T_2=0) * Pr(T_3=1) \\
+Pr(T = 010) &= Pr(T_1=0) * Pr(T_2=1) * Pr(T_3=0) \\
+Pr(T = 011) &= Pr(T_1=0) * Pr(T_2=1) * Pr(T_3=1) \\
+Pr(T = 100) &= Pr(T_1=1) * Pr(T_2=0) * Pr(T_3=0) \\
+Pr(T = 101) &= Pr(T_1=1) * Pr(T_2=0) * Pr(T_3=1) \\
+Pr(T = 110) &= Pr(T_1=1) * Pr(T_2=1) * Pr(T_3=0) \\
+Pr(T = 111) &= Pr(T_1=1) * Pr(T_2=1) * Pr(T_3=1) \\
+\end{aligned}
+```
+
+*where $0$ represents a negative results and $1$ represents a positive results for $T_1, T_2, T_3$.*
+
+As all the tests are either negative or positive, $Pr(T_1=0)=1-Pr(T_1=1)$, $Pr(T_2=0)=1-Pr(T_2=1)$, $Pr(T_3=0)=1-Pr(T_3=1)$. With 9 equations and 4 variables, the model can estimate optimal values for all the $Pr(T_1=1)$, $Pr(T_2=1)$, $Pr(T_3=1)$, and $Pr(D+)$ so that the error $\epsilon$ can be minimised for every pattern $T$.
+
+## Our extensions to the LCA
+
+### Prevalence model
+
+The $Pr(D+)$ estimated from classical LCA is the prevalence of the disease in the study population; it is an average value and does not not reflect the risk of TBM for each individual enrolled in the dataset. To quantify this, we further incorporated this prevalence in a logistic regression, with risk factors as the covariates and the latent TBM status as the response, which we called the *prevalence model* \@ref(mathematical-parametrisation). In theory, the process was equivalent to:
+  
+1. Fit the LCA model
+2. For each individual:
+
+  a. Look at the pattern of test results
+  
+  b. Look up the corresponding probability of TBM given the pattern
+  
+  c. Randomly allocate that individual into TMM or non-TBM group by that probability
+  
+3. Fit the logistic regression for the dataset with all allocated TBM status
+4. Repeat from step 2 for a large number of times (~ 1000 times)
+5. Combined all the results
+
+### Latent bacillary burden
+
+Another major disadvantage of the classic LCA is the assumption of independent test results is usually not satisfied, so the multiplication in Formula `r my_fn$labEq.docx('eq:clin-lca-fml')` is no longer valid. Adding an additional random effect, which quantifies that correlation, could fix the issue [@qu1996]. In our study, we named it the mycobacillary burden [@schumacher2016]. It is another latent variables could also be estimated based on other variables (denoted as aggravating factors). The details of how these regression models were formulated were elaborated in the Statistical supplementary document. 
+
+# Prior choices {#appendix-prior-choices}
+
+The anticipated impacts of relevant non-specific characteristics are shown in Table \@ref(tab:predictor-tab). As a rule, we used weakly informative prior distribution for all coefficients regardless of their side of effects (increasing or decreasing TBM risk), which some exceptions: covariates strongly believed to like with a higher TBM risk had positive-only prior distributions and vice versa. We exceptionally allowed CSF WBC count to have a quadratic term, as suggested by the prior consensus [@marais2010].
+
+```{r predictor-tab, tab.id="predictor-tab", label='tab0', out.width="100%", tab.cap="Anticipated contribution of demographic and clinical features to the likelihood of TBM and CSF mycobacterial burden based on prior knowledge. Cell values + and - denote the expected direction of association, followed by the level of confidence; ? mean unknown, empty cells mean no association assumed"}
+tibble::tribble(
+  ~ 'Predictor'                    , ~ 'TBM prevalence', ~ 'Bacillary Burden',
+  'HIV infection'                  , '+, strong', '+, strong'         ,
+  'Past TB contact'                , '+, weak'  , ''                  ,
+  'TB-suggested symptoms'          , '+, weak'  , ''                  ,
+  'Local motor deficit'            , '+, weak'  , ''                  ,         
+  'Cranial nerve palsy'            , '+, weak'  , ''                  ,
+  'Days from onset'                , '+, weak'  , ''                  ,
+  'PTB/X-Ray'                      , '+, weak'  , ''                  ,
+  'MTB/X-Ray'                      , '+, strong', ''                  ,
+  'Glasgow Coma Score'             , '-, weak'  , ''                  ,
+  'Cryptococcus Antigen/Indian Ink', '-, strong', ''                  ,
+  'Gram stain +'                   , '-, strong', ''                  ,
+  'Blood Glucose'                  , '-, weak'  , ''                  ,
+  'CSF Glucose'                    , '-, weak'  , '?, weak'     ,
+  'CSF Lymphocyte Count'           , '+, weak'  , '-, weak'    ,
+  'CSF Total While cell Count'     , '+-^[Risk of TBM peaks with intermediate CSF white cell count], weak' , '+, weak'    ,
+  'CSF Protein'                    , '+, weak'  , '+, weak'    ,
+  'CSF Lactate'                    , '+, weak'  , '+, weak'    ,
+  'CSF Eosinophil Count > 0'       , '-, strong', ''                  ,
+  'CSF Eosinophil Count'           , '-, strong', ''                  ,
+  'CSF RBC Count'                  , '?, weak'   , ''
+) |>
+  flextable::flextable() |>
+  ftExtra::colformat_md(2) |>
+  # flextable::footnote(i=16, j=2, 
+    # value=flextable::as_paragraph('')) |>
+  flextable::width(j=1, width=2) |>
+  flextable::width(j=2:3, width=1.2) |>
+  flextable::theme_vanilla() |>
+  flextable::bold(bold = FALSE, part = "footer") |>
+  flextable::italic(italic = TRUE, part = "footer" )
+```
+
+For ZN-Smear, MGIT, and Xpert, our choice of priors was based on information collected from several previous studies [@nhu2013, @thwaites2004, @heemskerk2018]. A summary of these choices is shown in Figure \@ref(fig:mv-priors)), on logistic and linear scale. We demonstrated how good they covered corresponding results derived from the previous studies. As suggested by the literature, we used highly informative priors for False Positive Rate ($FPR = 1-Specificity$) and weakly informative priors for True Positive Rate ($TPC = Sensitivity$) on the logit scale <!--(formula `r my_fn$labEq.docx('eq:priors_response')`)-->, given the discrepancies between the studies.
+
+The details of prior choices are outlined in the Statistical Supplementary Section \@ref(appendix-stat-prior-choices).
+
+# Model estimates in details
+
+This Supplementary Section outlines all the estimates of the selected model, if not mentioned in the main text.
+
+## Prevalence model
+
+```{r prev-model-est, tab.id = 'prev-model-est', tab.cap = 'Estimates and credible intervals of TBM odd ratios, with respects to risk factors', warnings=FALSE, message=FALSE}
+recover_scale <- \(x) sign(x) * x^2
+prev_model_est <- 
+  a_plot$data |> 
+  mutate(
+    Parameter = 
+      rev(a_plot$scales$get_scales('y')$labels) |>
+      stringr::str_replace_all(pattern = '<\\/?sup>', '^') |>
+      stringr::str_replace_all(pattern = '<\\/?sub>', '~'),
+    ll = round(exp(recover_scale(ll)), 2), 
+    hh = round(exp(recover_scale(hh)), 2), 
+    m = round(exp(recover_scale(m)), 2),
+    m2 = round(exp(recover_scale(m2)), 2)) |>
+  select(Parameter, Mean = m,  Median = m2, `Lower 95% CrI` = ll, `Higher 95% CrI` = hh)
+
+prev_model_est |>
+  flextable::flextable() |>
+  ftExtra::colformat_md(j=1) |>
+  flextable::width(j = 1, width = 2) |>
+  flextable::theme_vanilla()
+
+```
+
+## Bacillary burden model
+
+```{r bd-model-est, tab.id = 'bd-model-est', tab.cap = 'Estimates and credible intervals of standardised bacillary burden, with respects to impacting factor'}
+
+bd_model_est <- 
+  b_plot$data |> 
+  mutate(
+    Parameter = 
+      rev(b_plot$scales$get_scales('y')$labels) |>
+      stringr::str_replace_all(pattern = '<\\/?sup>', '^') |>
+      stringr::str_replace_all(pattern = '<\\/?sub>', '~'),
+    ll = round(ll, 2), hh = round(hh, 2), m = round(m, 2)) |>
+  select(Parameter, Mean = m, `Lower 95% CrI` = ll, `Higher 95% CrI` = hh)
+
+bd_model_est |>
+  flextable::flextable() |>
+  ftExtra::colformat_md(j=1) |>
+  flextable::width(j = 1, width = 2) |>
+  flextable::theme_vanilla()
+```
+
+# Comparison with current approaches
+
+```{r load_compared_data, message=FALSE, warning=FALSE, include=FALSE}
+corr_test <- readRDS(file.path(data_dir, '../export/test_corr.RDS'))
+```
+
+## Comparing predicted TBM risk and the uniform case definition
+
+This section compares the prediction of our selected model and the standard-of-care uniform definition [@marais2010] (Supplementary Figure \@ref(fig:defscore)). We hypothesised that no confirmatory was done when doing the risk classification. Overall, there is a relative monotonously positive correlation between the two ($p_{Smearman} = 0.37$ (95%CI $0.30 - 0.43$)), especially in the possible and probable group. However, without the definitive mycobacterial tests, the uniform case definition missed out some confirmed cases as they were classified into the unknown group (total score < 6). Some of them were later confirmed microbiologically ("Confirmed TBM"), while some were classified to suspected TBM regardless of the score (denoted as "Clinical TBM").
+
+```{r defscore, fig.align='center', out.width='100%', fig.dim=c(10, 8), fig.cap = "Comparison of our predicted TBM probability and the calculated scores and classes by the uniform definition", warning=FALSE, message=FALSE}
+corr_test$defscore
+```
+## Comparing model-based bacillary burden and current measurement
+
+This sections compares our estimated standardised mybacillary burden (SMB) with current tools to quantify mycobacterial load, if those results were available. These tools were the semi-quantification level by GeneXpert (based on CT value) and time to positivity (TTP) when performing culturing. The general downside of these quantification methods are they require the corresponding tests to be positive. All-negative patients were assumed to have low bacterial load.
+
+We can see a significant correlation between our SMB and the Xpert level ($p_{Spearman} < 0.001$) (Supplementary Figure \@ref(fig:xpert-lv)). The correlation were not obvious between SMB and TTP in the overall population. This might be due to small sample size. However, similar to a previous study [@najjingo2019], in the HIV-naive sub-population, we can see a negative correlation between TTP and SMB; that was however not obvious in the HIV group (Supplementary Figure \@ref(fig:cultime)). The association was again supported by the linear regression between TTP and SMB, correction for HIV status and the interaction between TTP and HIV. The negative association was nullified by in HIV-positive sub-population (Supplementary Table \@ref(tab:cultimefit)). This contradicted the past study [@najjingo2019] and possibly due to the low number of TBM-HIV co-infection that had a positive MGIT culturing.
+
+```{r xpert-lv, message=FALSE, warning=FALSE, fig.align='center', fig.cap='Comparison of our predicted SMB and Xpert semi-quantification level', fig.dim=c(12, 8), message=FALSE, warning=FALSE, out.width='100%'}
+corr_test$xpertlv
+```
+
+
+```{r cultime, message=FALSE, warning=FALSE,  fig.dim=c(12, 8), fig.align='center', out.width='100%', fig.cap = "Comparison of our predicted SMB and TTP", fig.asp=2}
+(corr_test$cultime[[1]] + ggtitle('HIV positive') + theme(axis.title.x = element_blank())) / (corr_test$cultime[[2]] + ggtitle('HIV negative') )
+```
+
+
+```{r cultimefit, message=FALSE, warning=FALSE, out.width='100%', tab.cap = "Comparison of our predicted SMB and TTP", fig.asp=2}
+
+labelled::var_label(corr_test$cultimefit$model) <- list(burden="SMB", hiv="HIV", log_culture_time="log(TTP)")
+# corr_test$cultimefit$model$hiv <- factor(corr_test$cultimefit$model$hiv, levels=c(F,T), labels=c("-", "+"))
+tbl <- gtsummary::tbl_regression(corr_test$cultimefit) |>
+  gtsummary::as_hux_table() 
+tbl[-1,1] <- c("HIV", "HIV+", "log(TTP)", "Interaction", "(HIV+) : log(TTP)", "CI = Confidence Interval")
+huxtable::as_flextable(tbl) |>
+  flextable::width(j = 1, width = 2) |>
+  flextable::theme_vanilla()
+```

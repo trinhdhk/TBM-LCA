@@ -139,6 +139,9 @@ m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS')) |> as.env
 load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = m3)
 load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
 # m3$rocs = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_roc_iscb.RDS'))
-m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib.RDS'))
-m3$roc = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_ROC.RDS'))
+# m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib.RDS'))
+# m3$roc = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_ROC.RDS'))
+m3_roc = readRDS(file.path(data_dir, '..', 'export', 'm3_roc.RDS')) 
+m3_calib = readRDS(file.path(data_dir, '..', 'export', 'm3_calib.RDS')) 
+s_plots <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS'))
 ```

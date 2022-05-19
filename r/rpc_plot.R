@@ -39,7 +39,7 @@ rpc_plot = ggplot(data=rpc_summary, aes(x=Pair, color=Model, group=Model)) +
   # stat_summary(aes(y=mean), geom='line', fun=sum) +
   scale_y_continuous(limits=c(-.15, .15)) +
   scale_x_discrete(expand=c(.07,.07)) +
-  scale_color_brewer(palette='Set3') +
+  scale_color_brewer(palette='Set1') +
   theme_bw() + 
   theme(axis.title = element_blank())
 

@@ -4,6 +4,8 @@ keptin = m3$folds$keptin
 dat = m3$folds$inputs
 load('data/cleaned/data_input.Rdata')
 
+obs = with(data_19EI, obs_smear + obs_mgit + obs_xpert > 0)
+test = with(data_19EI, csf_smear + csf_mgit + csf_xpert > 0)
 fill_x_holdout <- function(x, obs, pred_fn, holdout, m = m3, full=FALSE){
   model <- m$model
   K <- m$n_fold
@@ -45,7 +47,7 @@ fill_x_holdout_multi <- function(x, obs, pred_fn, holdout, m = m3, full=FALSE){
   x_pred <- vector('list', length(x_obs))
   for (k in seq_along(x_pred)) x_pred[[k]] <- vector('list', dim(x)[[1]])
   # for (k in seq_len(length(x_obs))) x_pred[[k]] = vector('numeric', length=)
-  
+
   i = 1
   cli::cli_progress_bar(total = length(holdout))
   for (h in holdout){
@@ -53,7 +55,7 @@ fill_x_holdout_multi <- function(x, obs, pred_fn, holdout, m = m3, full=FALSE){
     h = which(as.logical(h))
     # x_heldout = x[h]
     pred_heldout = pred_fn(model[[i]], h)
-    
+
     for (k in seq_len(length(x_obs))){
       j = 1
       for (hh in h) {
@@ -61,7 +63,7 @@ fill_x_holdout_multi <- function(x, obs, pred_fn, holdout, m = m3, full=FALSE){
         j = j+1
       }
     }
-    
+
     i = i+1
     cli::cli_progress_update()
   }
@@ -83,42 +85,26 @@ get_par = function(par, model) {
   sapply(x, "*", y)
 }
 
-impute_misc=new.env()
-impute_misc$calib <- function(x){
-  require(ggplot2)
-  ggplot(mapping=aes(x = apply(x$pred,2,mean)-x$obs, y=x$obs)) + 
-    geom_smooth()
-}
+# impute_misc=new.env()
+# impute_misc$calib <- function(x){
+#   require(ggplot2)
+#   ggplot(mapping=aes(x = apply(x$pred,2,mean)-x$obs, y=x$obs)) + 
+#     geom_smooth()
+# }
 
-
-# gcs
-gcs_pred = function(model, id){
-  L_sigma_gcs = get_par('L_sigma_gcs', model)
-  L_omega_gcs = get_par('L_Omega_gcs', model)
-  sapply(seq_len(dim(L_omega_gcs)[1]), 
-         FUN = function(i){
-           L_Sigma_gcs = diag(L_sigma_gcs[i,]) %*% L_omega_gcs[i,,]
-           
-           GCS = sapply(id, 
-                        function(...) {
-                          gcs = LaplacesDemon::rmvnc(1, mu = rep(0, 3), U = t(L_Sigma_gcs))
-                          while (any(gcs < 0 | gcs > 1)) gcs =  LaplacesDemon::rmvnc(1, mu = rep(0, 3), U = t(L_Sigma_gcs))
-                          gcs
-                        }) |> t()
-           # browser()
-           round(3*GCS[,1] + 5*GCS[,2] + 4*GCS[,3] - 3)/3;
-         }) |> t()
-}
-# gcs = fill_x_holdout(Xc[,8], obs_Xc[,8], gcs_pred, holdout)
-gcs2 = fill_x_holdout(Xc[,8], obs_Xc[,8], gcs_pred, holdout, full=T)
-
+#hiv
 hiv_pred = function(model, id){
   hiv_a0 = get_par('HIV_a0', model)
-  # sapply(seq_len(dim(hiv_a0)[1]), 
-  #       function(i){
-  #         rbinom(length(id), 1, prob = pnorm(hiv_a0[i]))
-  #       })  |> t()
-  matrix(mean(pnorm(hiv_a0)), ncol=length(id), nrow = dim(hiv_a0)[1])
+  hiv_a = get_par('HIV_a', model)
+  # browser()
+  sapply(seq_len(dim(hiv_a0)[1]),
+        function(i){
+          sapply(id, function(j){
+            plogis(hiv_a0[i] + hiv_a[i,1]*obs[j] + hiv_a[i,2]*test[j])
+          })
+          # rbinom(length(id), 1, prob = pnorm(hiv_a0[i]))
+        })  |> t()
+  # matrix(mean(pnorm(hiv_a0)), ncol=length(id), nrow = dim(hiv_a0)[1])
 }
 
 obs_Xd[Td[,7]==0,1] = 1
@@ -127,6 +113,33 @@ hiv = fill_x_holdout(Xd[Td[,7]==1,1], obs_Xd[Td[,7]==1,1], hiv_pred, lapply(hold
 hiv3 = fill_x_holdout(Xd[,1], obs_Xd[,1], hiv_pred, holdout, full=T)
 hiv2 = list(obs = hiv3$obs, pred=apply(hiv3$pred, 2, function(x) sapply(x, rbinom, n=1, size=1)))
 # hiv$pred[,as.logical(obs_Xd[,1])]=Xd[as.logical(obs_Xd[,1]),1]
+
+# gcs
+gcs_pred = function(model, id){
+  L_sigma_gcs = get_par('L_sigma_gcs', model)
+  L_omega_gcs = get_par('L_Omega_gcs', model)
+  gcs_a0 = get_par('gcs_a0', model)
+  gcs_a = get_par('gcs_a', model)
+  future::plan(future::multisession, workers=20)
+  future.apply::future_sapply(seq_len(dim(L_omega_gcs)[1]), 
+         FUN = function(i){
+           L_Sigma_gcs = diag(L_sigma_gcs[i,]) %*% L_omega_gcs[i,,]
+           sapply(id, function(j) {
+             gcs_mu = gcs_a0[i] + gcs_a[i,,1]%.*%hiv2$pred[j] + gcs_a[i,,2]%.*%obs[j] + gcs_a[i,,3]%.*%test[j] 
+             GCS = sapply(id, 
+                          function(...) {
+                            gcs = LaplacesDemon::rmvnc(1, mu = gcs_mu, U = t(L_Sigma_gcs))
+                            while (any(gcs < 0 | gcs > 1)) gcs =  LaplacesDemon::rmvnc(1, mu = gcs_mu, U = t(L_Sigma_gcs))
+                            gcs
+                          }) |> t()
+             round(3*GCS[,1] + 5*GCS[,2] + 4*GCS[,3] - 3)/3;
+           })
+         }, future.seed=TRUE) |> t()
+}
+# gcs = fill_x_holdout(Xc[,8], obs_Xc[,8], gcs_pred, holdout)
+gcs2 = fill_x_holdout(Xc[,8], obs_Xc[,8], gcs_pred, holdout, full=T)
+
+
 #id
 id_pred = function(model, id){
   id_a0 = get_par('id_a0', model)
@@ -135,7 +148,7 @@ id_pred = function(model, id){
   # browser()
   sapply(seq_len(dim(id_a0)[1]), function(i) {
     sapply(id, function(j) {
-      mu = id_a0[i] + id_a[i]*Xd[j,1]#*hiv$pred[i,j]
+      mu = id_a0[i] + id_a[i,1]*hiv2$pred[j] + id_a[i,2]*obs[j] + id_a[i,3]*test[j] #*hiv$pred[i,j]
       rnorm(1, mean = mu, sd = id_sigma[i])
       # mu
     })
@@ -153,7 +166,7 @@ cs_pred = function(model, id, binary = FALSE){
   # browser()
   sapply(seq_len(dim(cs_a0)[1]),
          function(i){
-           mu_cs =  cs_a0[i,] + cs_a[i,,1]%.*%Xd[id,1] + cs_a[i,,2]%.*%id2$pred[i,id]
+           mu_cs =  cs_a0[i,] + cs_a[i,,1]%.*%hiv2$pred[id,1] + cs_a[i,,2]%.*%id2$pred[i,id] + cs_a[i,,3]%.*%obs[id] + cs_a[i,,4]%.*%test[id]
            cs = apply(mu_cs, 1,
                       function(mu) mvtnorm::rmvnorm(1, mean = mu, sigma = L_omega_cs[i,,] %*% t(L_omega_cs[i,,]))) |> pnorm()
            if (binary) {
@@ -230,7 +243,8 @@ mp_pred = function(model, id, binary=FALSE){
   # browser()
   sapply(seq_len(dim(mp_a0)[1]),
          function(i){
-           mu_mp =  mp_a0[i,] + mp_a[i,,1]%.*%Xd[id,1] + mp_a[i,,2]%.*%id2$pred[i,id]
+           mu_mp =  mp_a0[i,] + mp_a[i,,1]%.*%hiv2$pred[id,1] + mp_a[i,,2]%.*%id2$pred[i,id] + mp_a[i,,3]%.*%obs[id] + mp_a[i,,4]%.*%test[id]
+           # mu_mp =  mp_a0[i,] + mp_a[i,,1]%.*%hiv2$pred[id,1] + mp_a[i,,2]%.*%id2$pred[i,id] + mp_a[i,,3]%.*%obs + mp_a[i,,4]%*.*%test
            mp = apply(mu_mp, 1,
                       function(mu) mvtnorm::rmvnorm(1, mean = mu, sigma = L_omega_mp[i,,] %*% t(L_omega_mp[i,,]))) |> pnorm()
            
@@ -253,16 +267,23 @@ motor_palsy3 = fill_x_holdout(Xd[,3], obs_Xd[,3], mp_pred_prob, holdout, full=T)
 
 # CSF
 csf_pred = \(model, id){
-  L_omega_csf   = get_par('L_Omega_csf', model) 
-  L_sigma_csf   = get_par('L_sigma_csf', model) 
-  
+  L_omega_csf   = get_par('L_Omega_csf', model)
+  L_sigma_csf   = get_par('L_sigma_csf', model)
+  csf_a0   = get_par('csf_a0', model)
+  csf_a    = get_par('csf_a', model)
+  # print(dim(csf_a))
+
   lapply(seq_len(dim(L_sigma_csf)[1]),
          function(i){
            L_Sigma_csf = diag(L_sigma_csf[i,]) %*% L_omega_csf[i,,]
            # mvtnorm::rmvnorm(N, sigma = L_Sigma_csf %*% t(L_Sigma_csf), method = 'chol')
-           sapply(id, 
-                  function(...) {
-                    LaplacesDemon::rmvnc(1, mu = rep(0, 6), U = t(L_Sigma_csf))
+           sapply(id,
+                  function(j) {
+                    csf_mu = csf_a0[i] + csf_a[i,,1]%.*%hiv2$pred[j] + csf_a[i,,2]%.*%obs[j] + csf_a[i,,3]%.*%test[j]
+                    # print(csf_mu)
+                    # printL_Sigma_csf)
+                    LaplacesDemon::rmvnc(1, mu = csf_mu, U = t(L_Sigma_csf)) 
+                    
                   }) |> t()
          })
 }
@@ -297,28 +318,31 @@ resid_missingess = function(y, e){
          }) |> t()
 }
 
-resid_missingness.binary = function(Py, e, completed.quan, completed.qual){
-  if (is.matrix(completed.quan))
-    return(
-      sapply(seq_len(dim(completed.quan)[1]),
-            \(x){
-              pca <- PCAmixdata::PCAmix(X.quanti=completed.quan[i,], X.quali = completed.qual[i,], rename.level=TRUE)
-              dim1 <- pca$ind$coord[,1]
-              fit <- lm(dim1~Py*e)
-              predict(fit)
-            })
-    )
-  
-  sapply(seq_len(length(completed.quan)),
-         \(x){
-           pca <- PCAmixdata::PCAmix(X.quanti=completed.quan[[i]], X.quali = completed.qual[[i]], rename.level=TRUE)
-           dim1 <- pca$ind$coord[,1]
-           fit <- lm(dim1~Py*e)
-           predict(fit)
-         })
-}
+# resid_missingness.binary = function(Py, e, completed.quan, completed.qual){
+#   if (is.matrix(completed.quan))
+#     return(
+#       sapply(seq_len(dim(completed.quan)[1]),
+#             \(x){
+#               pca <- PCAmixdata::PCAmix(X.quanti=completed.quan[i,], X.quali = completed.qual[i,], rename.level=TRUE)
+#               dim1 <- pca$ind$coord[,1]
+#               fit <- lm(dim1~Py*e)
+#               predict(fit)
+#             })
+#     )
+#   
+#   sapply(seq_len(length(completed.quan)),
+#          \(x){
+#            pca <- PCAmixdata::PCAmix(X.quanti=completed.quan[[i]], X.quali = completed.qual[[i]], rename.level=TRUE)
+#            dim1 <- pca$ind$coord[,1]
+#            fit <- lm(dim1~Py*e)
+#            predict(fit)
+#          })
+# }
 
 save(list=ls(), file='.cache/impute_cv.Rdata')
+library(ggplot2)
+library(ggfx)
+library(data.table)
 ## HIV
 
 hiv_miss = prob_missingness(obs_Xd[Td[,7]==1,1], 
@@ -339,9 +363,9 @@ hiv_plot$plot0 =
 
 hiv_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=hiv3$pred[1:2,Td[,7]==1], x=hiv_miss[1:2,], color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=2),fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)), shape=21, size=2, alpha=1) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=hiv3$pred[,Td[,7]==1], x=hiv_miss, color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=2000), fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2000)), alpha=.5, method='gam', method.args=list(gamma=2), se=F)) + 
-  scale_x_continuous(trans='logit')+
+  geom_point(aes(y=hiv3$pred[1:50,Td[,7]==1], x=hiv_miss[1:50,], color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=50)), shape=21, size=2, alpha=1) + #fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=hiv3$pred[1:100,Td[,7]==1], x=hiv_miss[1:100,], color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100), fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=100)), alpha=.5, method='loess', se=F)) + 
+  scale_x_continuous(trans='logit', breaks = c(.25, .75, .95, .99, .999), limits=c(0.2, .9999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   ylab("Pr (HIV +)")+
   xlab('Pr (Response)') +
@@ -349,7 +373,7 @@ hiv_plot$plot1 =
 
 hiv_plot$plot2 = 
   ggplot()+
-  geom_density(aes(x=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:500,], fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=500)), color='transparent', alpha=.5, adjust=6) +
+  geom_density(aes(x=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:2000,], fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=2000)), color='transparent', alpha=.5, adjust=.5) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Residual') +
   ylab('Density') +
@@ -357,9 +381,9 @@ hiv_plot$plot2 =
 
 hiv_plot$plot3 = 
   ggplot()+
-  geom_point(aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:2,], x = hiv_miss[1:2,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=2)), size=2, shape=21) + 
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:2000,], x = hiv_miss[1:2000,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=2000))), method='gam', method.args = list(select=TRUE, gamma=2), se=FALSE)) +
-  scale_x_continuous(trans='logit') +
+  geom_point(aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:100,], x = hiv_miss[1:100,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100)), size=2, shape=21) + 
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:100,], x = hiv_miss[1:100,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100))), method='loess', se=FALSE)) +
+  scale_x_continuous(trans='logit', breaks = c(.25, .75, .95, .99, .999), limits=c(0.2, .9999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Pr (Response)') +
   ylab('Residual') +
@@ -377,9 +401,9 @@ id_miss = prob_missingness(obs_Xc[,1],
 id_plot = list()
 id_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=id2$pred[1:2,], x=id_miss[1:2,], color = rep(as.logical(obs_Xc[,1]),each=2),fill = rep(as.logical(obs_Xc[,1]), each=2)), shape=21, size=2, alpha=1) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=id2$pred, x=id_miss, color = rep(as.logical(obs_Xc[,1]),each=2000),fill = rep(as.logical(obs_Xc[,1]), each=2000)), alpha=.5, se=FALSE)) + 
-  scale_x_continuous(trans='logit')+
+  geom_point(aes(y=id2$pred[1:100,], x=id_miss[1:100,], color = rep(as.logical(obs_Xc[,1]),each=100)), shape=21, size=2, alpha=1) + #, fill = rep(as.logical(obs_Xc[,1]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=id2$pred[1:100,], x=id_miss[1:100,], color = rep(as.logical(obs_Xc[,1]),each=100),fill = rep(as.logical(obs_Xc[,1]), each=100)), alpha=.5, method='loess', se=FALSE)) + 
+  scale_x_continuous(trans='logit', breaks=c(0.4, .8, .95, .99, .999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   ylab("Days from onset")+
   xlab('Pr (Response)') +
@@ -395,9 +419,9 @@ id_plot$plot2 =
 
 id_plot$plot3 = 
   ggplot()+
-  geom_point((aes(y=resid_missingess(id2$pred, id_miss)[1:2,], x = id_miss[1:2,], color=rep(as.logical(obs_Xc[,1]),each=2))), size=2, shape=21) + 
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(id2$pred, id_miss)[1:50,], x = id_miss[1:50,], color=rep(as.logical(obs_Xc[,1]),each=50))), se=FALSE)) +
-  scale_x_continuous(trans='logit') +
+  geom_point((aes(y=resid_missingess(id2$pred, id_miss)[1:100,], x = id_miss[1:100,], color=rep(as.logical(obs_Xc[,1]),each=100))), size=2, shape=21) + 
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(id2$pred, id_miss)[1:100,], x = id_miss[1:100,], color=rep(as.logical(obs_Xc[,1]),each=100))), method='loess', se=FALSE)) +
+  scale_x_continuous(trans='logit', breaks=c(0.4, .8, .95, .99, .999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Pr (Response)') +
   ylab('Residual') +
@@ -416,9 +440,9 @@ gcs_plot = list()
 
 gcs_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=gcs2$pred[1:2,], x=gcs_miss[1:2,], color = rep(as.logical(obs_Xc[,8]),each=2),fill = rep(as.logical(obs_Xc[,8]), each=2)), shape=21, size=2, alpha=1) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=gcs2$pred, x=gcs_miss, color = rep(as.logical(obs_Xc[,8]),each=2000),fill = rep(as.logical(obs_Xc[,8]), each=2000)), alpha=.5, se=FALSE)) + 
-  scale_x_continuous(trans='logit')+
+  geom_jitter(aes(y=gcs2$pred[1:100,], x=gcs_miss[1:100,], color = rep(as.logical(obs_Xc[,8]),each=100)), shape=21, size=2, alpha=1) + #,fill = rep(as.logical(obs_Xc[,8]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=gcs2$pred[1:100,], x=gcs_miss[1:100,], color = rep(as.logical(obs_Xc[,8]),each=100),fill = rep(as.logical(obs_Xc[,8]), each=100)), alpha=.5,method='loess', span=1, se=FALSE)) + 
+  scale_x_continuous(trans='logit', breaks = c(.4, .8, .95, .99, .999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   ylab("Glascow coma score")+
   xlab('Pr (Response)') +
@@ -434,9 +458,9 @@ gcs_plot$plot2 =
 
 gcs_plot$plot3 = 
   ggplot()+
-  geom_point((aes(y=resid_missingess(gcs2$pred, gcs_miss)[1:2,], x = gcs_miss[1:2,], color=rep(as.logical(obs_Xc[,8]),each=2))), size=2, shape=21) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(gcs2$pred, gcs_miss)[1:50,], x = gcs_miss[1:50,], color=rep(as.logical(obs_Xc[,8]),each=50))), se=FALSE)) +
-  scale_x_continuous(trans='logit') +
+  geom_jitter((aes(y=resid_missingess(gcs2$pred, gcs_miss)[1:100,], x = gcs_miss[1:100,], color=rep(as.logical(obs_Xc[,8]),each=100))), size=2, shape=21) +
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(gcs2$pred, gcs_miss)[1:100,], x = gcs_miss[1:100,], color=rep(as.logical(obs_Xc[,8]),each=100))),method='loess',span=1, se=FALSE)) +
+  scale_x_continuous(trans='logit', breaks = c(.4, .8, .95, .99, .999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Pr (Response)') +
   ylab('Residual') +
@@ -454,8 +478,8 @@ cs_plot = list()
 
 cs_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=clin_symptoms3$pred[1:2,], x=cs_miss[1:2,], color = rep(as.logical(obs_Xd[,2]),each=2),fill = rep(as.logical(obs_Xd[,2]), each=2)), shape=21, size=2, alpha=1) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=clin_symptoms3$pred, x=cs_miss, color = rep(as.logical(obs_Xd[,2]),each=2000),fill = rep(as.logical(obs_Xd[,2]), each=2000)), alpha=.5, se=FALSE)) + 
+  geom_point(aes(y=clin_symptoms3$pred[1:100,], x=cs_miss[1:100,], color = rep(as.logical(obs_Xd[,2]),each=100)), shape=21, size=2, alpha=1) + #,fill = rep(as.logical(obs_Xd[,2]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=clin_symptoms3$pred[1:100,], x=cs_miss[1:100,], color = rep(as.logical(obs_Xd[,2]),each=100),fill = rep(as.logical(obs_Xd[,2]), each=100)), alpha=.5,method='loess', se=FALSE)) + 
   scale_x_continuous(trans='logit')+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   ylab("Pr (TB symptoms)")+
@@ -472,8 +496,8 @@ cs_plot$plot2 =
 
 cs_plot$plot3 =
   ggplot()+
-  geom_point((aes(y=resid_missingess(clin_symptoms3$pred, gcs_miss)[1:2,], x = cs_miss[1:2,], color=rep(as.logical(obs_Xd[,2]),each=2))), size=2, shape=21) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(clin_symptoms3$pred, gcs_miss)[1:1000,], x = cs_miss[1:1000,], color=rep(as.logical(obs_Xd[,2]),each=1000))), se=FALSE)) +
+  geom_point((aes(y=resid_missingess(clin_symptoms3$pred, gcs_miss)[1:100,], x = cs_miss[1:100,], color=rep(as.logical(obs_Xd[,2]),each=100))), size=2, shape=21) +
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(clin_symptoms3$pred, gcs_miss)[1:100,], x = cs_miss[1:100,], color=rep(as.logical(obs_Xd[,2]),each=100))), method='loess',se=FALSE)) +
   scale_x_continuous(trans='logit') +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Pr (Response)') +
@@ -494,9 +518,9 @@ mp_plot = list()
 
 mp_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=motor_palsy3$pred[1:2,], x=mp_miss[1:2,], color = rep(as.logical(obs_Xd[,3]),each=2),fill = rep(as.logical(obs_Xd[,3]), each=2)), shape=21, size=2, alpha=1) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=motor_palsy3$pred[1:2000,], x=mp_miss[1:2000,], color = rep(as.logical(obs_Xd[,3]),each=2000),fill = rep(as.logical(obs_Xd[,3]), each=2000)), alpha=.5, se=FALSE)) + 
-  scale_x_continuous(trans='logit')+
+  geom_point(aes(y=motor_palsy3$pred[1:100,], x=mp_miss[1:100,], color = rep(as.logical(obs_Xd[,3]),each=100)), shape=21, size=2, alpha=1) + #,fill = rep(as.logical(obs_Xd[,3]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=motor_palsy3$pred[1:100,], x=mp_miss[1:100,], color = rep(as.logical(obs_Xd[,3]),each=100),fill = rep(as.logical(obs_Xd[,3]), each=100)), alpha=.5,method='loess',span=1, se=FALSE)) + 
+  scale_x_continuous(trans='logit', breaks = c(.5, .9, .99, .999, .9999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   ylab("Pr (Local neuro-deficit)")+
   xlab('Pr (Response)') +
@@ -512,9 +536,9 @@ mp_plot$plot2 =
 
 mp_plot$plot3 = 
   ggplot()+
-  geom_point((aes(y=resid_missingess(motor_palsy3$pred, mp_miss)[1:2,], x = mp_miss[1:2,], color=rep(as.logical(obs_Xd[,3]),each=2))), size=2, shape=21) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(motor_palsy3$pred, mp_miss)[1:1000,], x = mp_miss[1:1000,], color=rep(as.logical(obs_Xd[,3]),each=1000))), se=FALSE)) +
-  scale_x_continuous(trans='logit') +
+  geom_point((aes(y=resid_missingess(motor_palsy3$pred, mp_miss)[1:50,], x = mp_miss[1:50,], color=rep(as.logical(obs_Xd[,3]),each=50))), size=2, shape=21) +
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(motor_palsy3$pred, mp_miss)[1:100,], x = mp_miss[1:100,], color=rep(as.logical(obs_Xd[,3]),each=100))),method='loess', se=FALSE)) +
+  scale_x_continuous(trans='logit', breaks = c(.5, .9, .99, .999, .9999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Pr (Response)') +
   ylab('Residual') +

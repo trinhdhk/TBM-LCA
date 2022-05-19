@@ -8,6 +8,8 @@ data {
   int<lower=1> B[nB];
   int<lower=0, upper=1> unsure_spc;
   int<lower=0, upper=1> quad_RE;
+  int<lower=0, upper=1> obs_Smear_all[N_all];
+  int<lower=0, upper=1> obs_Mgit_all [N_all];
   int<lower=0, upper=1> obs_Xpert_all[N_all];
   
 #include includes/data/a.stan 
@@ -26,10 +28,10 @@ transformed data{
   int nX = nXc + nXd; // Total number of covariates 
   int nA = nX + nQ; // Number of coef
 #include includes/cross_validation/transform_data_Y.stan
-  int obs_Smear_all[N_all] = rep_array(1, N_all);
-  int obs_Mgit_all[N_all] = rep_array(1, N_all);
-  int<lower=0, upper=1> obs_Smear[N] = obs_Smear_all[which(keptin)];
-  int<lower=0, upper=1> obs_Mgit [N] = obs_Mgit_all [which(keptin)];
+  int obs_Smear2_all[N_all] = rep_array(1, N_all);
+  int obs_Mgit2_all[N_all] = rep_array(1, N_all);
+  int<lower=0, upper=1> obs_Smear[N] = obs_Smear2_all[which(keptin)];
+  int<lower=0, upper=1> obs_Mgit [N] = obs_Mgit2_all [which(keptin)];
   int<lower=0, upper=1> obs_Xpert[N] = obs_Xpert_all[which(keptin)];
 #include includes/cross_validation/transform_data_X.stan
 #include includes/impute_model/transform_data.stan
@@ -73,7 +75,7 @@ transformed parameters {
 
 
 model {
-  int nu = 4;
+  int nu = 5;
    // Imputation model ---------------------------------------------------------
 #include includes/impute_model/variables_declaration.stan 
 #include includes/impute_model/impute_priors.main_part.stan 
@@ -316,7 +318,7 @@ model {
 }
 
 generated quantities {
-   vector[N_all] log_lik;
+  vector[N_all] log_lik;
   vector[N_all] p_Smear;
   vector[N_all] p_Mgit;
   vector[N_all] p_Xpert;
@@ -356,12 +358,12 @@ generated quantities {
       
       for (n in 1:N_all){
         real ll_Smear[2] = 
-          obs_Smear_all[n] == 1 ?
+          obs_Smear2_all[n] == 1 ?
           { bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear[1]), bernoulli_logit_lpmf(Y_Smear_all[n] | z_Smear_RE[n]) } :
           { 0, 0 };
           
         real ll_Mgit[2] = 
-          obs_Mgit_all[n] == 1 ?
+          obs_Mgit2_all[n] == 1 ?
           { bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit[1]), bernoulli_logit_lpmf(Y_Mgit_all[n] | z_Mgit_RE[n]) } :
           { 0, 0 };
         
@@ -369,7 +371,7 @@ generated quantities {
           obs_Xpert_all[n] == 1 ?
           { bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert[1]), bernoulli_logit_lpmf(Y_Xpert_all[n] | z_Xpert_RE[n]) } :
           { 0, 0 };
-        int obs = obs_Smear_all[n] + obs_Mgit_all[n] + obs_Xpert_all[n] == 3 ? 1 : 0;  
+        int obs = obs_Smear2_all[n] + obs_Mgit2_all[n] + obs_Xpert_all[n] == 3 ? 1 : 0;  
         log_lik[n] = log_mix(theta[n],
         bernoulli_logit_lpmf(obs | z_obs[2]) + 
         ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],

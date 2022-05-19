@@ -1,5 +1,5 @@
 library(ggplot2)
-a_m = rstan::extract(m3m$outputs, pars=c('a0', 'a'))
+a_m = rstan::extract(m3mX$outputs, pars=c('a0', 'a'))
 # a$a[,1:ncol(Xd)] = a$a[,1:ncol(Xd)] * 2
 a_m$a[,18] = -a_m$a[,18]
 a_m = cbind(a_m$a0, a_m$a) 
@@ -37,7 +37,8 @@ a_plot_m <-
     fits = list(Original = a, Missing = a_m),
     pars = c('a0',
              paste0('a[',c(1:5,18,6:7,11:13,15,16,14,17,21,10,19,20,8,9),']')),
-    point_est = 'mean',
+    multi_point_est = TRUE,
+    point_est = c('mean', 'median'),
     transformations = function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))),
     prob_outer = .95) +
      geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +
@@ -129,13 +130,17 @@ z_plot_logit_m = (td.misc::mcmc_intervals_multi(list(Original = z, Missing = z_m
 z_plot_m_data_m1 = bayesplot::mcmc_intervals_data(z,
                                                   regex_pars = '^z',
                                                   transformations = plogis, 
-                                                  prob_outer=.95, point_est='mean') %>%
+                                                  prob_outer=.95,  
+                                                  multi_point_est = TRUE,
+                                                  point_est = c('mean', 'median'),) %>%
   mutate(across(c(ll:hh), ~ qlogis(.x))) %>% .$m
 
 z_plot_m_data_m2 = bayesplot::mcmc_intervals_data(z_m,
                                                   regex_pars = '^z',
                                                   transformations = plogis, 
-                                                  prob_outer=.95, point_est='mean')%>%
+                                                  prob_outer=.95, 
+                                                  multi_point_est = TRUE,
+                                                  point_est = c('mean', 'median'),)%>%
   mutate(across(c(ll:hh), ~ qlogis(.x))) %>% .$m
 
 z_plot_logit_m$data$m = c(z_plot_m_data_m1, z_plot_m_data_m2)

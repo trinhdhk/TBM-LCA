@@ -105,20 +105,6 @@ with(
     new.recipe$penalty_term = penalty_term
     new.recipe$penalty_family = penalty_family
     
-    # X_extra = if (!all(is.na(extra_x))) recipe$data_19EI[extra_x] else NULL
-    
-    # HIV missing case
-    # if (hiv_missing == 0){
-    #   recipe$obs_Xd[,1] = 1
-    # }
-    # if (hiv_missing == 1){
-    # recipe$obs_Xd[recipe$Td[,7]==0,1] = 1
-    # recipe$obs_Xd[,1] = ifelse((recipe$Td[,7]==0)&(recipe$obs_Xd[,1]==0), 1, recipe$obs_Xd[,1])
-    # }
-    # if (hiv_missing == 2){
-    #   recipe$Td[,7] = 1
-    # }
-    
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
       dir.create(file.path(cache_dir, "sampling"), recursive = TRUE, showWarnings = FALSE, mode = "770")
@@ -160,7 +146,6 @@ with(
     Xd <- rstan::extract(target_fit, pars='X')$X[,,c(1,2,3,4,5,6,7)]
     Xc <- rstan::extract(target_fit, pars='X')$X[,,c(11,18)]
     theta <- rstan::extract(target_fit, pars='theta')$theta
-    X_extra <- if (!all(is.na(extra_x))) recipe$data_19EI[extra_x] else NULL
     total_iter <- dim(Xc)[1]
     n_sample <- if (rep * fold == 1) 400 else rep * fold
     set.seed(seed)
@@ -168,9 +153,26 @@ with(
     Xd <- Xd[selected_iters,,]
     Xc <- Xc[selected_iters,,]
     Y <- theta[selected_iters,] |> apply(2, \(col) sapply(col, rbinom, n=1, size=1))
-    X_extra <- sapply(X_extra, 
-                      \(x) rep(x, n_sample) |> matrix(nrow=n_sample, byrow=TRUE), 
-                      simplify = FALSE) |> abind::abind(along=3)
+    # Get and impute X_extra
+    X_extra <- if (!all(is.na(extra_x))) recipe$data_19EI[extra_x] else NULL
+    obs_test <- as.logical(with(recipe$data_19EI, obs_smear + obs_mgit + obs_xpert > 0))
+    test <- as.logical(with(recipe$data_19EI, csf_smear + csf_mgit + csf_xpert > 0))
+    impute_data <- cbind(X_extra, obs = obs_test, test = test)
+    X_extra <- lapply(seq_len(dim(Xd)[1]),
+                      function(i) {
+                        dat <- cbind(impute_data, hiv = Xd[i,,1], id = Xc[i,,1])
+                        imp <- mice::mice(dat, m=1, maxit=50, print=FALSE)
+                        comp <- mice::complete(imp)
+                        comp[extra_x] |> as.matrix()
+                      }) 
+    X_extra <- abind::abind(X_extra, along=3) |> aperm(c(3,1,2))
+    # print(dim(X_extra))
+    # print(head(X_extra))
+    # X_extra <- sapply(X_extra, 
+    #                   \(x) rep(x, n_sample) |> matrix(nrow=n_sample, byrow=TRUE), 
+    #                   simplify = FALSE) |> abind::abind(along=3)
+    
+    
     Xd <- abind::abind(Xd, X_extra)
     new.recipe$Xd = Xd
     new.recipe$Xc = Xc
@@ -178,6 +180,7 @@ with(
     if (fold == 1 && rep == 1) rep = 400
     rm(target_fit)
     # gc()
+    
     
     
     if (clean_state){

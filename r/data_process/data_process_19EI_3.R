@@ -59,8 +59,8 @@ joindt[,`:=`(
     (HIV %in% c('', 'NOT DONE', 'UNKNOWN') | is.na(HIV)) & ISHIV == 'C49488' , TRUE,
     (HIV %in% c('', 'NOT DONE', 'UNKNOWN') | is.na(HIV)) & ISHIV == 'N' , FALSE
   ),
-  clin_headache = (ISHEADACHE == 'C49488') %in% TRUE,
-  clin_psychosis = (ISPSYCHOSIS == 'C49488') %in% TRUE,
+  clin_headache = (ISHEADACHE == 'C49488'),
+  clin_psychosis = (ISPSYCHOSIS == 'C49488'),
   clin_illness_day = as.numeric(ILLNESSDAY),
   clin_symptoms = ISWEIGHT | ISNSWEAT | ISCOUGH,
   clin_contact_tb = ISCONTUBER,
@@ -108,7 +108,7 @@ joindt[,`:=`(
   # img_score = img_hydro+2*img_basal+2*img_tuber+img_infarct+2*img_precon,
   img_score = 0,
   tube_score = 2*xray_pul_tb+4*xray_miliary_tb
-)][, crude_total_score := rowSums(.SD[, .(clin_score, csf_score, img_score, tube_score)], na.rm=T)]
+)][, crude_total_score := rowSums(.SD[, .(pmin(clin_score,6), pmin(csf_score,4), pmin(img_score,6), pmin(tube_score,4))], na.rm=T)]
 
 # joindt <- joindt[USUBJID!='003-335'&!is.na(RANDO)]
 

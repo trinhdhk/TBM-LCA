@@ -42,15 +42,15 @@ data_19EI[, age := ifelse(age==0, new_age, age)]
 data_19EI[,csf_rbc:=ifelse(is.na(REDCELL),0,REDCELL)]
 
 #join the test results & remove conataminated
-data_19EI = merge(
-  data_19EI |> dplyr::select(-csf_xpert, -csf_mgit, -csf_smear),
+data_19EI = dplyr::left_join(
+  data_19EI |> dplyr::select(-csf_xpert, -csf_mgit, -csf_smear, XpertLevel_EI=XpertLevel),
   test_data |> dplyr::select(USUBJID=PatientCode,
                              csf_smear=ZielNeelsen,
                              csf_mgit=MGITculture,
                              csf_xpert=GeneXpert,
                              csf_mgit_contaminated = Contaminated,
-                             Volume, diffday, wrong_name),
-  all.x=TRUE)
+                             Volume, diffday, wrong_name, GrowthUnit, TimeToPositive, XpertLevel),
+  by='USUBJID')
 
 #csf smear should not be missing if xpert or mgit is available. they were forgotten to input
 data_19EI[, csf_smear := ifelse(is.na(csf_smear)&(!is.na(csf_mgit)|!is.na(csf_xpert)), FALSE, csf_smear)]
@@ -63,6 +63,7 @@ data_19EI = data_19EI |>
   filter(is.na(Volume) | Volume >= 3) |>
   filter(is.na(diffday) | diffday < 7) |>
   filter(!wrong_name)
+  # filter(!USUBJID%in% c('003-102', '003-407'))  #death
 
 data_19EI[, `:=`(
   Volume    = fifelse(is.na(Volume), 6, Volume),
@@ -136,7 +137,7 @@ Xc <- data_19EI %$% tibble(
   csfpro=scale(log2(csf_protein_corrected), scale=T),                #5    #15   
   csflac=scale(log2(csf_lactate), scale=T),                          #6    #16   
   csfwbc=scale(log10(csf_wbc_corrected+1), scale=T),                 #7    #17
-  gcs=structure((15-clin_gcs - 3)/3, dim=c(658,1), `scaled:center`=3, `scaled:scale`=3),  #8    #18
+  gcs=structure((15-clin_gcs - 3)/3, dim=c(nrow(data_19EI),1), `scaled:center`=3, `scaled:scale`=3),  #8    #18
   csfeos=scale.nonzero(log10(csf_eos_corrected+1), scale=T),                 #9   #19
   csfred=scale(log10(csf_rbc+1), scale=T)                            #10   #20
 )

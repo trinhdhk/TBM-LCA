@@ -650,17 +650,17 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
   pred_env$pred = pred
   pred_env$pred_rep = pred_rep
   pred_env$obs = obs
-  pred_env$add_pred <- function(pr, line = FALSE){
+  pred_env$add_pred <- function(pr, line = FALSE, se = !line){
     pr <- pr
     if (method == "loess"){
-      geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'loess', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line,span=span)
+      geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'loess', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = se, span=span)
     } else if (method == "gam") {
-      geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'gam', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = !line)
+      geom_smooth(aes(x = pr, y = as.numeric(obs)), method = 'gam', color = subcolor1, fill = subcolor2, alpha=if (line) 1 else .5/length(pred_rep), size=line, se = se)
     } else {
       if (type == 'binary')
-        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line) 
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=as.logical(y)~splines::ns(qlogis(x), df=knots), method.args=list(family='binomial'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = se) 
       else
-        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = !line) 
+        stat_smooth(aes(x = pr, y = as.numeric(obs)), method="glm", formula=y~splines::ns(qlogis(x), df=knots), method.args=list(family='gaussian'), color = subcolor1, fill = subcolor2, size=line, alpha=if (line) 1 else .6/length(pred_rep), se = se) 
     }
   }
   # browser()\
@@ -670,7 +670,7 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
     subcolor2 <- "#999999"
     p <- ggplot(mapping=aes(x = pred))
     
-    for (pr in pred_rep) p <- p + add_pred(pr)
+    for (pr in pred_rep) p <- p + add_pred(pr, se=FALSE)
     for (pr in pred_rep) p <- p + add_pred(pr, line = .3)
     
     

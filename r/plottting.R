@@ -38,7 +38,7 @@ labs = c(
   '*log<sub>10</sub>* (CSF Eosinophil)',
   '*log<sub>10</sub>* (CSF RBC)',
   'Cryptococcus + b',
-  'Gram stain +'
+  'CSF Gram stain +'
 ) 
 
 add_annotate = function(tab, text = '{round(mean,2)} [{round(`2.5%`,2)}; {round(`97.5%`,2)}]'){
@@ -141,7 +141,8 @@ a_plot <-
     fits = list(a_orig),
     pars = c('a0',
              paste0('a[',c(1:5,18,6:7,11:13,15,16,14,10,19,20,8,9),']')),
-    point_est = 'mean',
+    multi_point_est = TRUE,
+    point_est = c('mean', 'median'),
     transformations = function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))),
     # point_size = 4,
     prob_outer = .95) +
@@ -170,7 +171,7 @@ a_plot <-
 a_plot$data$m = bayesplot::mcmc_intervals_data(a_orig,
                                              pars = c('a0',
                                                       paste0('a[',c(1:5,18,6:7,11:13,15,16,14,10,19,20,8,9),']')),
-                                             transformations = plogis, prob_outer=.95, point_est='mean') %>%
+                                             transformations = exp, prob_outer=.95, point_est='mean') %>%
   mutate(across(c(ll:hh), ~ sign(qlogis(.x)) * sqrt(abs(qlogis(.x))))) %>% .$m
 
 b = rstan::extract(model$outputs, pars=c('b_HIV', 'b'))
@@ -185,7 +186,8 @@ for (i in 2:(ncol(b))) b_orig[,i] = b_orig[,i]/(scale$`scaled:scale`[[re_b[i-1]]
 # b_orig[,1] = b_orig[,1] - apply(intercept_translation_b,1,sum)
 b_plot = td.misc::mcmc_intervals_multi(list(b_orig),
                         pars = c('b_HIV',  paste0('b[',c(1,6,4,5,2,3), ']')),
-                        point_est = 'mean',
+                        multi_point_est = TRUE,
+                        point_est = c('mean', 'median'),
                         # point_size = 2.5,
                         prob_outer = .95) |>
   td.misc::change_ylabs(
@@ -218,15 +220,17 @@ ab_plot = a_plot / b_plot + plot_layout(guides='collect', ncol=1,
 z = rstan::extract(model$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert'))
 z = do.call(cbind, z)
 colnames(z) = paste0('z_',rep(c('Smear', 'Mgit', 'Xpert'),each=2), rep(c('[1]', '[2]'), 3))
-z_plot = mcmc_intervals(z, 
+z_plot = td.misc::mcmc_intervals_multi(list(z=z), 
                         regex_pars = '^z',
                         transformations = 'plogis',
-                        point_est = 'mean',
+                        multi_point_est = TRUE,
+                        point_est = c('mean', 'median'),
                         point_size = 2.5,
                         prob_outer = .95)
 
 z_plot_logit = mcmc_intervals(z, 
                              regex_pars = '^z',
+                             multi_point_est = TRUE,
                              point_est = 'mean',
                              point_size = 2.5,
                              prob_outer = .95)

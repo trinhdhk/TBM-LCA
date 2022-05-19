@@ -11,7 +11,8 @@ a[,9] = a[,9] /scale$`scaled:scale`$id
 a_plot_s2 = td.misc::mcmc_intervals_multi(list(a),
                                      pars = c('a0',
                                               paste0('a[',c(1:5, 9, 6:8, 10:11),']')),
-                                     point_est = 'mean',
+                                     multi_point_est = TRUE,
+                                     point_est = c('mean', 'median'),
                                      point_size = 2.5,
                                      prob_outer = .95) |>
   td.misc::change_ylabs(

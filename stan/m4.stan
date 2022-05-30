@@ -81,7 +81,7 @@ transformed parameters {
 
 
 model {
-  int nu = 4;
+  int nu = 6;
    // Imputation model ---------------------------------------------------------
 #include includes/impute_model/variables_declaration.stan 
 #include includes/impute_model/impute_priors.main_part.stan 

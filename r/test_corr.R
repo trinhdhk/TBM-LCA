@@ -13,7 +13,7 @@ data_19EI[,
               as.integer(time_str[[1]])*24 + as.integer(time_str[[2]])
             })]
 
-model = readRDS('outputs/m3_t00_b345678_q7_r1_k1_2.RDS')$outputs
+model = readRDS('outputs/m3_n00_b345678_q7_r1_k1.RDS')$outputs
 X = rstan::extract(model, 'X')$X
 b = rstan::extract(model, c('b', 'b_HIV', 'b_RE'))
 RE = rstan::extract(model, 'RE')$RE
@@ -49,7 +49,7 @@ bd_dt =
 bd_dt[, log_culture_time := (log2(culture_time+1))][,  gph := log(growth_unit*culture_time)]
 # check correpondence with Xpert Level
 xpert_level = 
-  ggstatsplot::ggbetweenstats(bd_dt[xpert==TRUE], x=xpert_level, y=burden, plot.type='box', pairwise.comparison=T, type='non-parametric', pairwise.display='all',
+  ggstatsplot::ggbetweenstats(bd_dt[xpert==T], x=xpert_level, y=burden, plot.type='box', pairwise.comparison=T, type='non-parametric', pairwise.display='all',
                                   xlab = "Xpert semi-quantification level", ylab = "Standardised Mycobacillary burden")
 # check correspondence with culture time
 cultime = list(
@@ -66,15 +66,16 @@ score_dt = data.table(
   ztheta = mean_ztheta,
   tbm_dx = fcase(data_19EI[,csf_smear|csf_mgit|csf_xpert], "Confirmed TBM", 
                  data_19EI$tbm_dx, "Clinical TBM",
-                 default = "Non-TBM") |> tidyr::replace_na('Non-TBM')
+                 default = "Not TBM") |> tidyr::replace_na('Not TBM')
 )
 
-area = expand.grid(score = seq(0, 13, .01), y=seq(-25, 20,.1)) |> setDT()
+area = expand.grid(score = seq(0, 14, .01), y=seq(-25, 20,.1)) |> setDT()
 # score_dt[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "Probable TBM")]
 area[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "Probable TBM") |> factor(levels = c('Unknown', 'Possible TBM', 'Probable TBM'), ordered=TRUE)]
 defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.75),
                                        point.args = list(alpha=0),
-                                      xlab = "Total score", ylab = "Predicted TBM risk (%)") +
+                                      xlab = "Total score", ylab = "Predicted TBM risk (%)",
+                                      ggplot.component = scale_x_continuous(breaks = c(0, 3, 6, 9, 12, 14))) +
   geom_jitter(aes(color = tbm_dx), size=1, na.rm=TRUE, width=.3, height=1)+
   scale_color_brewer(type='qual', palette=7, name='Dx at discharge', guide = guide_legend(nrow=2, title.position = 'top')) +
   geom_raster(aes(x=score, y=y, fill = def), data=area, alpha=.3) + 

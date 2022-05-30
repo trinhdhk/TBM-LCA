@@ -6,7 +6,7 @@ init_r: 1
 adapt_delta: 0.75
 re_b: !expr c(3, 4, 5, 6, 7, 8)
 quad_Xc: 7
-penalty_family: normal
+penalty_family: t
 penalty-term: !expr c(0, 0)
 all_params: yes
 pos_a: !expr c(1, 7, 11)

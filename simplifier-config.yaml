@@ -10,3 +10,4 @@ penalty-term: 0
 all_params: yes
 clean_state: yes
 extra_x: !expr c( "clin_headache", "clin_psychosis")
+use_rstan_compiler: yes

@@ -179,10 +179,12 @@ Trinh Dong, 2021
         }
       }
       
+      
       pat += a_pattern[:,i];
       log_probs += log(probs_pattern[:,i]);
     }
     
+    // print(obs_pattern);
     out[1] = log_probs;
     out[2] = pat;
     return(out);

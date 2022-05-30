@@ -28,6 +28,7 @@ LCAModel <- R6::R6Class(
       # self$params <- model$.META$params
       private$.META <- model$.META
       self$update_misc()
+      invisible(model)
     },
     print = function(){
       cat("TBM LCA model", self$model_name, "\n")
@@ -42,6 +43,16 @@ LCAModel <- R6::R6Class(
     },
     extract = function(...){
       rstan::extract(self$model_cmb, ...)
+    },
+    get_metrics = function(file = NULL){
+      s <- list(
+        model_name = self$model_name,
+        p = self$p,
+        p_rep = self$p_rep,
+        elpd = self$elpd
+      )
+      if (!length(file)) return(s) 
+      saveRDS(s, file)
     },
     export_to_Shiny = function(file = NULL){
       pars <- self$meta$params
@@ -132,15 +143,16 @@ LCAModel <- R6::R6Class(
     ),
     calibration_plot = function(
       which = c("Y", "C"),
-      method = c("loess", "splines"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      method = c("loess", "splines", "gam"),
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       span = .75,
-      knots = 5,
+      knots = 3,
       est = c("mean", "median"),
-      plot_rep = FALSE, theme = ggplot2::theme_bw,
+      plot_rep = FALSE, theme = ggplot2::theme_bw(),
       ...
     ){
-      which <- match.arg(which); method <- match.arg(method)
+      which <- match.arg(which);
+      method <- match.arg(method)
       require(ggplot2)
       require(patchwork)
       est <- match.arg(est)
@@ -157,14 +169,16 @@ LCAModel <- R6::R6Class(
           private$.misc$calib_curve(p_summary$p_Xpert[[est]], lapply(p_rep, function(.) .$p_Xpert[[est]]),Y_Xpert_all, "Xpert", span=span,method = method, knots=knots,..., theme = theme) + xlab("") + ylab("")
       
       } else {
-        private$.misc$calib_curve(p_summary$theta[[est]], lapply(p_rep, function(.) .$theta[[est]]), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
+        not.na <- which(!is.na(C))
+        C <- na.omit(C)
+        private$.misc$calib_curve(p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
       }
     },
     density_plot = function(
       which = c("Y", "C"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       est = c("mean", "median"),
-      theme = ggplot2::theme_bw 
+      theme = ggplot2::theme_bw()
     ){
       which <- match.arg(which)
       require(ggplot2)
@@ -177,26 +191,33 @@ LCAModel <- R6::R6Class(
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        (classifierplots::density_plot(as.integer(Y_Smear_all), p_summary$p_Smear[[est]]) + ggplot2::ggtitle("Smear") + scale_x_continuous(name="", trans='reverse') + theme()) +
-          (classifierplots::density_plot(as.integer(Y_Mgit_all), p_summary$p_Mgit[[est]]) + ggplot2::ggtitle("Mgit")  + scale_y_continuous(name="", expand=expansion(0))+ theme()) + 
-          (classifierplots::density_plot(as.integer(Y_Xpert_all), p_summary$p_Xpert[[est]]) + ggplot2::ggtitle("Xpert")  + scale_x_continuous(name="", trans='reverse') + scale_y_continuous(name="", expand=expansion(0)) + theme())+ 
+        (classifierplots::density_plot(as.integer(Y_Smear_all), p_summary$p_Smear[[est]]) + ggplot2::ggtitle("Smear") + scale_x_continuous(name="", trans='reverse') + theme) +
+          (classifierplots::density_plot(as.integer(Y_Mgit_all), p_summary$p_Mgit[[est]]) + ggplot2::ggtitle("Mgit")  + scale_y_continuous(name="", expand=expansion(0))+ theme) + 
+          (classifierplots::density_plot(as.integer(Y_Xpert_all), p_summary$p_Xpert[[est]]) + ggplot2::ggtitle("Xpert")  + scale_x_continuous(name="", trans='reverse') + scale_y_continuous(name="", expand=expansion(0)) + theme)+ 
           plot_layout(guides='collect') & ggplot2::theme(legend.position = 'bottom')
-      } else 
-        classifierplots::density_plot(as.integer(C), p_summary$theta[[est]]) + theme() + ggplot2::ggtitle("Positive TBM")
+      } else {
+        not.na <- which(!is.na(C))
+        C <- na.omit(C)
+        classifierplots::density_plot(as.integer(C), p_summary$theta[[est]][not.na]) + theme + ggplot2::ggtitle("Positive TBM")
+      }
     },
     roc_plot = function(
-      which = c("Y", "C"),
-      C = !self$recipe$data_19EI$other_dis_dx,
+      which = c("Y", "C", "simulated_C", "smear", "mgit", "xpert"),
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       resamps = 2000,
       force_bootstrap = NULL,
       est = c("mean", "median"),
-      theme = ggplot2::theme_bw
+      plot_rep = FALSE,
+      theme = ggplot2::theme_bw(),
+      ...
     ){
       which <- match.arg(which)
       require(ggplot2)
       require(patchwork)
       est <- match.arg(est)
+      
       p_summary <- self$p
+      p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
       
       if (which == "Y"){
         Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
@@ -204,12 +225,31 @@ LCAModel <- R6::R6Class(
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
         suppressMessages(
-          classifierplots::roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Smear") + scale_x_continuous(name="") +
-          classifierplots::roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] , resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Mgit") + scale_y_continuous(name="") +  
-          classifierplots::roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Xpert") + scale_x_continuous(name="") + scale_y_continuous(name="")
+          patch <-
+            private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Smear") + ggplot2::theme(axis.title = element_blank()) + # + scale_x_continuous(name="") +
+            private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Mgit") + ggplot2::theme(axis.title = element_blank()) + #+ scale_y_continuous(name="") +  
+            private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Xpert") + ggplot2::theme(axis.title = element_blank())#+ scale_x_continuous(name="") + scale_y_continuous(name="")
         )
-      } else 
-        classifierplots::roc_plot(C, p_summary$theta[[est]], resamps = resamps, force_bootstrap = force_bootstrap) + theme() + ggplot2::ggtitle("Positive TBM")
+        
+        gt <- patchwork::patchworkGrob(patch)
+        x <- list(gt, left = "True Positive Rate (%)    (Sensitivity)", bottom = "False Positive Rate (%)    (1-Specificity)")
+        class(x) <- 'multggplotGrob'
+        x
+      } else if (which == "smear") {
+        Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
+        private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Smear")
+      } else if (which == "mgit") {
+        Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
+        private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap,...) + theme + ggplot2::ggtitle("Mgit")  
+      } else if (which == "xpert") {
+        Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
+        private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Xpert")
+      } else {
+        not.na <- which(!is.na(C))
+        C <- na.omit(C)
+        plt <- private$.misc$my_roc_plot(C, p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Positive TBM")
+        # ggplot2::ggplotGrob(plt)
+      }  
     }
   ),
   private = list(.misc = new.env(), .elpd = NULL, .loglik = NULL, .p = NULL, .p_rep = NULL, .META = list()),
@@ -251,3 +291,11 @@ LCAModel <- R6::R6Class(
     }
   )
 )
+
+print.multggplotGrob <- plot.multggplotGrob <- function(x, ...){
+  do.call(gridExtra::grid.arrange, x)
+}
+
+print.ggplotGrob <- plot.ggplotGrob <- function(x, ...){
+  plot(x, ...)
+}

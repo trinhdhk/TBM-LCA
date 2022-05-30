@@ -12,6 +12,7 @@ args <-
   # add_argument("--help", help = "print this help page and exit", short = "-h", flag = TRUE)
   add_argument("--input", help = "input Rdata file", 
                default = "data/cleaned/data_input.Rdata", short = "-i") %>%
+  add_argument("--config-file", help = "configuration file, in yaml format, replace all argument", short = "-c", default = "") %>%
   add_argument("--sampler", help = "sampler file, default to stan/<model>.stan", short = "-s") %>% 
   add_argument("--mode", help = "mode, either sampling, optimizing, or vb. Apart from sampling, only iteration number is tweakable", default = "sampling", short="-m") %>%
   add_argument("--output-dir", help = "output folder", default = "outputs", short = "-o") %>%
@@ -42,7 +43,9 @@ args <-
   add_argument("--quad-RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
-  add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf)
+  add_argument("--include-pars", help = "List of parameters to be extracted, default is based on the model", default = NA_character_, nargs = Inf) %>%
+  add_argument("--append", help = "Where the list in include-pars be appended or replace the default", flag = TRUE) %>%
+  add_argument("--hiv-missing", help = "HIV missing treating condition, 0: all is 0, 1: MAR for suspected, 2: MAR for all ", default=1, nargs=1)
 argparser <- parse_args(args)
 
 # Functions to create folds
@@ -69,6 +72,7 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
            Y_Smear_all = data_19EI$csf_smear,
            Y_Mgit_all = data_19EI$csf_mgit,
            Y_Xpert_all = data_19EI$csf_xpert,
+           Y_NegCrypto_all = recipe$csf_NegCrypto,
            obs_Smear_all = data_19EI$obs_smear,
            obs_Mgit_all = data_19EI$obs_mgit,
            obs_Xpert_all = data_19EI$obs_xpert,
@@ -92,9 +96,16 @@ create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_sp
   folds
 }
 
-
+if (nchar(argparser$config_file)) {
+  config <- try(yaml::read_yaml(argparser$config_file, eval.expr = TRUE))
+  if (inherits(config, 'try-error')) cli::cli_alert_danger('Config file parsing failed!')
+  else {
+    argparser <- modifyList(argparser, config)
+  }
+}
 results <- new.env(parent=emptyenv())
 results$.META <- argparser
+
 with(
   argparser,
   {
@@ -144,8 +155,25 @@ with(
     load(input, envir = recipe)
     recipe$penalty_term = penalty_term
     recipe$penalty_family = penalty_family
-    # Create results env
-    # results <- new.env()
+    # Remove crypto if model == m3e
+    if (model == 'm3e') {
+      recipe$csf_NegCrypto = !recipe$Xd[,8]
+      recipe$Xd = recipe$Xd[,-8]
+      recipe$obs_Xd = recipe$obs_Xd[,-8]
+    }
+    
+    # HIV missing case
+    if (hiv_missing == 0){
+      recipe$obs_Xd[,1] = 1
+    }
+    if (hiv_missing == 1){
+      recipe$obs_Xd[recipe$Td[,7]==0,1] = 1
+      # recipe$obs_Xd[,1] = ifelse((recipe$Td[,7]==0)&(recipe$obs_Xd[,1]==0), 1, recipe$obs_Xd[,1])
+    }
+    if (hiv_missing == 2){
+      recipe$Td[,7] = 1
+    }
+  
     
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
@@ -156,31 +184,44 @@ with(
     # Load cache or create new folds
     cache_file <- file.path(cache_dir, "folds", paste0(output_name, "_recipe.RDS"))
     has_cache <- file.exists(cache_file)
-    writeLines(paste(">> Program starts at:", Sys.time()))
-    writeLines(crayon::yellow("------------------------------------------------"))
-    writeLines(crayon::yellow("Configuration:"))
-    writeLines(crayon::yellow("- Model", model))
-    writeLines(crayon::yellow("-", fold, "fold(s) with", rep, "repetition(s)"))
-    writeLines(crayon::yellow("- Prior family:", switch(as.character(penalty_family), "0" = "Student t", "1" = "Laplace", "2" = "Normal"),
-      "with scales = {", toString(ifelse(penalty_term==0, "~N[0,2.5]", penalty_term)), "}"))
-    writeLines(crayon::yellow("- Seed =", seed))
-    writeLines(crayon::yellow("- Stan config: Cores =", cores, "Chains =", chains, "Iter =", iter, "Warmup =", warmup, "Init_r =", init_r, "Adapt_delta =", adapt_delta))
-    if (model == "m6kf")
-      writeLines(crayon::yellow("- Number of latent factors:", n_FA))
-    writeLines(crayon::yellow("------------------------------------------------"))
+    prior_family_name <- 
+      switch(as.character(penalty_family), 
+             "0" = "Student t", "1" = "Laplace", "2" = "Normal")
+    # Print out program information
+    writeLines('')
+    cli::cli_inform('{.strong LCA Model Sampler}')
+    cli::cli_alert_info('Program starts at: {Sys.time()}')
+    cli::cli_h1('Configurations:')
+    cli::cli_ul()
+    cli::cli_li('{.strong Model} {model}')
+    cli::cli_li('Mode: {mode}')
+    cli::cli_li('{fold} fold{?s} with {rep} repetition{?s}')
+    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N(0,2.5)", penalty_term))}]')
+    cli::cli_li('{.strong Random seed:} {.field {seed}}')
+    cli::cli_li('Stan configurations:')
+    ulid <- cli::cli_ul()
+    cli::cli_li('cores = {.field {cores}}')
+    cli::cli_li('chains = {.field {chains}}')
+    cli::cli_li('iter = {.field {iter}}')
+    cli::cli_li('warmup = {.field {warmup}}')
+    cli::cli_li('adapt_delta = {.field {adapt_delta}}')
+    cli::cli_li('init_r = {.field {init_r}}')
+    cli::cli_end(ulid)
+    cli::cli_end()
+    cli::cli_h1('')
 
     if (clean_state){
       if (has_cache) {
-        writeLines(">> Remove cache and create new folds")
+        cli::cli_alert("Remove cache and create new folds")
         file.remove(cache_file)
       }
       folds <- create_folds(recipe, fold, rep, seed, cache_file, n_FA, B, lifted_spc, quad_RE=m3_quadRE)
     } else{
       if (has_cache) {
-        writeLines(">> Cache file found. Use cache file.")
+        cli::cli_alert("Cache file found. Use cache file.")
         folds <- readRDS(cache_file)
       } else {
-        writeLines(">> No cache file found. Create new folds")
+        cli::cli_alert("No cache file found. Create new folds")
         folds <- create_folds(recipe, fold, rep, seed, cache_file, n_FA, B, lifted_spc, quad_RE = m3_quadRE)
       }
     }
@@ -195,7 +236,7 @@ with(
       dir.create(outdir, showWarnings = F)
     } else outdir <- NULL
     
-    cat('>> Compile the sampler\n')
+    cli::cli_alert('Compile model sampler')
     if (is.na(sampler)) sampler <- file.path("stan", paste0(model, ".stan"))
     sampler <- tryCatch(
       my_stan_model(sampler),
@@ -206,29 +247,36 @@ with(
         my_stan_model(sampler)
       }
     )
-    writeLines(">> Sample")
-    pars <- c("z_Smear", "z_Mgit", "z_Xpert",
-              "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta")
+    cli::cli_alert('Sample')
+    pars <- c("z_Smear", "z_Mgit", "z_Xpert", "z_theta",
+              "log_lik", "p_Smear", "p_Mgit", "p_Xpert", "theta", "pairwise_corr")
     if (model_no > 0) pars <- c(pars, "a0", "a")
     # if (model != "m0kf" && any(penalty_term == 0)) pars <- c(pars, paste0("sp", c(1,2)[penalty_term==0]))
     if (model_no > 0 && any(penalty_term == 0)) pars <- c(pars, 'sp')
     if (model_no > 0 && all_params) pars <- c(pars, 
-      "HIV_a0", "HIV_a", 
+      "HIV_a0", "HIV_a",
       "cs_a0", "cs_a", "L_Omega_cs",
       "mp_a0", "mp_a", "L_Omega_mp",
-      "age_a0", "age_a", "age_sigma",
+      # "age_a0", "age_a", "age_sigma",
       "id_a0", "id_a", "id_sigma",
-      if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
+      if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf", "L_sigma_gcs", "L_Omega_gcs", "csf_a0", "csf_a", "gcs_a0", "gcs_a") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))
     if (!model_no %in% c(0,1)) pars <- c(pars, "b_RE", "b_HIV")
-    if (model_no >= 3) pars <- c(pars, "b")
+    if (model_no > 1) pars <- c(pars, "b")
     if (model_no == 4) pars <- c(pars, "b_FE")
+    if (model == 'm3d') pars <- c(pars, 'a2')
+    if (model == 'm3e') pars <- c(pars, 'z_NegCrypto')
+    if (model == 'm3i') pars <- c(pars, 'b_mp')
+    if (model == 'm4d') pars <- c(pars, "a2")
     if (is_pca) pars <- c(pars, "L_csf")
-    if (model_no == 5) pars <- c(pars, "b_cs")
+    # if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     if (include_d) pars <- c(pars, c('d'))
     if (grepl('missing$', model)) pars <- c(pars, 'z_obs') 
-    if (grepl('missing$', model)) pars <- c(pars, 'z_obs_Xpert') 
-    if (!all(is.na(include_pars))) pars <- include_pars 
+    if (grepl('missingXpert$', model)) pars <- c(pars, 'z_obs_Xpert') 
+    if (!all(is.na(include_pars))) {
+      if (append) pars <- c(pars, include_pars)
+      else pars <- include_pars
+    }
     
     if (mode == "sampling"){
       results$outputs <- misc$stan_kfold(sampler = sampler,
@@ -267,19 +315,20 @@ with(
     
     # Clear cache
     if (!keep_cache){
-      writeLines(">> Clean up cache")
+      cli::cli_inform("Clean up cache")
       unlink(outdir, recursive = TRUE)
       file.remove(cache_file)
     } 
     
     # Save results
-    writeLines(">> Save results")
+    cli::cli_alert("Save results")
     results$model_name <- model
     results$folds  <- folds
     if (mode != 'optimizing')
       results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
     saveRDS(results, file = file.path(output_dir, output_file))
     future::plan("sequential")
+    cli::cli_alert_success('Sampling completed!')
   })
 
 

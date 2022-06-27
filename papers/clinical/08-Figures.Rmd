@@ -8,12 +8,12 @@ plot(fig_svg)
 
 <!-- Result -->
 
-```{diagrammer patient-flow, fig.show="hold", out.width="100%", out.height="10cm",  fig.align="center", fig.cap="Recruited patient profile", fig.id="patient-flow"}
+```{diagrammer patient-flow, fig.show="hold", out.width="100%", out.height="10cm",  fig.align="center", fig.cap="CONSORT diagram of recruited population", fig.id="patient-flow"}
 #check final number
 digraph patientflow {
   # compound = true;
-  graph[fontname="CMU Serif", splines=line];
-  node[fontname = "CMU Serif", shape="rectangle"];
+  graph[fontname="CMU-Serif", splines=line];
+  node[fontname = "CMU-Serif", shape="rectangle"];
   # edge[splines=line]
   
   Total [label = "@@1 enrolled and have CSF samples collected" ]
@@ -75,7 +75,7 @@ digraph patientflow {
 [12]: var[12]
 ```
 
-```{r venn-test, out.width='50%', fig.align='center', fig.asp=1, fig.width=6, fig.cap = 'Venn diagram for ZN Smear, MGIT, and Xpert'}
+```{r venn-test, out.width='50%', fig.align='center', fig.asp=1, fig.width=6, fig.cap = 'Venn diagram for ZN-Smear, MGIT, and Xpert profile in the study population'}
 
 # data_19EI |>
 #   mutate(across(c(csf_smear, csf_mgit, csf_xpert), as.logical)) |>
@@ -100,7 +100,7 @@ plot(eulfit,
      adjust_labels=TRUE)
 ```
 
-```{r coef-est, out.width="90%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Estimates of TBM odd ratios in prevalence model for different covariates, excluding WBC count; B: Estimates of TBM odd ratio for each value of CSF WBC count; C: Estimates of factors impacting individual's bacillary burden, given they have TBM. In A and C: dot, thick lines, and thin lines are posterior expected values, 50\\% and 95\\% credible intervals. In B: the blue line is expected odds ratio, the inner ribbon and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="coef-est", warning=FALSE, message=FALSE}
+```{r coef-est, out.width="90%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Estimates of TBM odd ratios in prevalence model for different covariates, excluding WBC count; B: Estimates of TBM odd ratio for each value of CSF WBC count ($cell/mm^3$); C: Estimates of factors impacting individual's bacillary burden, given they have TBM. In A and C: dot, thick lines, and thin lines are posterior expected values, 50\\% and 95\\% credible intervals. In B: the blue line is expected odds ratio, the inner ribbon and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="coef-est", warning=FALSE, message=FALSE}
 
 library(patchwork)
 
@@ -148,7 +148,7 @@ ab_plot
 
 
 
-```{r coef-est.old, fig.align='center', fig.asp=1.4, fig.cap='Posterior estimates (mean and 50%/95% credible intervals) of coefficients of risk factors for TBM (prevalence model) and variables that impact bacillary burden (latent class model)', message=FALSE, warning=FALSE, out.width='100%', include=FALSE, eval=FALSE}
+```{r coef-est.old, fig.align='center', fig.asp=1.4, fig.cap='Posterior estimates (Median and 50%/95% credible intervals) of coefficients of risk factors for TBM (prevalence model) and aggravating factors (bacillary burden model)', message=FALSE, warning=FALSE, out.width='100%', include=FALSE, eval=FALSE}
 (a_plot + ggtitle('TBM Risk factor')) /
   (b_plot + scale_x_continuous() + ggtitle('Bacillary burden predictors')) + 
   plot_layout(nrow=2, heights=c(7,2))&
@@ -156,7 +156,7 @@ ab_plot
 ```
 
 
-```{r model-metrics, fig.align="center", fig.cap='Model performance. A: ROC and AUC against confirmatory test results; B: calibration against confimatory test results; C: ROC and AUC against hospital diagnosis; D: Calibration against hospital diagnosis. For calibration plots, “observed” probabilities are defined as values smoothed by a loess fit against observed binary events, in which the translucent ribbons represent the level of uncertainty of the smoothing. For ROC plots, AUC values are presented as \\emph{“average (min - max over 5 repetitions of cross-validation)”}; the grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average.' , fig.dim=c(9, 12), fig.show='hold', message=FALSE, warning=FALSE, out.width='80%', fig.id="model-metrics"}
+```{r model-metrics, fig.align="center", fig.cap='Model performance. A: ROC and AUC against confirmatory test results; B: calibration against confimatory test results; C: ROC and AUC against hospital diagnosis; D: Calibration against hospital diagnosis. For calibration plots, “observed” probabilities are defined as values smoothed by a loess fit against observed binary events. For ROC plots, AUC values are presented as “average (min - max over 5 repetitions of cross-validation)”; the grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average.' , fig.dim=c(9, 12), fig.show='hold', message=FALSE, warning=FALSE, out.width='80%', fig.id="model-metrics"}
 
 roc_y <- do.call(gridExtra::arrangeGrob, m3$ROC$Y)
 m3$calib$Y[[3]] = m3$calib$Y[[3]] + theme(axis.title.y = element_blank())
@@ -180,16 +180,18 @@ theta_calib <- m3_calib$C
 theta_rocs+theta_calib
 ```
 
-```{r simplified-model-plot, fig.align='center', fig.cap="A: Posterior estimates of coefficients of clinical TBM risk factors. Points, thick lines, and thin lines are posterior means, 50\\% and 95\\% credible intervals. B: Calibration plot of the simplified model, expected posterior probability of prevalence model. “Observed” probabilities are defined as values smoothed by a loess fit against observed binary events, in which the translucent ribbons represent the level of uncertainty of the smoothing. C: ROC plot and AUC of the simplified model, against hospital diagnosis. AUC values are presented as \\emph{“average (min - max over 20 repetitions of cross-validation)”}.", message=FALSE, warning=FALSE, out.width='100%', dpi=600, fig.dim=c(9, 8), fig.id = "simplified-model-plot"}
+```{r simplified-model-plot, fig.align='center', fig.cap="A: Posterior estimates of coefficients of clinical TBM risk factors. Points, thick lines, and thin lines are posterior Medians, 50\\% and 95\\% credible intervals. B: Calibration plot of the simplified model, expected posterior probability of prevalence model. “Observed” probabilities are defined as values smoothed by a loess fit against observed binary events. C: ROC plot and AUC of the simplified model, against hospital diagnosis. AUC values are presented as “average (min - max over 20 repetitions of cross-validation)”.", message=FALSE, warning=FALSE, out.width='100%', dpi=600, fig.dim=c(8, 8), fig.id = "simplified-model-plot"}
 # tmp_svg <- cowplot::ggdraw() + 
 #   cowplot::draw_image(magick::image_read_svg("includes/a_plog_s.svg", width=212*5, height=159*5))
 # plot(tmp_svg)
-a_plot_s <- s_plots$a_plot_s + 
-  theme(
+a_plot_s<- s_plots$a_plot_s
+  # theme(
     #text = element_text('serif', size = 10), 
     #plot.tag = element_text('serif', size = 10), 
-    axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = "none") 
+    # axis.text.y = ggtext::element_markdown(), legend.position = "none") 
 metrics_s <- readRDS(file.path(data_dir, '..', 'export', 'metrics', 's_plot.RDS')) 
+metrics_s$ROC <- metrics_s$ROC |> patchwork::wrap_elements()
+metrics_s$calib <- metrics_s$calib |> patchwork::wrap_elements()
 
-(a_plot_s + (metrics_s$calib/ (metrics_s$roc))) + plot_annotation(tag_levels = 'A')
+(wrap_elements(a_plot_s)  / (metrics_s$calib | (metrics_s$ROC))) + plot_annotation(tag_levels = 'A')
 ```

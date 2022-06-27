@@ -1,3 +1,6 @@
 book_filename: "LCA_paper.Rmd"
 output_dir: "outputs"
 delete_merged_file: yes
+rmd_files:
+  word : ["index.Rmd", "01-Abstract.Rmd", "02-Introduction.Rmd", "03-Methods.Rmd", "04-Results.Rmd","05-Discussions.Rmd", "06-Conclusion.Rmd", "07-Tables.Rmd", "08-Figures.Rmd"]
+  latex :  ["index.Rmd", "01-Abstract.Rmd", "02-Introduction.Rmd", "03-Methods.Rmd", "04-Results.Rmd","05-Discussions.Rmd", "06-Conclusion.Rmd", "07-Tables.Rmd", "08-Figures.Rmd", "09-Stat-Details.Rmd", "10-Clin-Details.Rmd"]

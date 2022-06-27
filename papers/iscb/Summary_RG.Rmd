@@ -1,8 +1,9 @@
 ---
-title: 'In search of a novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Model'
+title: 'A novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Model'
 site: bookdown::bookdown_site
 bibliography: includes/references.bib
 csl: includes/clinical-infectious-diseases.csl
+fontsize: 12pt
 output:
   bookdown::pdf_book:
     base_format: rmarkdown::latex_document
@@ -130,14 +131,16 @@ m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib_upda
 \doublespacing
 # Introduction
 
-*Tuberculous meningitis (TBM)* is the most lethal form of tuberculosis. The diagnosis of TBM is notoriously challenging, as there is no gold standard. Bacterial detection methods include Ziehl-Neelsen staining (Smear), GeneXpert MTB/RIF (Xpert), and culturing in Mycobacteria Growth Indicator Tube (MGIT) for cerebrospinal fluid (CSF) samples. All are delayed and lack sensitivity [@nhu2013; @chen2020]. In 2010, a uniform case definition was agreed amongst experts as a standardised approach in TBM research [@marais2010]. As it did not provide a formal quantification, the scoring system was intended neither as a diagnostic tool nor as a gold standard. Given the disease is almost always fatal if not treated properly, physicians usually incorporate their experience to decide. Under- and over-treatment are thereby inevitable.
+*Tuberculous meningitis (TBM)* is the most lethal form of tuberculosis. The diagnosis of TBM is challenging, as there is no gold standard. Results of methods to detect bacteria in cerebrospinal fluid (CSF) samples including Ziehl-Neelsen staining (Smear), GeneXpert MTB/RIF (Xpert), and culturing in Mycobacteria Growth Indicator Tube (MGIT) are only known after 1 days to 4 weeks. All lack sensitivity [@nhu2013; @chen2020]. In 2010, a uniform case definition was agreed upon amongst experts [@marais2010] but did not have a formal quantification and was not intended as a diagnostic tool. Given the deadly consequences, physicians usually incorporate their experience to make the decisions.
 
-*Latent class analysis (LCA)* is a modelling technique that incorporates hidden traits and assigns a probability to have such traits based on a combination of observed dichotomous indicators, called manifest variables. <!--It has been used in social science, psychology [@Weller2020], and medical studies [@schumacher2016; @stout2018; @lahuerta-marin2018; @adams2019]. --> The main objective of LCA is to group patients into clusters based on patterns of manifest variables. Some auxiliary variables could be added to guide the task. However, our aim is instead, based on those auxiliary variables, to build a calibrated scoring system that estimates the latent probability of TBM.
+*Latent class analysis (LCA)* is a modelling technique that incorporates hidden traits and assigns a probability of traits based on binary manifest variables. Auxiliary variables can be added to guide the task. Our study aim to use those auxiliary variables and build a scoring system that estimates the probability of TBM based on data with uncertain TBM status.
 
 # Methods
 
-We used data from an observational study of brain infection conducted on the neuro-infection ward of the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam. Our model consists of two components. The basic component links three manifest variables ($Y^{(t)}$ with *t* = {Smear, MGIT, Xpert}) to the latent TBM status $C$. <!--All manifest variables are different methods to detect bacteria, via direct visualisation (Smear), DNA detection (Xpert), and culture growth (MGIT).-->Local dependence between manifest variables was taken into account by adding a standardised representation of bacillary burden (*B*), modelled as a combination of an unmeasured random effect *r* [@qu1996] and covariates (*V*). The second component of our model is a logistic regression prevalence model that relates TBM status to the set of risk factors (*X*). We considered risk factors for TBM based on the uniform case definition [@marais2010]. At discharge or death, a final diagnosis was recorded, denoted as "hospital diagnosis". With the exception of the false positive rate ($\zeta^{(t)}_0$) for which we chose a strong prior so that all tests have specificity larger than 95% [@nhu2013], we used weakly informative priors for the parameters. All covariates were transformed to a similar scale [@gelman2008].
-
+We used data from an observational study of brain infection conducted in Ho Chi Minh City, Vietnam. Our model consists of two components. The basic component links 3 manifest variables ($Y$) to the latent TBM status ($C$). Local dependence between tests was addressed by a representation of bacillary burden (*B*), modelled as a combination of a random effect (*r*) [@qu1996] and covariates (*V*). The other component is a logistic regression prevalence model relating TBM status to the risk factors (*X*) which were transformed to the same scale [@gelman2008]. Except for the false positive rate ($\zeta^{(t)}_0$) for which we chose a strong prior based on literatures [@nhu2013], we used weakly informative priors for the parameters.
+$$
+Y^{(t)} \sim Bernoulli(\rho^{(t)})
+$$
 $$
 \rho^{(t)} 
 =\sum_{c=0}^1Pr(C=c) * Pr(Y^{(t)}=1|C=c)
@@ -145,25 +148,16 @@ $$
 $$
 $$
 \begin{aligned}
-Y^{(t)} &\sim Bernoulli(\rho^{(t)})
-&\zeta^{(t)}_1 &\sim Logistic(0,0.35) 
-&\theta &= X^T \alpha &B &= V^T \gamma + r \\
-r &\sim \mathcal{N}(0, 1) 
-&{\alpha,\ \beta^{(t)}} &\sim t_5(0, s);\ \gamma \sim t_5(0, \frac{s}{\overline{\beta^{(t)}}})
-&s &\sim \mathcal{N}(0, 1.5)
+\theta &= logit^{-1}(X^T \alpha) &B &= V^T \gamma + r \\
+\zeta^{(t)}_1 &\sim Logistic(0,0.35) 
+&r &\sim \mathcal{N}(0, 1) 
+&{\alpha,\ \beta^{(t)}} &\sim t_5(0, s) &\gamma \sim t_5(0, \frac{s}{\overline{\beta^{(t)}}})
+&\ &s \sim \mathcal{N}(0, 1.5)
 \end{aligned}
 $$
-*where $\theta$ is the probability of a TBM diagnosis ($Pr(C=1)$), $\rho^{(t)}$ is the probability of a positive test (t = {Smear, MGIT, Xpert}) whose observed values are $Y^{(t)}$, $\alpha$, $\beta$, $\gamma$ are the vectors of coefficients for $X$, $B$, and $V$. To avoid sign switching, $\beta$ is positive-constrained. <!--$\zeta^{(t)}_0$ and $\zeta^{(t)}_1$ are the based probability of positive test $t$ given $B = 0$, for non-TBM and TBM class, respectively.-->*
+*where $\theta$ is the TBM probability ($Pr(C=1)$), $\rho^{(t)}$ is the probability of a positive test (t with t = {Smear, MGIT, Xpert}) whose observed values are $Y^{(t)}$; $\alpha$, $\beta$, $\gamma$ are the coefficients or $X$, $B$, and $V$. To avoid sign switching, $\beta$ is constrained to be positive.*
 
-<!-- The basic component in the latent class model (LCM) links TBM status to the three above confirmatory tests <!-- Additional variables that explain the test results can be included in this model. --><!--All tests are different methods to detect bacteria, via direct visualisation (ZN Smear), DNA detection (Xpert), and culture growth (MGIT). Local dependence between manifest variables was corrected adding bacillary burden, modelled as a random effect [@qu1996], and in turn depends on HIV status and the CSF values. The second component is a logistic regression prevalence model that relates TBM status to the set of risk factors. We considered risk factors for TBM in general based on the uniform definition [@marais2010]. <!-- wadded three covariates that indicate alternative diagnoses: CSF eosinophil count for eosinophilic meningitis, CSF lateral flow antigen/Indian Ink tests for cryptococcal meningitis, and CSF Gram stain for non-acid-fast bacterial meningitis; and CSF red cell count whose high numbers being a marker of traumatic lumbar puncture [@greenberg2008; @nigrovic2011; @mehl1986]. If TBM status were known for every individual, the prevalence model would be all we need to come up with a diagnostic score. We need the LCM to provide additional information on unknown TBM status. The LCM provides individual estimates of the probability to have TBM based on the test results and the additional characteristics. These individual probabilities provide the data to compute sensitivity and specificity of each of the three test procedures and to relate TBM status to the diagnostic variables in the prevalence model. --> 
-
-
-<!--The basic design of our model is shown in Figure \@ref(fig:skeleton-model).-->
-<!-- difference in approach compared to the schumacher2016 -->
-<!-- formula of LCA -->
-<!-- replace table 1 w. missing tabel -->
-<!-- focus on the prev model -->
-We considered four different models. In model 1, similar to M1 in a previous study [@schumacher2016], tests are assumed locally independent ($B = 0$). Model 2 added bacillary burden but its impact on test results are constrained to be equal ($\beta^{Smear} = \beta^{MGIT} = \beta^{Xpert}$), which was lifted in model 3. In model 4, a second random effect was added separately from $B$ as the fluctuation in the sample quality. Model 5 was similar to model M4 in [@schumacher2016], as all covariates $V$ was directly linked to $\rho^{(t)}$. We addressed local independence satisfaction by looking at residual pairwise correlation between manifest variables [@qu1996]. _Expected log point-wise predictive density (elpd)_ [@vehtari2016] was used as a metric to select the best model. We evaluated diagnostic performance by: calibration [@VanCalster2019], receiver operating characteristic (ROC) curves and area under the curve (AUC) for the three tests. We explored how the prevalence model corresponds to hospital diagnosis by using it as a pseudo-gold standard. 5 repeated 20-fold cross validations were used in all validations. Missing covariates were imputed on a case-by-case basis (Table \@ref(tab:missing-handling)). In missing-at-random cases, potentially correlated variables were grouped and modelled by a multivariate normal distribution [@stan-doc; @albert1993]. We fitted the model in 4 MCMC chains with 10000 iterations. All analyses were performed on statistical package \textsf{R}, version 4.1.1 [@rcoreteam] and \textsf{Stan}, version 2.27 [@stan-doc].<!-- All code were published on [project's github repo](github.com/TBM-LCA).-->
+We considered 4 model designs. Model 1 was similar to M1 in [@schumacher2016], as no bacillary burden was included ($\beta^{(t)} = 0$). In model 2 we assumed the impact of bacillary burden on tests to be equal ($\beta^{Smear} = \beta^{MGIT} = \beta^{Xpert}$), which was lifted in model 3. Model 4 was similar to M4 in [@schumacher2016], as we moved $V$ out of the bacillary burden components, directly linking it to $\rho^{(t)}$. We assessed local independence via residual pairwise correlation between 3 tests [@qu1996]. _Expected log point-wise predictive density (elpd)_ [@vehtari2016] was used for model selection. We assessed the calibration [@VanCalster2019], receiver operating characteristic (ROC) curves and area under the curve (AUC) of our models against 3 manifest variables. We also pseudo-validated our prevalence model against the "hospital diagnosis" made by the physicians at the end of the follow-up. Five repeated 20-fold cross validations were used in all validations. Missing covariates were treated case by case according to their missing mechanisms (Table \@ref(tab:missing-handling)). All analyses were performed using the statistical package \textsf{R}, version 4.1.2 [@rcoreteam] and \textsf{Stan}, version 2.27 [@stan-doc].<!-- All code were published on [project's github repo](github.com/TBM-LCA).-->
 
 # Results
 
@@ -201,21 +195,17 @@ spc = \(name, hiv=NULL, fn=spc.est, sep = ' ') {
 }
 ```
 
-Estimated coefficients are shown in Figure \@ref(fig:fig-est). In brief, patients with HIV, Miliary TB, long symptom duration, and past TBM contacts were in the higher risk group of TBM. Of the laboratory variables, increased TBM risk was associated with low CSF glucose, low paired blood glucose, and high CSF lymphocyte. Amongst the factors that impact bacillary burden, HIV and higher CSF protein were both associated with higher burden. Although higher CSF lymphocyte relates to TBM, it was associated with a reduction in the bacillary burden, which reduced detection rates. 
-
-Except for model 1, all residual pairwise correlations all fluctuated around 0. Model 3 was selected with highest $elpd = -347.1$ $(SE = 24.9)$. Model 1 and 5 had lowest elpd with $-379.7$ $(SE = 26.5)$ and $-354.7$ $(SE = 25.7)$. Selected model was well-calibrated (intercept = 0.05 - 0.17 and slope = 1.1 - 1.3) and have high discriminative values against confirmatory tests, with AUC 92.4% - 96.4% (Figure \@ref(fig:model-metrics)). Against hospital diagnosis, we also saw good calibration (intercept = -0.01, slope= 0.97) and high AUC (93.9%). <!--elpd of model 1, 2, and 5 were lower at $-379.7$ $(SE = 26.5)$, $-353.3$ $(SE = 25.4)$, and $-354.7$ $(SE = 25.7)$. Model 4 has a slightly lower elpd compared with model 3: $-347.2$ $(SE=25.0)$.-->
+Estimated coefficients are shown in Figure \@ref(fig:fig-est). Patients with HIV, Miliary TB, and long symptom duration had higher risk of TBM. HIV positivity and higher CSF protein were associated with higher bacillary burden. Although higher CSF lymphocyte relates to TBM, it was associated with a lower bacillary burden. Except for model 1, all residual pairwise correlations fluctuated around 0. Model 3 was selected with highest elpd. It was well-calibrated and had high discriminative value against 3 tests (AUC = 92.4 - 96.1%) (Figure \@ref(fig:model-metrics)). Against hospital diagnosis, we also saw good calibration and high AUC (93.9%). 
 
 # Discussions
 
-<!-- leave this out 
-We utilised LCM to re-evaluate performance of the confirmatory assays Ziehl--Neelsen Smear, MGIT and GeneXpert.<!-- Ziehl--Neelsen Smear had highest sensitivity of `r sen('z_Xpert', hiv=NULL)`, confirming prior studies [@nhu2013; @donovan2020].--><!-- GeneXpert performed poorly in HIV negative individuals. All test performed much better in the HIV positive group, due to higher bacillary burden. With sensitivity and specificity both higher than 90%, either of the three tests can be used as a reliable standard for HIV-infected individuals. Our estimated sensitivities were lower than in a recent study [@donovan2020]. However, since that study focused on TBM-suspected patients, HIV positive cases were more prevalent. Stratified by HIV status, values were more comparable. -->
-We developed a statistical TBM diagnosis model using LCA, taken into account the local dependence between tests. Different to a previous study [@schumacher2016], all impacting factors (*V*) were wrapped inside the bacillary burden (*B*); this design both gained us some degrees of freedom and provided an insight of the mechanistic pathway from disease status to test results. Peaked elpd at model 3 indicated that our parametrisation were robust and any higher flexibility did not add any value. The calibration against confirmatory tests showed a drop at the upper tails for MGIT and Xpert; this was due to the scarcity of patients with extreme probability of positive tests. The calibration against hospital diagnosis showed in overall good trend, suggesting a good correspondence between our model and clinical practice.
+We used latent class analysis to develop a TBM diagnostic model, included random effects to obtain local independence between tests. Different to a previous study [@schumacher2016], all factors (*V*) were wrapped inside the bacillary burden (*B*); this gained us some degrees of freedom and provided an insight into the mechanistic pathway from disease status to tests. The model had good calibration against the confirmatory tests. It also had good calibration against hospital diagnosis, suggesting a good correspondence between our model and clinical judgement.
 
-Our study has some limitations. For missing data we had to make assumptions that can underpower the results. We also had to depend on another hypothesised variable (bacillary burden) that cannot be validated until further research. The last issue is the wide credible intervals of some posterior estimates due to rare events. However, with the Bayesian setup, this can be updated with future data.  <!-- Another disadvantage is the population from which our sample originated. Our study cohort was patients with suspected neurological infection, which implies some level of arbitrariness. Estimated TBM prevalence overestimated that in the general population. In most studies, they are the cohort of interest. However, when doing population surveillance, this must be taken into account.-->
+Our study has some limitations. For missing data we had to make assumptions that can bias the results. We also had to depend on another hypothesized variable (bacillary burden) that cannot be validated. Further research in this field is thereby needed. 
 
 # Conclusion
 
-Our model provides a well-calibrated and highly predictive diagnostic model for TBM diagnosis. Until a true gold standard being developed, our model can be an effective diagnostic tool and baseline severity estimator in both clinical practice and research for TBM patients.
+Our model provides a well-calibrated and highly predictive diagnostic model for TBM diagnosis. Until a true gold standard is developed, our model can be an effective diagnostic tool in both clinical practice and research for TBM patients.
 
 # References
 
@@ -231,7 +221,7 @@ fig_svg <- cowplot::ggdraw() +
 plot(fig_svg)
 ```
 \singlespacing
-```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling", out.width='100%'}
+```{r missing-handling, tab.cap="Missing values rationales and handling", tab.id="missing-handling", out.width='100%'}
 na = \(x) sum(is.na(x))
 pop = data_dirty[,(wrong_name%in%F) &
     !((Volume<3)%in%TRUE) &
@@ -335,7 +325,7 @@ restab
 <!-- \newpage -->
 <!-- \blandscape -->
 
-```{r fig-est, out.width="100%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Estimates of TBM odd ratios in prevalence model for different covariates, excluding WBC count; B: Estimates of TBM odd ratio given number of CSF WBC count; C: Estimates of factors impacting individual's bacillary burden, given they have TBM. In A and C, dot, thick lines, and thin lines are posterior expected values, 50\\% and 95\\% credible intervals. In B: the blue line is expected odd, the inner ribbon and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="fig-est", warning=FALSE, message=FALSE}
+```{r fig-est, out.width="90%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Estimates of TBM odd ratios in prevalence model for different covariates, excluding WBC count; B: Estimates of TBM odd ratio for number of CSF WBC count; C: Estimates of factors impacting individual's bacillary burden, given they have TBM. In A and C, dot, thick lines, and thin lines are posterior expected values, 50\\% and 95\\% credible intervals. In B: the blue line is expected odds ratio, the inner ribbon and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="fig-est", warning=FALSE, message=FALSE}
 
 library(patchwork)
 
@@ -381,7 +371,7 @@ ab_plot = ((m3$a_plot |> td.misc::change_ylabs(rev(y_labs), top_down = TRUE)) + 
 ab_plot
 ```
 
-```{r model-metrics, fig.align="center", fig.cap='Model performance. A: ROC and AUC against confirmatory test results; B: calibration against confimatory test results; C: ROC and AUC against hospital diagnosis; D: Calibration against hospital diagnosis. For calibration plots, “observed” probabilities are defined as values smoothed by a loess fit against observed binary events, in which the translucent ribbons represent the level of uncertainty of the smoothing. For ROC plots, AUC values are presented as “average (min - max over 5 repetitions of cross-validation)”. In all plots, grey lines are individual corresponding fitted curves from each 20-fold cross validation and coloured lines represent an average over them.' , fig.dim=c(9, 12), fig.show='hold', message=FALSE, warning=FALSE, out.width='80%', fig.id="model-metrics"}
+```{r model-metrics, fig.align="center", fig.cap='Model performance. A: ROC and AUC against confirmatory test results; B: calibration against confimatory test results; C: ROC and AUC against hospital diagnosis; D: Calibration against hospital diagnosis. For calibration plots, “observed” probabilities are defined as values smoothed by a loess fit against observed binary events, in which the translucent ribbons represent the level of uncertainty of the smoothing. For ROC plots, AUC values are presented as \\emph{“average (min - max over 5 repetitions of cross-validation)”}. In all plots, grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average.' , fig.dim=c(9, 12), fig.show='hold', message=FALSE, warning=FALSE, out.width='80%', fig.id="model-metrics"}
 
 design <- "
 1111

@@ -1,4 +1,4 @@
-<!-- Resutl -->
+<!-- Result -->
 \newpage
 
 \blandscape
@@ -12,8 +12,9 @@ bl_tbl <-
   as_tibble() |>
   # dplyr::filter(!(wrong_name %in% TRUE) & !(csf_mgit_contaminated %in% TRUE))
   mutate(csf_neutro = csf_wbc - csf_lympho - csf_eos) |>
+  mutate(csf_myco = csf_smear + csf_mgit + csf_xpert > 0) |>
   mutate(
-    across(c(csf_smear, csf_xpert, csf_mgit), 
+    across(c(csf_myco, csf_smear, csf_xpert, csf_mgit), 
            ~ factor(.x, 
                     levels = c(TRUE, FALSE,NA), 
                     labels = c('Positive', 'Negative', 'Missing'),
@@ -21,15 +22,16 @@ bl_tbl <-
            )
     )
   ) |>
-  select(age, hiv_stat, clin_illness_day, clin_symptoms, clin_contact_tb, clin_motor_palsy, clin_nerve_palsy, clin_gcs, xray_pul_tb, xray_miliary_tb, csf_lympho, csf_wbc, csf_eos, csf_rbc, csf_protein, csf_lactate, csf_glucose, bld_glucose = BLDGLU, csf_crypto, csf_gram, csf_smear, csf_xpert, csf_mgit) |>
+  select(age, hiv_stat, clin_illness_day, clin_symptoms, clin_contact_tb, clin_motor_palsy, clin_nerve_palsy, clin_gcs, xray_pul_tb, xray_miliary_tb, csf_lympho, csf_wbc, csf_eos, csf_rbc, csf_protein, csf_lactate, csf_glucose, bld_glucose = BLDGLU, csf_crypto, csf_gram, csf_myco, csf_smear, csf_xpert, csf_mgit) |>
   tidyr::pivot_longer(
-    c(csf_smear, csf_mgit, csf_xpert),
+    c(csf_myco, csf_smear, csf_mgit, csf_xpert),
     names_to = 'Test',
     values_to = 'Result'
   ) |>
   # mutate(- csf_neutro) |>
   mutate(
     Test = case_when(
+      Test == 'csf_myco'  ~ 'Overall',
       Test == 'csf_smear' ~ 'ZN-Smear',
       Test == 'csf_mgit'  ~ 'MGIT',
       Test == 'csf_xpert' ~ 'Xpert',
@@ -39,8 +41,8 @@ bl_tbl <-
 
 bl_tbl <-
   bl_tbl |>
-  mutate(Test = 'Overall') |>
-  bind_rows(bl_tbl) |>
+  # mutate(Test = 'Overall') |>
+  # bind_rows(bl_tbl) |>
   mutate(Test = factor(Test, levels = c('Overall', 'ZN-Smear', 'MGIT', 'Xpert'))) |>
   my_fn$add_labels(
     age               = 'Age (year)',
@@ -73,24 +75,27 @@ bl_tbl <-
     .tbl_fun = ~ tbl_summary(
       .x, 
       by = Result,
-      missing_text = '  - Missing',
+      missing_text = ' - Missing',
       # type = list(GCSV~'continuous', GCSE~'continuous',GCSM~'continuous'),
       statistic = list(
-        all_continuous() ~ '{mean} ({p25}, {p75})'),
+        all_continuous() ~ '{mean}; {median} ({p25}, {p75})'),
       digits = list(csf_eos ~ c(0, 0, 0), clin_gcs ~ c(0, 0, 0))
-    )
+    ) |> add_n()
   ) |>
   modify_footnote(
     update = all_stat_cols() ~ "Mean (1st, 3rd quartiles) for numeric variables; n (%) for categorical variables",
     text_interpret = "html"
   )
 
-bl_tbl |> as_flex_table() |>
+
+bl_tbl |> 
+  modify_column_hide(c('n_2', 'n_3', 'n_4','stat_3_2', 'stat_3_3', 'stat_3_4')) |>
+  as_flex_table() |>
   # flextable::set_caption('Baseline characteristics') |>
-  flextable::width(width = .6) |>
-  flextable::width(j = 1, width = .89) |>
-  # flextable::width(j = c(2,6,10), width = .23) |>
-  flextable::fontsize(size=7, part = 'all') |>
+  flextable::width(width = .82) |>
+  flextable::width(j = 1, width = 1.1) |>
+  flextable::width(j = c(2), width = .23) |>
+  flextable::fontsize(size=10, part = 'header') |>
   ftExtra::colformat_md(1, part='body') |>
   flextable::theme_vanilla()
 ```
@@ -151,7 +156,7 @@ huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
   flextable::theme_vanilla() |>
   flextable::align(i=1, align='center') |>
   flextable::align(i=1, align='center', part='header') |>
-  flextable::add_footer_row(top=F, values="Values are in the form Mean (95% Credible interval)", colwidths = 7) -> restab
+  flextable::add_footer_row(top=F, values="Values are in the form Median (95% Credible interval)", colwidths = 7) -> restab
 # restab_raster = flextable::as_raster(restab |> flextable::width(width=1.2), zoom=1.2)
 restab
 ```
@@ -165,7 +170,7 @@ flextable::flextable(post_test_tbl) |>
   flextable::theme_vanilla() |>
   flextable::align(i=1, part='header', align='center') |>
   flextable::align(j=1:4, part='body', align='center') |>
-  flextable::add_footer_row(top=F, values="Values are in the form Mean (95% Credible interval)", colwidths = 6)
+  flextable::add_footer_row(top=F, values="Values are in the form Median (95% Credible interval)", colwidths = 6)
 ```
 
 \newpage
@@ -199,41 +204,47 @@ m = data.frame(
     'Local neurological deficit',
     'Cranial nerve palsy',
     'Past noticed TB contact',
-    rep('Glasgow coma score',6),
+    rep('Glasgow coma score',4),
     'Pulmonary TB/X-ray',
     'Miliary TB/X-Ray',
     rep('Days from onset',6),
     'Headache',
     'Pyschosis'),
-  Estimated = s_plots$a_plot_s3$data |> filter(parameter %in% paste0('a[',c(1:5, 9, 6:8, 10:11),']')) %>% .$m %>% round(2) %>% (\(x) {c(x[1:5], rep(x[6],6),x[7:8], rep(x[9],6), x[10:11])}),
+  Estimated = s_plots$a_plot_s3$data |> filter(parameter %in% paste0('a[',c(1:5, 9, 6:8, 10:11),']')) %>% 
+    `[`(c(1:5, rep(6,4), 7, 8, rep(9,6), 10, 11),) %>%
+    glue::glue_data("{l} - {h}", .transformer = \(x, env){
+      # round(env[[x]], 2)
+      formatC(env[[x]], format='f', digits=2)
+    }),
+    
+    # .$m %>% round(2) %>% (\(x) {c(x[1:5], rep(x[6],4),x[7:8], rep(x[9],6), x[10:11])}),
   Value  = c(
-    rep('+',5),
-    '3-5',
-    '6-7',
-    '8-9',
-    '10-11',
-    '12-13',
-    '14-15',
-    rep('+', 2),
-    '<1',
-    '1-2',
+    'Positive',
+    rep('Existed',4),
     '3-6',
-    '7-14',
-    '15-30',
-    '31+',
-    rep('+', 2)
+    '7-9',
+    '10-12',
+    '13-15',
+    rep('Detected', 2),
+    '1',
+    '2-4',
+    '5-13',
+    '14-39',
+    '40-120',
+    '120+',
+    rep('Existed',2)
     # '63+',3
   ),
   # Score = c(1, 0.5, 0, 0.5, 0.5, "GCS/5",  1.5, 1, "$log_2$(Number of days)/2", .5, -.1)
-  Score = c(0.5, 0.5, 1, 0, 1.5, 1, 1.5, 2, 2.5, 3, 3.5, 1.5, 1.5, 0, .5, 1, 1.5, 2, 2.5, .5, -.5)
+  Score = c(1, .75, .5, 0, 1, 1, 1.5, 2, 2.5, 1.5, 1, 0, .5, 1, 1.5, 2, 2.5, .6, -.5)
   
 )
 flextable::flextable(m) |>
   flextable::add_footer_row(top=FALSE, 
-                            values = glue::glue("TBM suspected: > {((qlogis(.283) - s_plots$a_plot_s3$data$m[1])/0.5) |> round(0) |> (\\(x) x * 0.5)()}"),
+                            values = glue::glue("TBM suspected: Total score > {((qlogis(.234) - s_plots$a_plot_s3$data$m[1])/0.5) |> round(0) |> (\\(x) x * 0.5)()}"),
                             colwidths = 4) |>
   flextable::merge_v(j=c(1,2)) |>
-  flextable::set_header_labels(Estimated = 'Model estimate') |>
+  flextable::set_header_labels(Estimated = '50% CrI') |>
   ftExtra::colformat_md(j=c(1,2)) |>
   flextable::width(width=1.1) |>
   flextable::theme_vanilla()

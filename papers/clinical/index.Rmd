@@ -1,7 +1,7 @@
 ---
 title: 'A novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach'
 author:
-  - Trinh Huu-Khanh Dong:
+  - Trinh Huu Khanh Dong:
       email: trinhdhk@oucru.org
       institute: [oucru, kcl]
       correspondence: true
@@ -11,21 +11,26 @@ author:
       institute: [oucru]
   - Ngoc My Nghiem:
       institute: [oucru, htd]
-  - Guy Thwaites:
+  - Tan Van Le:
+      institute: [oucru]
+  - Guy E. Thwaites:
       institute: [oucru, oxford]
   - Ronald B. Geskus:
       institute: [oucru, oxford]
 institute:
   - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam 
-  - kcl: King's College London, London, United Kingdom
-  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
+  - kcl: King's College London, United Kingdom
+  - lshtm: London School of Hygiene and Tropical Medicine, United Kingdom
   - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
   - htd: Hospital of Tropical Diseases, Ho Chi Minh City, Viet Nam
 site: bookdown::bookdown_site
 bibliography: includes/references.bib
 csl: includes/clinical-infectious-diseases.csl
+eqnPrefix: 
+  - "Formula"
+  - "Formulae"
 params:
-  dev: "pdf"
+  dev: "cairo_pdf"
 ---
 
 ```{r setup, include=FALSE}
@@ -97,12 +102,14 @@ knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
 
 # Register diagrammer graphviz
 my_fn$diagrammer_engine <- \(options){
+   # browser()
   grviz_opt = formals(DiagrammeR::grViz)
   grviz_opt = grviz_opt[names(grviz_opt) != 'diagram']
   new_opt = options[names(options) %in% names(grviz_opt)]
   # not_grviz_opt = opt[!names(opt %in% c('diagram', name(grviz_opt)))]
   grviz_opt = modifyList(grviz_opt, new_opt)
   dia_call <- purrr::partial(DiagrammeR::grViz, diagram = options$code)
+  grviz_opt$envir <- parent.frame(9)
   
   out <- do.call(dia_call, grviz_opt) 
   options$code <- out$x$diagram
@@ -136,12 +143,14 @@ load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
 load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
 # m3 = new.env()
 m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS')) |> as.environment()
-load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = m3)
+# load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = zz)
 load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
 # m3$rocs = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_roc_iscb.RDS'))
 # m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib.RDS'))
 # m3$roc = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_ROC.RDS'))
-m3_roc = readRDS(file.path(data_dir, '..', 'export', 'm3_roc.RDS')) 
-m3_calib = readRDS(file.path(data_dir, '..', 'export', 'm3_calib.RDS')) 
+# m3_roc = readRDS(file.path(data_dir, '..', 'export', 'm3_roc.RDS')) 
+# 3_calib = readRDS(file.path(data_dir, '..', 'export', 'm3_calib.RDS')) 
 s_plots <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS'))
 ```
+
+\newpage

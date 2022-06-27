@@ -1,27 +1,19 @@
-<!-- ::: {custom-style="Unnumbered H1"} -->
 # Abstract {-}
-<!-- ::: -->
 
-<!-- ::: {custom-style="Unnumbered H2"} -->
 ## Background {-}
-<!-- ::: -->
 
-*Tuberculous meningitis* (TBM) is the one most mortal form of tuberculosis. Current expertise-based diagnosis comes with high uncertainty and performance of Ziehl-Neelsen smear (ZN Smear), mycobacterial culturing, and GeneXpert are suboptimal. We developed a diagnosis model that provides a statistically calibrated scoring system, on full and simplified scales, that estimates individual TBM risk, bacillary burden, and sensitivity and specificity of current confirmatory tests amongst adults with suspected brain infection.
+*Tuberculous meningitis* (TBM) is the deadliest form of Tuberculosis (TB). Current diagnostic approaches are subjective and highly uncertain, with performances of current mycobacterial confirmatory tools are suboptimal. We developed a statistical diagnosis model, on different complexity levels, that estimates individual TBM risks, bacillary burden, and sensitivity and specificity of current confirmatory tests amongst adults with suspected brain infection.
 
-<!-- ::: {custom-style="Unnumbered H2"} -->
 ## Methods {-}
-<!-- ::: -->
 
-We included 658 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021. We used a Bayesian latent class regression model with bacillary burden as random effects. Models were validated internally and a Shiny app was provided.
+We included 660 subjects from a prospective observational study conducted at Ho Chi Minh city Hospital of Tropical diseases from 2007 to 2021 in a Bayesian latent class model with 2 classes: TBM and non-TBM. We included three common mycobacterial tests: Ziehl-Neelsen smearing (ZN-Smear), culturing, and GeneXpert as manifest variables and characteristics used in the TBM uniform case definition as risk factors. Based on the fitted model, we later exploratorily computed the relative reduction in TBM risks after confirmatory tests were retrieved. All model were compared and validated internally. A web application was developed based on the selected model.
 
-<!-- ::: {custom-style="Unnumbered H2"} -->
 ## Results {-}
-<!-- ::: -->
 
-All current confirmatory had over 99% specificity. The sensitivity of ZN Smear was 74% (57% - 88%), culturing was 40% (23% - 57%), and GeneXpert was 25% (11% - 47%). Stratified by HIV status, ZN Smear was 72% (55% - 87%) sensitive, culturing was 36% (18% - 54%) sensitive, and GeneXpert was 19% (04% - 43%) sensitive for HIV negative population. All test sensitivities were better in HIV group at 94% (85% - 99%), 86% (65% - 98%), and 92% (67% - 100%), respectively. All model showed good discrimination and calibration. 
+Our diagnostic model showed good predictive value with AUC = 92.6%, 92.9%, 96% for ZN-Smear, MGIT, and Xpert. Regarding diagnosis, AUC was 94% for the full model and 82.5% for the simplified model. At the optimal cutpoint chosen by Youden Index, sensitivities were 87% for the full and 86% for the simplified model; specificities were 87% and 68%. All current confirmatory had over 99% specificity. ZN-Smear was 75% (59%-88%) sensitive, while culturing and Xpert were 40% (24%-57%) and 24% (11%-46%). All test were considerably more sensitive in the HIV-infected group, compared with the HIV-naive population.
 
-<!-- ::: {custom-style="Unnumbered H2"} -->
 ## Conclusion {-}
-<!-- ::: -->
 
-Our developed models could be objectively used as a decision assistant for clinicians to detect patients with high risk of TBM at different time points from early admission to later with test results.
+Our diagnostic model shows reliable performance and could be used as a decision assistant for clinicians to detect patients with high risk of TBM at different time points from as early as admission.
+
+\newpage

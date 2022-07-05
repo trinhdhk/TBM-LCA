@@ -1,4 +1,4 @@
-cores: 8
+cores: 4
 thin: 40
 chains: 1
 iter: 6000 

@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(argparser)
+# library(dplyr, include.only = '%>%')
 misc <- new.env(hash = FALSE)
 source("r/include/functions.R", local = misc)
 rstan::rstan_options(javascript = FALSE, auto_write = TRUE)
@@ -10,6 +11,7 @@ args <-
   add_argument("target", help = 'Target to simplify, must be an output of sample.R with --rep=1 and --fold=1') |>
   add_argument("--input", help = "input Rdata file", 
                default = "data/cleaned/data_input.Rdata", short = "-i") |>
+  add_argument("--config-file", help = "configuration file, in yaml format, replace all argument", short = "-c", default = "") |>
   add_argument("--mode", help = "mode, either sampling, optimizing, or vb. Apart from sampling, only iteration number is tweakable", default = "sampling", short="-m") |>
   add_argument("--output-dir", help = "output folder", default = "outputs", short = "-o") |>
   add_argument("--output-file", help = "output filename, default to auto-inference", short = "-f") |>
@@ -35,41 +37,43 @@ args <-
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) 
 
 argparser <- parse_args(args)
+if (nchar(argparser$config_file)) {
+  config <- try(yaml::read_yaml(argparser$config_file, eval.expr = TRUE))
+  if (inherits(config, 'try-error')) cli::cli_alert_danger('Config file parsing failed!')
+  else {
+    argparser <- modifyList(argparser, config)
+  }
+}
 
 create_folds <- 
-  \(recipe, K, N, X_extra, seed, cache_file=NULL){
-    recipe <- recipe
-    inp <-
+  \(recipe, K, N, Xc, Xd, seed, cache_file=NULL){
+    # recipe <- recipe
+    # print(ls(recipe))
+    inp1 <-
       with(recipe,
            list(
-             N_all = nrow(data_19EI),
-             nXc = ncol(Xc),
-             nXd = ncol(Xd),
-             nTd = ncol(Td),
-             nTc = ncol(Tc),
-             Y_Smear_all = data_19EI$csf_smear,
-             Y_Mgit_all = data_19EI$csf_mgit,
-             Y_Xpert_all = data_19EI$csf_xpert,
-             obs_Smear_all = data_19EI$obs_smear,
-             obs_Mgit_all = data_19EI$obs_mgit,
-             obs_Xpert_all = data_19EI$obs_xpert,
-             Xc_all = Xc,
-             Xd_all = Xd,
-             Td_all = Td,
-             Tc_all = Tc,
-             nX_extra = ncol(X_extra),
-             X_extra_all = X_extra,
-             obs_Xc_all = cbind(obs_Xc),
-             obs_Xd_all = obs_Xd,
-             obs_Td_all = obs_Td,
-             obs_Tc_all = obs_Tc,
+             N_all = dim(Y)[2],
+             nXc = ncol(Xc[1,,]),
+             nXd = ncol(Xd[1,,]),
+             Y_all = Y[1,],
+             Xc_all = Xc[1,,],
+             Xd_all = Xd[1,,],
              penalty_family = penalty_family,
-             penalty_term = penalty_term,
-             mu_theta = mu_theta,
-             mu_ztheta = mu_ztheta,
-             sd_ztheta = sd_ztheta
+             penalty_term = penalty_term
            ))
-    folds <- misc$repeated_kfold(inp, K = K, N_rep = N, N_obs = nrow(recipe$data_19EI), seed = seed)
+    # print(inp1)
+    folds <- misc$repeated_kfold(inp1, K = K, N_rep = N, N_obs = dim(recipe$Y)[2], seed = seed)
+    # print(folds$inputs[[1]])
+    for (n in 1:(N*K)){
+      with(folds$inputs[[n]], {
+        nXc = ncol(recipe$Xc[n,,])
+        nXd = ncol(recipe$Xd[n,,])
+        Y_all = recipe$Y[n,]
+        Xc_all = recipe$Xc[n,,]
+        Xd_all = recipe$Xd[n,,]
+      })
+    }
+    # stop()
     if (!is.null(cache_file)) saveRDS(folds, file = cache_file)
     folds
   }
@@ -96,23 +100,10 @@ with(
     if (is.na(penalty_family)) stop("Invalid penalty family. Must be either t, laplace, or normal.")
     # Load the recipe
     recipe <- new.env()
+    new.recipe <- new.env()
     load(input, envir = recipe)
-    recipe$penalty_term = penalty_term
-    recipe$penalty_family = penalty_family
-    
-    X_extra = if (!all(is.na(extra_x))) recipe$data_19EI[extra_x] else NULL
-    
-    # HIV missing case
-    # if (hiv_missing == 0){
-    #   recipe$obs_Xd[,1] = 1
-    # }
-    # if (hiv_missing == 1){
-      recipe$obs_Xd[recipe$Td[,7]==0,1] = 1
-      # recipe$obs_Xd[,1] = ifelse((recipe$Td[,7]==0)&(recipe$obs_Xd[,1]==0), 1, recipe$obs_Xd[,1])
-    # }
-    # if (hiv_missing == 2){
-    #   recipe$Td[,7] = 1
-    # }
+    new.recipe$penalty_term = penalty_term
+    new.recipe$penalty_family = penalty_family
     
     # If there are cache to use, create corresponding dirs
     if (!no_cache) {
@@ -152,25 +143,59 @@ with(
     target_file <- file.path('outputs', paste0(target,'.RDS'))
     target_fit <- readRDS(target_file)
     if (!inherits(target_fit, 'stanfit')) target_fit <- target_fit$outputs 
-    z_theta <- rstan::summary(target_fit, pars = c('z_theta'))$summary
-    theta <- rstan::summary(target_fit, pars = c('theta'))$summary
-    recipe$mu_ztheta <- z_theta[,'mean']
-    recipe$sd_ztheta <- z_theta[,'sd']
-    recipe$mu_theta <- theta[,'mean']
+    Xd <- rstan::extract(target_fit, pars='X')$X[,,c(1,2,3,4,5,6,7)]
+    Xc <- rstan::extract(target_fit, pars='X')$X[,,c(11,18)]
+    theta <- rstan::extract(target_fit, pars='theta')$theta
+    total_iter <- dim(Xc)[1]
+    n_sample <- if (rep * fold == 1) 400 else rep * fold
+    set.seed(seed)
+    selected_iters <- sample.int(n=total_iter, size=n_sample, replace=FALSE)
+    Xd <- Xd[selected_iters,,]
+    Xc <- Xc[selected_iters,,]
+    Y <- theta[selected_iters,] |> apply(2, \(col) sapply(col, rbinom, n=1, size=1))
+    # Get and impute X_extra
+    X_extra <- if (!all(is.na(extra_x))) recipe$data_19EI[extra_x] else NULL
+    obs_test <- as.logical(with(recipe$data_19EI, obs_smear + obs_mgit + obs_xpert > 0))
+    test <- as.logical(with(recipe$data_19EI, csf_smear + csf_mgit + csf_xpert > 0))
+    impute_data <- cbind(X_extra, obs = obs_test, test = test)
+    X_extra <- lapply(seq_len(dim(Xd)[1]),
+                      function(i) {
+                        dat <- cbind(impute_data, hiv = Xd[i,,1], id = Xc[i,,1])
+                        imp <- mice::mice(dat, m=1, maxit=50, print=FALSE)
+                        comp <- mice::complete(imp)
+                        comp[extra_x] |> as.matrix()
+                      }) 
+    X_extra <- abind::abind(X_extra, along=3) |> aperm(c(3,1,2))
+    # print(dim(X_extra))
+    # print(head(X_extra))
+    # X_extra <- sapply(X_extra, 
+    #                   \(x) rep(x, n_sample) |> matrix(nrow=n_sample, byrow=TRUE), 
+    #                   simplify = FALSE) |> abind::abind(along=3)
+    
+    
+    Xd <- abind::abind(Xd, X_extra)
+    new.recipe$Xd = Xd
+    new.recipe$Xc = Xc
+    new.recipe$Y = Y
+    if (fold == 1 && rep == 1) rep = 400
+    rm(target_fit)
+    # gc()
+    
+    
     
     if (clean_state){
       if (has_cache) {
         cli::cli_alert("Remove cache and create new folds")
         file.remove(cache_file)
       }
-      folds <- create_folds(recipe=recipe, K=fold, N=rep, X_extra=X_extra, seed=seed, cache_file=cache_file)
+      folds <- create_folds(recipe=new.recipe, K=fold, N=rep, seed=seed, cache_file=cache_file)
     } else{
       if (has_cache) {
         cli::cli_alert("Cache file found. Use cache file.")
         folds <- readRDS(cache_file)
       } else {
         cli::cli_alert("No cache file found. Create new folds")
-        folds <- create_folds(recipe=recipe, K=fold, N=rep, X_extra=X_extra, seed=seed, cache_file=cache_file)
+        folds <- create_folds(recipe=new.recipe, K=fold, N=rep, seed=seed, cache_file=cache_file)
       }
     }
     
@@ -185,7 +210,7 @@ with(
     } else outdir <- NULL
     
     cli::cli_alert('Compile model sampler')
-    sampler <-"stan/s3.stan"
+    sampler <-"stan/s5.stan"
     sampler <- tryCatch(
       my_stan_model(sampler),
       error = function(e) {
@@ -196,11 +221,12 @@ with(
       }
     )
     cli::cli_alert('Sample')
-    pars <- c('a0', 'a', 'log_lik', 'ztheta_all','lambda')
+    pars <- c('a0', 'a', 'log_lik','lambda', 'theta')
     if (!all(is.na(include_pars))) pars <- include_pars
     if (fold == 1 && all_params) pars <- NA
     
     if (mode == "sampling"){
+      # print(iter)
       results$outputs <- misc$stan_kfold(sampler = sampler,
                                          list_of_datas=inputs,
                                          backend = "rstan",
@@ -245,8 +271,9 @@ with(
     cli::cli_alert("Save results")
     results$model_name <- model
     results$folds  <- folds
+    results$theta <- theta
     if (mode != 'optimizing')
-      results$.META$params <- if (fold == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
+      results$.META$params <- if (fold == 1 && rep == 1) results$outputs@model_pars else results$outputs[[1]]@model_pars
     saveRDS(results, file = file.path(output_dir, output_file))
     future::plan("sequential")
     cli::cli_alert_success('Sampling completed!')

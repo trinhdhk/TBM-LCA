@@ -47,11 +47,11 @@ sLCAModel <- R6::R6Class(
       else if (which == 'C'){
         not.na <- (!is.na(C))
         C <- na.omit(C)
-        private$.misc$calib_curve(p_summary$theta[[est]][not.na], lapply(p_rep, function(.) (.$theta[[est]][not.na])), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
+        private$.misc$calib_curve(p_summary$theta[[est]][not.na], lapply(p_rep, function(.) (.$theta[[est]][not.na])), C, "TBM diagnosis", span=span, method = method, knots=knots,..., theme = theme)
       }
       else if (which == 'simulated_C'){
         C = self$sample_C
-        private$.misc$calib_curve(p_summary$theta[[est]], lapply(p_rep, function(.) (.$theta[[est]])), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
+        private$.misc$calib_curve(p_summary$theta[[est]], lapply(p_rep, function(.) (.$theta[[est]])), C, "TBM diagnosis", span=span, method = method, knots=knots,..., theme = theme)
       }
     },
     density_plot = function(
@@ -89,7 +89,7 @@ sLCAModel <- R6::R6Class(
         not.na <- (!is.na(C))
         C <- na.omit(C)
         
-        private$.misc$my_roc_plot(obs=C, pred=p_summary$theta[[est]][not.na], lapply(p_rep, function(.) (.$theta[[est]][not.na])), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("Positive TBM")
+        private$.misc$my_roc_plot(obs=C, pred=p_summary$theta[[est]][not.na], lapply(p_rep, function(.) (.$theta[[est]][not.na])), resamps = resamps, force_bootstrap = force_bootstrap) + theme + ggplot2::ggtitle("TBM diagnosis")
       } else {
         plt <- ggplot()
         auc <- numeric(resamps)
@@ -119,8 +119,8 @@ sLCAModel <- R6::R6Class(
         far.break.x <- abs((round(100 - spc.mean[cutoff]*100,1)) - break.x) > 5
         break.x <- c(break.x[far.break.x], (round(100 - spc.mean[cutoff]*100,1)))
         break.y <- c(0, 25, 50, 75, 100)
-        far.break.y <- abs(round(100 - spc.mean[cutoff]*100,1) - break.y) > 5
-        break.y <- c(break.y[far.break.y], round(100 - spc.mean[cutoff]*100,1))
+        far.break.y <- abs(round(sen.mean[cutoff]*100,1) - break.y) > 5
+        break.y <- c(break.y[far.break.y], round(sen.mean[cutoff]*100,1))
     
         plt <- plt + 
         annotate("text", x = 62.5, y = 22.5, label = paste0("AUC ", formatC(auc.mean*100, digits = 1, format="f"), "%"),

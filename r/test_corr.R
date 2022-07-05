@@ -13,7 +13,7 @@ data_19EI[,
               as.integer(time_str[[1]])*24 + as.integer(time_str[[2]])
             })]
 
-model = readRDS('outputs/m3_n00_b345678_q7_r1_k1.RDS')$outputs
+model = readRDS('outputs/m3_t00_b345678_q7_r1_k1.RDS')$outputs
 X = rstan::extract(model, 'X')$X
 b = rstan::extract(model, c('b', 'b_HIV', 'b_RE'))
 RE = rstan::extract(model, 'RE')$RE
@@ -63,12 +63,19 @@ cultimefit = lm(burden~hiv*log_culture_time,data=bd_dt[mgit==T])
 # with current score
 score_dt = data.table(
   score = data_19EI$crude_total_score,
+  score2 = dplyr::case_when(
+    # data_19EI$crude_total_score == 0 ~ 7,
+    data_19EI$crude_total_score < 6 ~ data_19EI$crude_total_score + 5,
+    data_19EI$crude_total_score == 6 ~ 11,
+    T ~ data_19EI$crude_total_score
+  ),
   ztheta = mean_ztheta,
   tbm_dx = fcase(data_19EI[,csf_smear|csf_mgit|csf_xpert], "Confirmed TBM", 
                  data_19EI$tbm_dx, "Clinical TBM",
                  default = "Not TBM") |> tidyr::replace_na('Not TBM')
 )
 
+# score_dt[, logscore2 := qlogis((score2-6)/8)]
 area = expand.grid(score = seq(0, 14, .01), y=seq(-25, 20,.1)) |> setDT()
 # score_dt[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "Probable TBM")]
 area[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "Probable TBM") |> factor(levels = c('Unknown', 'Possible TBM', 'Probable TBM'), ordered=TRUE)]
@@ -83,8 +90,20 @@ defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-
   scale_y_continuous(breaks = qlogis(c(1e-10, 1e-4, 0.01, .1, .5, .9, .99, .9999, .99999999)), labels = c(1e-8, 1e-2, 1, 10, 50, 90, 99, 99.99, 100)) +
   theme(legend.position='bottom')
 
+defscore2 = ggstatsplot::ggscatterstats(score_dt, x=score2, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.8),
+                                       point.args = list(alpha=0),
+                                       xlab = "Total score", ylab = "Predicted TBM risk (%)",
+                                       ggplot.component = scale_x_continuous(breaks = c(6, 9, 12, 14))) +
+  geom_jitter(aes(color = tbm_dx), size=1, na.rm=TRUE, width=.3, height=1)+
+  scale_color_brewer(type='qual', palette=7, name='Dx at discharge', guide = guide_legend(nrow=2, title.position = 'top')) +
+  geom_raster(aes(x=score, y=y, fill = def), data=area[score>=6], alpha=.3) + 
+  scale_fill_brewer(palette=7, name='Case definition', guide = guide_legend(nrow=2, title.position = 'top')) +
+  scale_y_continuous(breaks = qlogis(c(1e-10, 1e-4, 0.01, .1, .5, .9, .99, .9999, .99999999)), labels = c(1e-8, 1e-2, 1, 10, 50, 90, 99, 99.99, 100)) +
+  theme(legend.position='bottom')
+
 saveRDS(list(
   defscore = defscore,
+  defscore2 = defscore2,
   xpertlv = xpert_level,
   cultime = cultime,
   cultimefit = cultimefit

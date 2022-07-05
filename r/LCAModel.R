@@ -164,14 +164,14 @@ LCAModel <- R6::R6Class(
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        private$.misc$calib_curve(p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), Y_Smear_all, "Smear", span=span, method = method, knots=knots,..., theme = theme) + xlab("") + 
-          private$.misc$calib_curve(p_summary$p_Mgit[[est]], lapply(p_rep, function(.) .$p_Mgit[[est]]), Y_Mgit_all,   "Mgit",  span=span,method = method, knots=knots,..., theme = theme) + ylab("") +
+        private$.misc$calib_curve(p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), Y_Smear_all, "ZN-Smear", span=span, method = method, knots=knots,..., theme = theme) + xlab("") + 
+          private$.misc$calib_curve(p_summary$p_Mgit[[est]], lapply(p_rep, function(.) .$p_Mgit[[est]]), Y_Mgit_all,   "MGIT",  span=span,method = method, knots=knots,..., theme = theme) + ylab("") +
           private$.misc$calib_curve(p_summary$p_Xpert[[est]], lapply(p_rep, function(.) .$p_Xpert[[est]]),Y_Xpert_all, "Xpert", span=span,method = method, knots=knots,..., theme = theme) + xlab("") + ylab("")
       
       } else {
         not.na <- which(!is.na(C))
         C <- na.omit(C)
-        private$.misc$calib_curve(p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), C, "Positive TBM", span=span, method = method, knots=knots,..., theme = theme)
+        private$.misc$calib_curve(p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), C, "TBM diagnosis", span=span, method = method, knots=knots,..., theme = theme)
       }
     },
     density_plot = function(
@@ -191,14 +191,14 @@ LCAModel <- R6::R6Class(
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         
-        (classifierplots::density_plot(as.integer(Y_Smear_all), p_summary$p_Smear[[est]]) + ggplot2::ggtitle("Smear") + scale_x_continuous(name="", trans='reverse') + theme) +
-          (classifierplots::density_plot(as.integer(Y_Mgit_all), p_summary$p_Mgit[[est]]) + ggplot2::ggtitle("Mgit")  + scale_y_continuous(name="", expand=expansion(0))+ theme) + 
+        (classifierplots::density_plot(as.integer(Y_Smear_all), p_summary$p_Smear[[est]]) + ggplot2::ggtitle("ZN-Smear") + scale_x_continuous(name="", trans='reverse') + theme) +
+          (classifierplots::density_plot(as.integer(Y_Mgit_all), p_summary$p_Mgit[[est]]) + ggplot2::ggtitle("MGIT")  + scale_y_continuous(name="", expand=expansion(0))+ theme) + 
           (classifierplots::density_plot(as.integer(Y_Xpert_all), p_summary$p_Xpert[[est]]) + ggplot2::ggtitle("Xpert")  + scale_x_continuous(name="", trans='reverse') + scale_y_continuous(name="", expand=expansion(0)) + theme)+ 
           plot_layout(guides='collect') & ggplot2::theme(legend.position = 'bottom')
       } else {
         not.na <- which(!is.na(C))
         C <- na.omit(C)
-        classifierplots::density_plot(as.integer(C), p_summary$theta[[est]][not.na]) + theme + ggplot2::ggtitle("Positive TBM")
+        classifierplots::density_plot(as.integer(C), p_summary$theta[[est]][not.na]) + theme + ggplot2::ggtitle("TBM diagnosis")
       }
     },
     roc_plot = function(
@@ -226,8 +226,8 @@ LCAModel <- R6::R6Class(
         
         suppressMessages(
           patch <-
-            private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Smear") + ggplot2::theme(axis.title = element_blank()) + # + scale_x_continuous(name="") +
-            private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Mgit") + ggplot2::theme(axis.title = element_blank()) + #+ scale_y_continuous(name="") +  
+            private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("ZN-Smear") + ggplot2::theme(axis.title = element_blank()) + # + scale_x_continuous(name="") +
+            private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("MGIT") + ggplot2::theme(axis.title = element_blank()) + #+ scale_y_continuous(name="") +  
             private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Xpert") + ggplot2::theme(axis.title = element_blank())#+ scale_x_continuous(name="") + scale_y_continuous(name="")
         )
         
@@ -237,17 +237,17 @@ LCAModel <- R6::R6Class(
         x
       } else if (which == "smear") {
         Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
-        private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Smear")
+        private$.misc$my_roc_plot(Y_Smear_all, p_summary$p_Smear[[est]], lapply(p_rep, function(.) .$p_Smear[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("ZN-Smear")
       } else if (which == "mgit") {
         Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
-        private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap,...) + theme + ggplot2::ggtitle("Mgit")  
+        private$.misc$my_roc_plot(Y_Mgit_all , p_summary$p_Mgit[[est]] ,lapply(p_rep, function(.) .$p_Mgit[[est]]), resamps = resamps, force_bootstrap = force_bootstrap,...) + theme + ggplot2::ggtitle("MGIT")  
       } else if (which == "xpert") {
         Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
         private$.misc$my_roc_plot(Y_Xpert_all, p_summary$p_Xpert[[est]],lapply(p_rep, function(.) .$p_Xpert[[est]]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Xpert")
       } else {
         not.na <- which(!is.na(C))
         C <- na.omit(C)
-        plt <- private$.misc$my_roc_plot(C, p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("Positive TBM")
+        plt <- private$.misc$my_roc_plot(C, p_summary$theta[[est]][not.na], lapply(p_rep, function(.) .$theta[[est]][not.na]), resamps = resamps, force_bootstrap = force_bootstrap, ...) + theme + ggplot2::ggtitle("TBM diagnosis")
         # ggplot2::ggplotGrob(plt)
       }  
     }
@@ -265,7 +265,7 @@ LCAModel <- R6::R6Class(
     },
     p = function(){
       if (is.null(private$.p)){
-        p <- private$.misc$extract_K_fold(self$model, self$folds$holdout, pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
+        p <- private$.misc$extract_K_fold(self$model, self$folds$holdout, pars = c("z_theta", "theta", "p_Smear", "p_Mgit", "p_Xpert"))
         p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
         p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
         private$.p <- p_summary
@@ -278,7 +278,7 @@ LCAModel <- R6::R6Class(
       if (is.null(private$.p_rep)){
         private$.p_rep <- vector("list", self$n_rep)
         for (n in seq_len(self$n_rep)){
-          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$folds$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = c("theta", "p_Smear", "p_Mgit", "p_Xpert"))
+          p <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$folds$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = c("z_theta","theta", "p_Smear", "p_Mgit", "p_Xpert"))
           p_summary <- sapply(p, apply, 2, function(l) data.frame(mean = mean(l), median = median(l), CI2.5 = quantile(l, .25), CI97.5 = quantile(l, .975)), simplify = FALSE, USE.NAMES = TRUE)
           p_summary <- sapply(p_summary, dplyr::bind_rows, simplify = FALSE, USE.NAMES = TRUE)
           private$.p_rep[[n]] <- p_summary

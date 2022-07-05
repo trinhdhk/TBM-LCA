@@ -32,14 +32,14 @@ args <-
   add_argument("--init-r", help = "Stan init parameter", default = 1, short = "-R") %>%
   add_argument("--adapt-delta", help = "Stan param", default = .8, short = "-D") %>%
   add_argument("--penalty-family", help = "Family for the regularised prior, either 't', 'normal', or 'laplace'", default = "t", short = "-F") %>%
-  add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed, second term == -1 will make it follow the first", nargs = 2, default = c(0,0), short = "-P") %>%
+  add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed, second term == -1 will make it follow the first", nargs = 2, default = 0, short = "-P") %>%
   add_argument("--all-params", help = "Whether to expose imputation params, ignored for m0", flag = TRUE, short="-a") %>%
-  add_argument("--quad-Xc", help = "Add quadratic effect for continuous variable, number are the positions in Xc", default = NA, nargs = Inf, short = '-q') %>%
+  add_argument("--quad-Xc", help = "Add quadratic effect for continuous variable, number are the positions in Xc", default = 0, nargs = Inf, short = '-q') %>%
   add_argument("--pca-n-FA", help = "Number of latent factors for PCA, 0 for no PCA", default = 0, short = "-P") %>%
   add_argument("--re-b", help = "Position of continuous variable to be included as predictor in bacillary burden model [0=none, 1=age, 2=illness day, 3=blood glucose, 4=csf glucose, 5=csf lympho, 6=csf protein, 7=csf lacate, 8=csf neutro, 9=gcs, 10=csf eos, 11=csf rbc, 12+=quadratic variables if exists]", nargs = Inf, default = NA, short = "-B") %>%
   add_argument("--include-d", help = "Add fixed outer effect for the bacillary burden", flag=TRUE) %>%
-  add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = NA, short = '-p') %>%
-  add_argument("--neg-a", help = "Position of negative coefficients, follow the same conventions as pos-a", nargs = Inf, default = NA, short = '-g') %>%
+  add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = 0, short = '-p') %>%
+  add_argument("--neg-a", help = "Position of negative coefficients, follow the same conventions as pos-a", nargs = Inf, default = 0, short = '-g') %>%
   add_argument("--quad-RE", help = "Sensitivity analysis for quadratic effect of Random Effect", flag=TRUE, short = "-Q") %>%
   add_argument("--lifted-spc", help = "Wider prior for test specificities (variances all set to .7 (default is .7 for Xpert, .3 for Mgit and Smear).", flag = TRUE, short = "-U") %>%
   add_argument("--use-rstan-compiler", help = "DEBUG arg: by default, use a custom stan_model function, if TRUE, use the default rstan one", flag = TRUE) %>%
@@ -135,6 +135,7 @@ with(
     pos_a <- if (all(is.na(pos_a))) 0 else pos_a
     neg_a <- if (all(is.na(neg_a))) 0 else neg_a
     re_b <- if (all(is.na(re_b))) 0 else re_b
+    if (length(penalty_term)==1) penalty_term <- rep(penalty_term, 2)
     if (penalty_term[1] < 0 || penalty_term[2] < -1) stop('Invalid penalty term(s)')
     n_FA <- if (any(!pca_n_FA %in% 0)) as.vector(pca_n_FA) else vector()
     B <- if (any(!re_b %in% 0)) as.array(as.numeric(re_b)) else vector()

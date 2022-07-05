@@ -1,5 +1,5 @@
 ppc = readRDS('outputs/ppc_check.RDS')
-orig = readRDS('outputs/m3_t00_b345678_q7_r1_k1_2.RDS')
+orig = readRDS('outputs/m3_t00_b345678_q7_r1_k1.RDS')
 ppc_merged = rstan::sflist2stanfit(ppc)
 
 # We will visually check for a[1], a[2], a[3], a[11], a[18]

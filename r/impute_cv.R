@@ -363,10 +363,11 @@ hiv_plot$plot0 =
 
 hiv_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=hiv3$pred[1:50,Td[,7]==1], x=hiv_miss[1:50,], color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=50)), shape=21, size=2, alpha=1) + #fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)
+  geom_hex(aes(y=hiv3$pred[1:100,Td[,7]==1], x=hiv_miss[1:100,], fill = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100), alpha=..ncount..)) + #fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)
   ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=hiv3$pred[1:100,Td[,7]==1], x=hiv_miss[1:100,], color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100), fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=100)), alpha=.5, method='loess', se=F)) + 
   scale_x_continuous(trans='logit', breaks = c(.25, .75, .95, .99, .999), limits=c(0.2, .9999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
+  scale_alpha_continuous(range=c(0.1,.75), trans='log10') + guides(alpha='none', fill='none')+
   ylab("Pr (HIV +)")+
   xlab('Pr (Response)') +
   theme_bw()
@@ -381,10 +382,11 @@ hiv_plot$plot2 =
 
 hiv_plot$plot3 = 
   ggplot()+
-  geom_point(aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:100,], x = hiv_miss[1:100,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100)), size=2, shape=21) + 
+  geom_hex(aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:100,], x = hiv_miss[1:100,], fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100), alpha = ..count..)) + 
   ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(hiv3$pred[,Td[,7]==1], hiv_miss)[1:100,], x = hiv_miss[1:100,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100))), method='loess', se=FALSE)) +
   scale_x_continuous(trans='logit', breaks = c(.25, .75, .95, .99, .999), limits=c(0.2, .9999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
+  scale_alpha_continuous(range=c(0.1,.75), trans='log10') + guides(alpha='none')+
   xlab('Pr (Response)') +
   ylab('Residual') +
   theme_bw()
@@ -401,10 +403,11 @@ id_miss = prob_missingness(obs_Xc[,1],
 id_plot = list()
 id_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=id2$pred[1:100,], x=id_miss[1:100,], color = rep(as.logical(obs_Xc[,1]),each=100)), shape=21, size=2, alpha=1) + #, fill = rep(as.logical(obs_Xc[,1]), each=100)
+  geom_hex(aes(y=id2$pred[1:100,], x=id_miss[1:100,], fill = rep(as.logical(obs_Xc[,1]),each=100), alpha=..count..)) + #, fill = rep(as.logical(obs_Xc[,1]), each=100)
   ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=id2$pred[1:100,], x=id_miss[1:100,], color = rep(as.logical(obs_Xc[,1]),each=100),fill = rep(as.logical(obs_Xc[,1]), each=100)), alpha=.5, method='loess', se=FALSE)) + 
   scale_x_continuous(trans='logit', breaks=c(0.4, .8, .95, .99, .999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
+  scale_alpha_continuous(range=c(0.1,.75), trans='log10') + guides(alpha='none', fill='none')+
   ylab("Days from onset")+
   xlab('Pr (Response)') +
   theme_bw()
@@ -440,10 +443,11 @@ gcs_plot = list()
 
 gcs_plot$plot1 = 
   ggplot() + 
-  geom_jitter(aes(y=gcs2$pred[1:100,], x=gcs_miss[1:100,], color = rep(as.logical(obs_Xc[,8]),each=100)), shape=21, size=2, alpha=1) + #,fill = rep(as.logical(obs_Xc[,8]), each=100)
+  geom_hex(aes(y=gcs2$pred[1:100,] + rnorm(length(gcs2$pred[1:100,]),0,.05), x=gcs_miss[1:100,], fill = rep(as.logical(obs_Xc[,8]),each=100), alpha=..count..)) + #,fill = rep(as.logical(obs_Xc[,8]), each=100)
   ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=gcs2$pred[1:100,], x=gcs_miss[1:100,], color = rep(as.logical(obs_Xc[,8]),each=100),fill = rep(as.logical(obs_Xc[,8]), each=100)), alpha=.5,method='loess', span=1, se=FALSE)) + 
   scale_x_continuous(trans='logit', breaks = c(.4, .8, .95, .99, .999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
+  scale_alpha_continuous(range=c(0.1,.75), trans='log10') + guides(alpha='none', fill='none')+
   ylab("Glascow coma score")+
   xlab('Pr (Response)') +
   theme_bw()
@@ -478,10 +482,11 @@ cs_plot = list()
 
 cs_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=clin_symptoms3$pred[1:100,], x=cs_miss[1:100,], color = rep(as.logical(obs_Xd[,2]),each=100)), shape=21, size=2, alpha=1) + #,fill = rep(as.logical(obs_Xd[,2]), each=100)
+  geom_hex(aes(y=clin_symptoms3$pred[1:100,], x=cs_miss[1:100,], fill = rep(as.logical(obs_Xd[,2]),each=100), alpha=..count..)) + #,fill = rep(as.logical(obs_Xd[,2]), each=100)
   ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=clin_symptoms3$pred[1:100,], x=cs_miss[1:100,], color = rep(as.logical(obs_Xd[,2]),each=100),fill = rep(as.logical(obs_Xd[,2]), each=100)), alpha=.5,method='loess', se=FALSE)) + 
   scale_x_continuous(trans='logit')+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
+  scale_alpha_continuous(range=c(0.1,.75), trans='log10') + guides(alpha='none', fill='none')+
   ylab("Pr (TB symptoms)")+
   xlab('Pr (Response)') +
   theme_bw()
@@ -518,11 +523,12 @@ mp_plot = list()
 
 mp_plot$plot1 = 
   ggplot() + 
-  geom_point(aes(y=motor_palsy3$pred[1:100,], x=mp_miss[1:100,], color = rep(as.logical(obs_Xd[,3]),each=100)), shape=21, size=2, alpha=1) + #,fill = rep(as.logical(obs_Xd[,3]), each=100)
+  geom_hex(aes(y=motor_palsy3$pred[1:100,], x=mp_miss[1:100,], fill = rep(as.logical(obs_Xd[,3]),each=100), alpha=..count..)) + #,fill = rep(as.logical(obs_Xd[,3]), each=100)
   ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=motor_palsy3$pred[1:100,], x=mp_miss[1:100,], color = rep(as.logical(obs_Xd[,3]),each=100),fill = rep(as.logical(obs_Xd[,3]), each=100)), alpha=.5,method='loess',span=1, se=FALSE)) + 
   scale_x_continuous(trans='logit', breaks = c(.5, .9, .99, .999, .9999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
-  ylab("Pr (Local neuro-deficit)")+
+  scale_alpha_continuous(range=c(0.1,.75), trans='log10') + guides(alpha='none', fill='none')+
+  ylab("Pr (Focal neuro-deficit)")+
   xlab('Pr (Response)') +
   theme_bw()
 
@@ -554,5 +560,5 @@ id_plot = grobs(id_plot)
 gcs_plot = grobs(gcs_plot)
 cs_plot = grobs(cs_plot)
 mp_plot = grobs(mp_plot)
-save(hiv_plot, id_plot, gcs_plot, cs_plot, mp_plot, file='export/impute_cv_plot.Rdata')
+save(hiv_plot, id_plot, gcs_plot, cs_plot, mp_plot, file='export/impute_cv_plot_hex.Rdata')
 

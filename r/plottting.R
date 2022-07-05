@@ -1,8 +1,9 @@
 library(bayesplot)
 library(ggplot2)
+library(tidyverse)
 load('data/cleaned/data_input.Rdata')
 scale = purrr::transpose(scale_Xc)
-model = m3t3
+model = m3t
 a = rstan::extract(model$outputs, pars=c('a0', 'a'))
 # a$a[,1:ncol(Xd)] = a$a[,1:ncol(Xd)] * 2
 a$a[,18] = -a$a[,18]
@@ -37,11 +38,13 @@ labs = c(
   'CSF Eosinophil > 0',
   '*log<sub>10</sub>* (CSF Eosinophil)',
   '*log<sub>10</sub>* (CSF RBC)',
-  'Cryptococcus + b',
-  'CSF Gram stain +'
+  'Evidence of Cryptococcus',
+  'Positive CSF Gram stain'
 ) 
 
-add_annotate = function(tab, text = '{round(mean,2)} [{round(`2.5%`,2)}; {round(`97.5%`,2)}]'){
+f2 = function(x) formatC(x, digits=2, format='f')
+
+add_annotate = function(tab, text = '{f2(mean)}; {f2(`50%`)} [{f2(`2.5%`)}; {f2(`97.5%`)}]'){
   tab |>
     as.data.frame() %>%
     dplyr::mutate(
@@ -141,8 +144,8 @@ a_plot <-
     fits = list(a_orig),
     pars = c('a0',
              paste0('a[',c(1:5,18,6:7,11:13,15,16,14,10,19,20,8,9),']')),
-    multi_point_est = TRUE,
-    point_est = c('mean', 'median'),
+    multi_point_est = FALSE,
+    point_est = c('median'),
     transformations = function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))),
     # point_size = 4,
     prob_outer = .95) +
@@ -154,13 +157,14 @@ a_plot <-
      scale_color_discrete(type=RColorBrewer::brewer.pal(name='Set1', n=3)[c(2,1,3)], 
                           breaks = c('a', 'a_orig'),
                           labels=c('Matched', 'Original')) + 
-     scale_x_continuous(name='TBM odd ratio', 
+     scale_x_continuous(name='TBM odd ratio',
                         # breaks=log(10^cutpoints),
+                        minor_breaks = NULL,
                         breaks = (function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))))(log(10^cutpoints)),
                         labels=lab.cutpoints) +
      ylab('')+
      theme_bw() +
-     theme(axis.text.y = ggtext::element_markdown(face='bold')) + 
+     theme(axis.text.y = ggtext::element_markdown()) +
   guides(color=guide_legend(title="Scale"))) %>%
   td.misc::change_ylabs(
     labs = labs,
@@ -168,11 +172,13 @@ a_plot <-
   ) + theme(legend.position = 'none') #+ 
   # ggforce::facet_zoom(xlim=c(-8,8))
   # (\(x) x )
-a_plot$data$m = bayesplot::mcmc_intervals_data(a_orig,
-                                             pars = c('a0',
-                                                      paste0('a[',c(1:5,18,6:7,11:13,15,16,14,10,19,20,8,9),']')),
-                                             transformations = exp, prob_outer=.95, point_est='mean') %>%
-  mutate(across(c(ll:hh), ~ sign(qlogis(.x)) * sqrt(abs(qlogis(.x))))) %>% .$m
+
+# transform mean. ununsed
+# a_plot$data$m = bayesplot::mcmc_intervals_data(a_orig,
+#                                              pars = c('a0',
+#                                                       paste0('a[',c(1:5,18,6:7,11:13,15,16,14,10,19,20,8,9),']')),
+#                                              transformations = exp, prob_outer=.95, point_est='mean') %>%
+#   mutate(across(c(ll:hh), ~ sign(log(.x)) * sqrt(abs(log(.x))))) %>% .$m
 
 b = rstan::extract(model$outputs, pars=c('b_HIV', 'b'))
 # b$b = b$b * 2
@@ -185,9 +191,9 @@ for (i in 2:(ncol(b))) b_orig[,i] = b_orig[,i]/(scale$`scaled:scale`[[re_b[i-1]]
 # intercept_translation_b = unlist(scale$`scaled:center`[re_b]) * b_orig[,-1]
 # b_orig[,1] = b_orig[,1] - apply(intercept_translation_b,1,sum)
 b_plot = td.misc::mcmc_intervals_multi(list(b_orig),
-                        pars = c('b_HIV',  paste0('b[',c(1,6,4,5,2,3), ']')),
-                        multi_point_est = TRUE,
-                        point_est = c('mean', 'median'),
+                        pars = c('b_HIV',  paste0('b[',c(6,1,4,5,2,3), ']')),
+                        multi_point_est = FALSE,
+                        point_est = c('median'),
                         # point_size = 2.5,
                         prob_outer = .95) |>
   td.misc::change_ylabs(
@@ -211,7 +217,7 @@ b_plot = td.misc::mcmc_intervals_multi(list(b_orig),
   guides(color=guide_legend(title="Scale")) +
   ylab('') +
   scale_x_continuous(name='Standardised bacillary burden', breaks=c(-3,-2,-1,0,1,2,3))+
-  theme_bw() + theme(axis.text.y = ggtext::element_markdown(family=NULL, face='bold'), legend.position = 'none')
+  theme_bw() + theme(axis.text.y = ggtext::element_markdown(), legend.position = 'none')
 
 library(patchwork)
 ab_plot = a_plot / b_plot + plot_layout(guides='collect', ncol=1,
@@ -223,15 +229,15 @@ colnames(z) = paste0('z_',rep(c('Smear', 'Mgit', 'Xpert'),each=2), rep(c('[1]', 
 z_plot = td.misc::mcmc_intervals_multi(list(z=z), 
                         regex_pars = '^z',
                         transformations = 'plogis',
-                        multi_point_est = TRUE,
-                        point_est = c('mean', 'median'),
+                        multi_point_est = FALSE,
+                        point_est = c('median'),
                         point_size = 2.5,
                         prob_outer = .95)
 
 z_plot_logit = mcmc_intervals(z, 
                              regex_pars = '^z',
                              multi_point_est = TRUE,
-                             point_est = 'mean',
+                             point_est = 'median',
                              point_size = 2.5,
                              prob_outer = .95)
 

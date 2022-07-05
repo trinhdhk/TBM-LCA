@@ -11,15 +11,15 @@ a[,9] = a[,9] /scale$`scaled:scale`$id
 a_plot_s2 = td.misc::mcmc_intervals_multi(list(a),
                                      pars = c('a0',
                                               paste0('a[',c(1:5, 9, 6:8, 10:11),']')),
-                                     multi_point_est = TRUE,
-                                     point_est = c('mean', 'median'),
+                                     multi_point_est = FALSE,
+                                     point_est = c('median'),
                                      point_size = 2.5,
                                      prob_outer = .95) |>
   td.misc::change_ylabs(
     'Intercept (centred)',
     'HIV +',
     'TB-suggested symptoms',
-    'Local motor palsy',
+    'Focal neurological deficit',
     'Cranial nerve palsy',
     'Past noticed TB contact',
     'Glasgow coma score',
@@ -33,15 +33,15 @@ a_plot_s2 = td.misc::mcmc_intervals_multi(list(a),
   geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +
   theme_bw() +
   scale_color_discrete(type=RColorBrewer::brewer.pal(3,'Set1')) +
-  ggplot2::theme(axis.text.y = ggtext::element_markdown(face='bold'), legend.position = 'none') +
+  ggplot2::theme(axis.text.y = ggtext::element_markdown(), legend.position = 'none') +
   xlab('') + ylab('')
 
-a_plot_s2$data$m = bayesplot::mcmc_intervals_data(a,
-                                                  pars = c('a0',
-                                                           paste0('a[',c(1:5, 9, 6:8, 10:11),']')),
-                                                  transformations = plogis, 
-                                                  prob_outer=.95, point_est='mean') %>%
-  mutate(across(c(ll:hh), ~ qlogis(.x))) %>% .$m
+# a_plot_s2$data$m = bayesplot::mcmc_intervals_data(a,
+#                                                   pars = c('a0',
+#                                                            paste0('a[',c(1:5, 9, 6:8, 10:11),']')),
+#                                                   transformations = plogis, 
+#                                                   prob_outer=.95, point_est='mean') %>%
+#   mutate(across(c(ll:hh), ~ qlogis(.x))) %>% .$m
 a_plot_s = a_plot_s2 +
   scale_x_continuous(
     name = 'TBM odd ratio',
@@ -54,14 +54,14 @@ a[,1] = a[,1] - apply(intercept_translation,1,sum)
 a_plot_s3 = td.misc::mcmc_intervals_multi(list(a),
                                           pars = c('a0',
                                                    paste0('a[',c(1:5, 9, 6:8, 10:11),']')),
-                                          point_est = 'mean',
+                                          point_est = 'median',
                                           point_size = 2.5,
                                           prob_outer = .95) |>
   td.misc::change_ylabs(
     'Intercept',
     'HIV +',
     'TB-suggested symptoms',
-    'Local motor palsy',
+    'Focal neurological deficit',
     'Cranial nerve palsy',
     'Past noticed TB contact',
     'Glasgow coma score',
@@ -75,7 +75,7 @@ a_plot_s3 = td.misc::mcmc_intervals_multi(list(a),
   geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +
   theme_bw() +
   scale_color_discrete(type=RColorBrewer::brewer.pal(3,'Set1')) +
-  ggplot2::theme(axis.text.y = ggtext::element_markdown(face='bold'), legend.position = 'none') +
+  ggplot2::theme(axis.text.y = ggtext::element_markdown(), legend.position = 'none') +
   xlab('') + ylab('') +
   scale_x_continuous(
     name = 'TBM odd ratio',

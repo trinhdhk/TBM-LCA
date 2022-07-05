@@ -706,13 +706,17 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
     
     # Find minimum calibration
     # browser()
+    offset <- stats::offset
     if (type == 'binary'){
       pred.logit <- stats::qlogis(pred)
       pred.logit <- ifelse(is.infinite(pred.logit), NA_real_, pred.logit)
       calib.fit <- stats::glm(as.logical(obs)~pred.logit, family=stats::binomial())
+      calib.fit0 <- stats::glm(as.logical(obs)~offset(pred.logit), family=stats::binomial())
     } else {
       pred.logit <- pred
       calib.fit <- stats::lm(obs~pred.logit)
+      calib.fit0 <- stats::lm(obs~offset(pred.logit))
+      
     }
     
     # browser()
@@ -727,7 +731,7 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
         "text", x = .99, y = .05, hjust='right', vjust='bottom',
         label = paste0("Observed prevalence: ", format(obs_p, digits = 2), '\n',
                        'Predicted prevalence: ', format(pred_p, digits=2), '\n',
-                       "Calibration intercept: ", format(stats::coef(calib.fit)[['(Intercept)']], digits = 2),'\n',
+                       "Calibration intercept: ", format(stats::coef(calib.fit0)[['(Intercept)']], digits = 2),'\n',
                        'Calibration slope: ', format(stats::coef(calib.fit)[['pred.logit']], digits=2)), 
         parse = F, size = 2.8, colour = classifierplots:::fontgrey_str
       ) +

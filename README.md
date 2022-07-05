@@ -1,4 +1,3 @@
-
 # An Latent Class Diagnostic Model for *Tuberculous meningitis* (#TBM-LCA)
 
 ## Introduction
@@ -19,10 +18,10 @@ Run the program:
 
 -   Unix and Unix-like operating systems:
 
-``` bash
-cd TBM-LCA
-./sampler.R --config-file sample-config.yml
-```
+    ``` bash
+    cd TBM-LCA
+    ./sampler.R --config-file sample-config.yml
+    ```
 
 -   Windows:
 
@@ -30,6 +29,5 @@ cd TBM-LCA
     cd TBM-LCA
     Rscript sampler.R --config-file sample-config.yml
     ```
-    
-(c) Trinh Huu-Khanh Dong @ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam
-2022
+
+\(c\) Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2022

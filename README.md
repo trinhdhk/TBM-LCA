@@ -30,4 +30,4 @@ Run the program:
     Rscript sampler.R --config-file sample-config.yml
     ```
 
-\(c\) Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2022
+@copy; Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2022

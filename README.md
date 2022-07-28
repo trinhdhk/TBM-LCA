@@ -77,7 +77,7 @@ Prerequisites:
     SQUAREM_2021.1          StanHeaders_2.29.2.9000 stats_4.2.0            
     stats4_4.2.0            statsExpressions_1.3.2  stringi_1.7.6          
     stringr_1.4.0           survival_3.2-12         sys_3.4                
-    systemfonts_1.0.4       td.misc_0.0.0.9001      tensorA_0.36.2         
+    systemfonts_1.0.4       tensorA_0.36.2         
     testthat_3.1.4          textshaping_0.3.6       TH.data_1.1-1          
     tibble_3.1.7            tidyr_1.2.0             tidyselect_1.1.2       
     timeDate_3043.102       tinytex_0.39            tools_4.2.0            

@@ -13,6 +13,9 @@ if (unsure_spc == 1){
 }
 
 //Sensitivity of each test
-z_Xpert[2] ~ logistic(0, .38);
-z_Mgit[2]  ~ logistic(0, .38);
-z_Smear[2] ~ logistic(0, .38);
+z_Xpert[2] ~ logistic(0, .6);
+z_Mgit[2]  ~ logistic(0, .6);
+z_Smear[2] ~ logistic(0, .6);
+// z_Xpert[2] ~ student_t(nu, 0, 3);
+// z_Mgit[2]  ~ student_t(nu, 0, 3);
+// z_Smear[2] ~ student_t(nu, 0, 3);

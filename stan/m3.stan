@@ -43,6 +43,7 @@ parameters {
   real<lower=0> b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
+  // vector<lower=0>[3 * quad_RE] b_RE2_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 
@@ -58,6 +59,7 @@ transformed parameters {
   real<lower=0> b_HIV;
   vector[nB] b;
   vector<lower=0>[3] b_RE;
+  // vector<lower=0>[3 * quad_RE] b_RE2;
 #include includes/impute_model/transform_parameters.stan
   {
 #include includes/transform_parameters/penalty.stan
@@ -93,9 +95,15 @@ model {
 #include includes/impute_model/impute_priors.observedHIV.stan
       int N_Xd_miss = 2 - sum(obs_Xd[n, 2:3]);
       real bac_load   = b_HIV*Xd_imp[n,1] + dot_product(b, Xc_imp[n, B]);
-      real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-      real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-      real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n] + square(RE[n])*quad_RE);
+      real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
+      real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
+      real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
+      
+      // if (quad_RE){
+      //   z_Smear_RE += b_RE2[1]*(bac_load + RE[n])^2;
+      //   z_Mgit_RE  += b_RE2[2]*(bac_load + RE[n])^2;
+      //   z_Xpert_RE += b_RE2[3]*(bac_load + RE[n])^2;
+      // }
       
       // Symptoms or motor palsy is missing
       if (N_Xd_miss > 0){
@@ -140,9 +148,15 @@ model {
         int N_Xd_miss = 2 - sum(obs_Xd[n, 2:3]);
         
         real bac_load   = b_HIV + dot_product(b, Xc_imp[n, B]);
-        real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-        real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-        real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n] + square(RE[n])*quad_RE);
+        real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
+        real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
+        real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
+        
+         // if (quad_RE){
+         //   z_Smear_RE += b_RE2[1]*(bac_load + RE[n])^2;
+         //   z_Mgit_RE  += b_RE2[2]*(bac_load + RE[n])^2;
+         //   z_Xpert_RE += b_RE2[3]*(bac_load + RE[n])^2;
+         // }
         // Symptoms or motor palsy is missing
         if (N_Xd_miss > 0){
           int N_pattern = int_power(2, N_Xd_miss);
@@ -173,10 +187,15 @@ model {
       {
         int N_Xd_miss = 2 - sum(obs_Xd[n, 2:3]);
         real bac_load   = dot_product(b, Xc_imp[n, B]);
-        real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-        real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n] + square(RE[n])*quad_RE);
-        real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n] + square(RE[n])*quad_RE);
+        real z_Smear_RE = z_Smear[2] + b_RE[1]*(bac_load + RE[n]);
+        real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
+        real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
             
+        // if (quad_RE){
+        //   z_Smear_RE += b_RE2[1]*(bac_load + RE[n])^2;
+        //   z_Mgit_RE  += b_RE2[2]*(bac_load + RE[n])^2;
+        //   z_Xpert_RE += b_RE2[3]*(bac_load + RE[n])^2;
+        // }
         // Symptoms or motor palsy is missing
         if (N_Xd_miss > 0){
           int N_pattern = int_power(2, N_Xd_miss);
@@ -237,10 +256,15 @@ generated quantities {
       for (i in 1:nB) B2[i] = B[i]+nXd;
       RE_all[which(keptin)] = RE;
       for (n in which_not(keptin)) RE_all[n] = normal_rng(0, 1);
-      bac_load = b_HIV*X[:,1] + X[:, B2]*b + RE_all + square(RE_all)*quad_RE;
+      bac_load = b_HIV*X[:,1] + X[:, B2]*b + RE_all;
       z_Smear_RE = z_Smear[2] + b_RE[1]*bac_load;
       z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*bac_load;
       z_Xpert_RE = z_Xpert[2] + b_RE[3]*bac_load;
+       // if (quad_RE){
+       //  z_Smear_RE += b_RE2[1]*bac_load^2;
+       //  z_Mgit_RE  += b_RE2[2]*bac_load^2;
+       //  z_Xpert_RE += b_RE2[3]*bac_load^2;
+      // }
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
       p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);

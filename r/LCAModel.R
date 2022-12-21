@@ -44,6 +44,21 @@ LCAModel <- R6::R6Class(
     extract = function(...){
       rstan::extract(self$model_cmb, ...)
     },
+    extract_heldout = function(pars, bind = TRUE){
+      extracted_data <- vector('list', len = self$n_rep)
+      for (n in seq_len(self$n_rep)){
+        m <- private$.misc$extract_K_fold(self$model[((n-1)*self$n_fold+1):(n*self$n_fold)], self$folds$holdout[((n-1)*self$n_fold+1):(n*self$n_fold)], pars = pars)
+        extracted_data[[n]] <- m
+      }
+      extracted_data <- purrr::transpose(extracted_data)
+      if (bind) {
+        extracted_data <- sapply(extracted_data,
+                                 function(data){
+                                   do.call(rbind, data)
+                                 }, simplify = FALSE, USE.NAMES = TRUE)
+      }
+      extracted_data
+    },
     get_metrics = function(file = NULL){
       s <- list(
         model_name = self$model_name,

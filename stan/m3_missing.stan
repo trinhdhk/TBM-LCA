@@ -90,8 +90,8 @@ model {
       j += 1;
     }
   }
-  z_obs[1] ~ logistic(0, .5);
-  z_obs[2] ~ logistic(logit(.99), 1);
+  z_obs[1] ~ logistic(0, .6);
+  z_obs[2] ~ logistic(logit(.9), 1);
   
   for (n in 1:N){
     // If HIV is observed

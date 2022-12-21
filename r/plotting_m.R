@@ -1,7 +1,7 @@
 library(ggplot2)
-a = rstan::extract(m3t$outputs, pars=c('a0', 'a'))
-a_mX = rstan::extract(m3mX$outputs, pars=c('a0', 'a'))
-a_mXu = rstan::extract(m3mXu$outputs, pars=c('a0', 'a'))
+a = rstan::extract(m3$outputs, pars=c('a0', 'a'))
+a_mX = rstan::extract(m3m$outputs, pars=c('a0', 'a'))
+a_mXu = rstan::extract(m3m$outputs, pars=c('a0', 'a'))
 
 a$a[,18] = -a$a[,18]
 a = cbind(a$a0, a$a)
@@ -81,9 +81,9 @@ a_plot_m <-
 
 # a_plot_m$data$m = c(a_plot_m_data_m1, a_plot_m_data_m2)
 
-b = rstan::extract(m3t$outputs, pars=c('b_HIV', 'b'))
-b_mX = rstan::extract(m3mX$outputs, pars=c('b_HIV', 'b'))
-b_mXu = rstan::extract(m3mXu$outputs, pars=c('b_HIV', 'b'))
+b = rstan::extract(m3$outputs, pars=c('b_HIV', 'b'))
+b_mX = rstan::extract(m3m$outputs, pars=c('b_HIV', 'b'))
+b_mXu = rstan::extract(m3m$outputs, pars=c('b_HIV', 'b'))
 
 b$b[,6]=-b$b[,6]
 b = cbind(b$b_HIV, b$b)
@@ -118,9 +118,9 @@ b_plot_m = td.misc::mcmc_intervals_multi(list('Selected' = b, `Incomplete Xpert`
   scale_x_continuous(name='Standardised bacillary burden', breaks=c(-3,-2,-1,0,1,2,3))+
   theme_bw() + theme(axis.text.y = ggtext::element_markdown(family=NULL), legend.position = 'bottom')
 
-z = rstan::extract(m3t$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert'))
-z_mX = rstan::extract(m3mX$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
-z_mXu= rstan::extract(m3mXu$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
+z = rstan::extract(m3$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert'))
+z_mX = rstan::extract(m3m$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
+z_mXu= rstan::extract(m3m$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
 z = do.call(cbind, z)
 z_mX = do.call(cbind, z_mX)
 z_mXu = do.call(cbind, z_mXu)
@@ -174,4 +174,4 @@ z_plot_logit_m = (td.misc::mcmc_intervals_multi(list(Original = z, `Incomplete X
 
 # z_plot_logit_m$data$m = c(z_plot_m_data_m1, z_plot_m_data_m2)
 
-saveRDS(list(a_plot = a_plot_m, b_plot = b_plot_m, z_plot = z_plot_logit_m), 'export/m3m_plot.RDS')
+# saveRDS(list(a_plot = a_plot_m, b_plot = b_plot_m, z_plot = z_plot_logit_m), 'export/m3m_plot.RDS')

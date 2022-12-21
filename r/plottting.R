@@ -3,7 +3,7 @@ library(ggplot2)
 library(tidyverse)
 load('data/cleaned/data_input.Rdata')
 scale = purrr::transpose(scale_Xc)
-model = m3t
+model = m3
 a = rstan::extract(model$outputs, pars=c('a0', 'a'))
 # a$a[,1:ncol(Xd)] = a$a[,1:ncol(Xd)] * 2
 a$a[,18] = -a$a[,18]

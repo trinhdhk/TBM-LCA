@@ -37,7 +37,7 @@ rpc_summary$Model = as.factor(rpc_summary$Model)
 rpc_plot = ggplot(data=rpc_summary, aes(x=Pair, color=Model, group=Model)) + 
   geom_line(aes(y=mean), stat='summary', size = .7)+
   # stat_summary(aes(y=mean), geom='line', fun=sum) +
-  scale_y_continuous(limits=c(-.15, .15)) +
+  scale_y_continuous(limits=c(-.12, .12)) +
   scale_x_discrete(expand=c(.07,.07)) +
   scale_color_brewer(palette='Set1') +
   theme_bw() + 

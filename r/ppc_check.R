@@ -29,11 +29,13 @@ simulate_data =
     
     cs_a0   = get_par('cs_a0', id) 
     cs_a    = get_par('cs_a', id)
-    L_omega_cs   = get_par('L_Omega_cs', id)
+    # L_omega_cs   = get_par('L_Omega_cs', id)
+    cs_p    = get_par('cs_p', id)
     
     mp_a0   = get_par('mp_a0', id)
     mp_a    = get_par('mp_a', id)
-    L_omega_mp   = get_par('L_Omega_mp', id) 
+    # L_omega_mp   = get_par('L_Omega_mp', id) 
+    mp_p    = get_par('mp_p', id)
     
     L_omega_csf   = get_par('L_Omega_csf', id) 
     L_sigma_csf   = get_par('L_sigma_csf', id) 
@@ -56,29 +58,31 @@ simulate_data =
     test = with(data_19EI, csf_smear + csf_mgit + csf_xpert) > 0
     # HIV
     Xd[Td[,7]==1,1] = sapply(hiv_a0 + hiv_a[1]*obs[Td[,7]==1] + hiv_a[2]*test[Td[,7]==1],
-                             function(iii) rbinom(1, size = 1, pnorm(iii)))
+                             function(iii) rbinom(1, size = 1, plogis(iii)))
     # browser()
     # Illness_day
     Xc[,1] = sapply(id_a0 + id_a[1]*Xd[,1] + id_a[2]*obs + id_a[3]*test,
                     function(iii) rnorm(1, mean = iii, sd = id_sigma))
     
     # Clinical symptoms
-    mu_cs =  cs_a0 + cs_a[,1]%.*%Xd[,1] + cs_a[,2]%.*%Xc[,1] + cs_a[,3]%.*%obs + cs_a[,4]%.*%test
-    cs = apply(mu_cs, 1,
-                function(mu) LaplacesDemon::rmvnc(1, mu = mu, U = t(L_omega_cs))) |> pnorm() 
-    cs = apply(cs, 2, \(x) sapply(x, rbinom, n=1, size=1))
-    Xd[,2] = cs[1,] | cs[2,] | cs[3,]
+    mu_cs =  cs_a0 + cs_a[1]%*%Xd[,1] + cs_a[2]%*%Xc[,1] + cs_a[3]%*%obs + cs_a[4]%*%test
+    #cs = apply(mu_cs, 1,
+    #            function(mu) LaplacesDemon::rmvnc(1, mu = mu, U = t(L_omega_cs))) |> pnorm() 
+    #cs = apply(cs, 2, \(x) sapply(x, rbinom, n=1, size=1))
+    Xd[,2] = sapply(mu_cs, function(iii) rbinom(1, size=1, plogis(iii)))
+    #Xd[,2] = cs[1,] | cs[2,] | cs[3,]
     # Motor palsy
     
-    mu_mp =  mp_a0 + mp_a[,1]%.*%Xd[,1] + mp_a[,2]%.*%Xc[,1] + mp_a[,3]%.*%obs + mp_a[,4]%.*%test
-    mp = apply(mu_mp, 1,
-               function(mu)  LaplacesDemon::rmvnc(1, mu = mu, U = t(L_omega_mp))) |> pnorm() 
-    mp = apply(mp, 2, \(x) sapply(x, rbinom, n=1, size=1))
-    Xd[,3] = mp[1,] | mp[2,] | mp[3,]
+    mu_mp =  mp_a0 + mp_a[1]%*%Xd[,1] + mp_a[2]%*%Xc[,1] + mp_a[3]%*%obs + mp_a[4]%*%test
+    #mp = apply(mu_mp, 1,
+    #           function(mu)  LaplacesDemon::rmvnc(1, mu = mu, U = t(L_omega_mp))) |> pnorm() 
+    #mp = apply(mp, 2, \(x) sapply(x, rbinom, n=1, size=1))
+    #Xd[,3] = mp[1,] | mp[2,] | mp[3,]
+    Xd[,3] = sapply(mu_mp, function(iii) rbinom(1, size=1, plogis(iii)))
     
     # GCS
     L_Sigma_gcs = diag(L_sigma_gcs) %*% L_omega_gcs
-    mu_gcs = gcs_a0 + gcs_a[,1] %.*% obs + gcs_a[,2] %.*% test
+    mu_gcs = gcs_a0 + gcs_a[,1] %.*% Xd[,1] + gcs_a[,2] %.*% obs + gcs_a[,3] %.*% test
     # GCS = mvtnorm::rmvnorm(N, mean = gcs_a0, sigma = L_Sigma_gcs %*% t(L_Sigma_gcs), method = 'chol')
     
     GCS = sapply(seq_len(N), 
@@ -140,15 +144,16 @@ cli::cli_alert_info('Load sampler')
 model <- misc$my_stan_model('stan/m3.stan')
 
 cli::cli_alert_info('Get pretrained model')
-pretrained <- readRDS('outputs/m3_t00_b345678_q7_r1_k1_2.RDS')
+pretrained <- readRDS('outputs/m3_t00_b345678_q7_r1_k1_3012.RDS')
 # set.seed(1223433)
 misc <- new.env()
 source('r/include/functions.R', local=misc)
 
 cli::cli_alert_info('Generate replicated data')
 # future::plan(future::multicore, workers=10)
-options('future.globals.maxSize' = 1610612736)
-rep_data <- future.apply::future_lapply(cli::cli_progress_along(1:100), function(.) simulate_data(pretrained), future.seed = TRUE)
+options(future.globals.maxSize = 1610612736*3)
+# rep_data <- future.apply::future_lapply(cli::cli_progress_along(1:100), function(.) simulate_data(pretrained), future.seed = TRUE)
+rep_data <- lapply(cli::cli_progress_along(1:100), function(.) simulate_data(pretrained))
 saveRDS(rep_data, 'export/rep_data.RDS')
 dir.create('.cache/sampling/ppc_check', showWarnings = FALSE)
 cli::cli_alert_info('Refit model on replicated data')
@@ -156,7 +161,7 @@ sample <-
   misc$stan_kfold(sampler = model,
                   list_of_datas=rep_data,
                   backend = "rstan",
-                  chains = 1, cores = 20, 
+                  chains = 1, cores = 15, 
                   thin = 10, 
                   merge = FALSE,
                   control = list(adapt_delta=.70, max_treedepth=12), 

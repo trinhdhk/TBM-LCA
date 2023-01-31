@@ -18,25 +18,25 @@ for (i in 11:(ncol(a_orig)-2)) a_orig[,i] = a_orig[,i]/scale$`scaled:scale`[[i-1
 scale_wbc2 = sd(Xc[,7])
 a_orig[,ncol(a_orig)]=a_orig[,ncol(a_orig)]/scale_wbc2
 labs = c(
-  'Intercept (centred)', 
+  'Intercept', 
   'HIV +',
-  'TB-suggested symptoms',
-  'Focal neurological deficit +',
-  'Cranial nerve palsy +',
+  'TB-suggestive symptoms',
+  'Focal neurological deficit',
+  'Cranial nerve palsy',
   'Past noticed TB contact',
   'Glasgow coma score',
   'Pulmonary TB/X-ray',
   'Miliary TB/X-Ray',
-  '*log<sub>2</sub>* (Days from onset)',
+  '*log<sub>2</sub>* (Symptom duration, days)',
   '*log<sub>2</sub>* (Paired blood glucose)',
-  '*log<sub>2</sub>* (CSF Glucose)',
-  '*log<sub>2</sub>* (CSF Protein)',
-  '*log<sub>2</sub>* (CSF Lactate)',
-  '*log<sub>10</sub>* (CSF Lymphocyte)',
+  '*log<sub>2</sub>* (CSF glucose)',
+  '*log<sub>2</sub>* (CSF protein)',
+  '*log<sub>2</sub>* (CSF lactate)',
+  '*log<sub>10</sub>* (CSF lymphocyte)',
   # '*log<sub>10</sub>* (CSF WBC count)',
   # '*log<sub>10</sub>* (CSF WBC count)<sup>2</sup>',
-  'CSF Eosinophil > 0',
-  '*log<sub>10</sub>* (CSF Eosinophil)',
+  'CSF eosinophil > 0',
+  '*log<sub>10</sub>* (CSF eosinophil)',
   '*log<sub>10</sub>* (CSF RBC)',
   'Evidence of Cryptococcus',
   'Positive CSF Gram stain'
@@ -147,7 +147,7 @@ a_plot <-
     multi_point_est = FALSE,
     point_est = c('median'),
     transformations = function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))),
-    # point_size = 4,
+    point_size = 2,
     prob_outer = .95) +
      geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +
      # geom_text(aes(x = 40, y=parameter, label=annotate), 
@@ -194,16 +194,16 @@ b_plot = td.misc::mcmc_intervals_multi(list(b_orig),
                         pars = c('b_HIV',  paste0('b[',c(6,1,4,5,2,3), ']')),
                         multi_point_est = FALSE,
                         point_est = c('median'),
-                        # point_size = 2.5,
+                        point_size = 2,
                         prob_outer = .95) |>
   td.misc::change_ylabs(
-    'HIV +',
+    'HIV +' ,
     # 'Local neurological deficit +',
     'GCS',
-    '*log<sub>2</sub>* (CSF Glucose)',
-    '*log<sub>2</sub>* (CSF Protein)',
-    '*log<sub>2</sub>* (CSF Lactate)',
-    '*log<sub>10</sub>* (CSF Lymphocyte)',
+    '*log<sub>2</sub>* (CSF glucose)',
+    '*log<sub>2</sub>* (CSF protein)',
+    '*log<sub>2</sub>* (CSF lactate)',
+    '*log<sub>10</sub>* (CSF lymphocyte)',
     '*log<sub>10</sub>* (CSF WBC)',
     top_down = T
   ) +
@@ -231,14 +231,14 @@ z_plot = td.misc::mcmc_intervals_multi(list(z=z),
                         transformations = 'plogis',
                         multi_point_est = FALSE,
                         point_est = c('median'),
-                        point_size = 2.5,
+                        point_size = 2,
                         prob_outer = .95)
 
 z_plot_logit = mcmc_intervals(z, 
                              regex_pars = '^z',
                              multi_point_est = TRUE,
                              point_est = 'median',
-                             point_size = 2.5,
+                             point_size = 2,
                              prob_outer = .95)
 
 wbc = rbind(Xc[,7], Xc[,7]^2)
@@ -256,14 +256,15 @@ wbcpredsum = data.frame(
 ) 
 
 trans=function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x)))
-  
+argmax_wbc = (wbcpredsum$wbc[which.max(wbcpredsum$mean)]+scale$`scaled:center`$csfwbc) * scale$`scaled:scale`$csfwbc
 wbc_plot = ggplot(wbcpredsum, aes(x=wbc)) +
   geom_ribbon(aes(ymax=h,ymin=l), alpha=.4, fill = RColorBrewer::brewer.pal(name='Set1', n=3)[2])+
   geom_ribbon(aes(ymax=hh,ymin=ll), alpha=.2, fill = RColorBrewer::brewer.pal(name='Set1', n=3)[2]) + 
   scale_x_continuous(name = 'CSF WBC',
-                     breaks = (log10(c(1, 11, 101, 1001, 10001)) - scale$`scaled:center`$csfwbc)/scale$`scaled:scale`$csfwbc,
-                     labels = c(0, 10, 100, 1000, 10000), expand=c(0,0)) +
+                     breaks = c((log10(c(1, 11, 101, 1001, 10001)) - scale$`scaled:center`$csfwbc)/scale$`scaled:scale`$csfwbc, wbcpredsum$wbc[which.max(wbcpredsum$mean)]),
+                     labels = c(0, 10, 100, 1000, 10000, round(10^argmax_wbc,0)), expand=c(0,0)) +
   geom_hline(aes(yintercept=0), color=grey(.5), alpha=.5) +
+  geom_vline(aes(xintercept=wbc[which.max(mean)]), color=grey(.5), alpha=.5)+
   geom_line(aes(y=mean), 
             color=RColorBrewer::brewer.pal(name='Set1', n=3)[2], size=.8) + 
   scale_y_continuous(

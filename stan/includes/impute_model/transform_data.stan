@@ -1,10 +1,3 @@
-// Observe test
-int obs_test_all[N_all];
-int test_all[N_all];
-
-int obs_test[N];
-int test[N];
-
 // * Clinical symptoms Td[1:3] ----------------------------------------------
 int Td_cs[N,3] = Td[:,1:3];
 int obs_cs[N,3] = obs_Td[:,1:3];

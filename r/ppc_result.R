@@ -1,5 +1,5 @@
 ppc = readRDS('outputs/ppc_check.RDS')
-orig = readRDS('outputs/m3_t00_b345678_q7_r1_k1.RDS')
+orig = readRDS('outputs/m3_t00_b345678_q7_r1_k1_3012.RDS')
 ppc_merged = rstan::sflist2stanfit(ppc)
 
 # We will visually check for a[1], a[2], a[3], a[11], a[18]
@@ -23,7 +23,7 @@ plot.param_data = function(x, grob=TRUE, ..., plot=TRUE){
     gghighlight::gghighlight(id == 0, use_group_by=FALSE, unhighlighted_params = list(size=.5, color = grey(.8))) +
     theme_classic() + 
     scale_color_brewer(type='qual', palette='Set1')+
-    xlab('Log odd-ratio') + 
+    xlab('Log odds ratio') + 
     ylab('Density')+
     theme(legend.position='none')
   if (!grob) return(plt)

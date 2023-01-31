@@ -13,7 +13,7 @@ data_19EI[,
               as.integer(time_str[[1]])*24 + as.integer(time_str[[2]])
             })]
 
-model = readRDS('outputs/m3_t00_b345678_q7_r1_k1.RDS')$outputs
+model = readRDS('outputs/m3_t00_b345678_q7_r1_k1_2112.RDS')$outputs
 X = rstan::extract(model, 'X')$X
 b = rstan::extract(model, c('b', 'b_HIV', 'b_RE'))
 RE = rstan::extract(model, 'RE')$RE

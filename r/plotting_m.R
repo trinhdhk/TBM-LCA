@@ -1,7 +1,7 @@
 library(ggplot2)
 a = rstan::extract(m3$outputs, pars=c('a0', 'a'))
 a_mX = rstan::extract(m3m$outputs, pars=c('a0', 'a'))
-a_mXu = rstan::extract(m3m$outputs, pars=c('a0', 'a'))
+a_mXu = rstan::extract(m3mu$outputs, pars=c('a0', 'a'))
 
 a$a[,18] = -a$a[,18]
 a = cbind(a$a0, a$a)
@@ -14,28 +14,28 @@ a_mXu = cbind(a_mXu$a0, a_mXu$a)
 
 colnames(a) <- colnames(a_mX) <- colnames(a_mXu) <-  c('a0', paste0('a[',1:(ncol(a)-1),']'))
 labs = c(
-  'Intercept (centred)', 
+  'Intercept', 
   'HIV +',
-  'TB-suggested symptoms',
-  'Focal neurological deficit +',
-  'Cranial nerve palsy +',
+  'TB-suggestive symptoms',
+  'Focal neurological deficit',
+  'Cranial nerve palsy',
   'Past noticed TB contact',
   'Glasgow coma score',
   'Pulmonary TB/X-ray',
   'Miliary TB/X-Ray',
-  '*log<sub>2</sub>* (Days from onset)',
+  '*log<sub>2</sub>* (Symptom duration, days)',
   '*log<sub>2</sub>* (Paired blood glucose)',
-  '*log<sub>2</sub>* (CSF Glucose)',
-  '*log<sub>2</sub>* (CSF Protein)',
-  '*log<sub>2</sub>* (CSF Lactate)',
-  '*log<sub>10</sub>* (CSF Lymphocyte)',
+  '*log<sub>2</sub>* (CSF glucose)',
+  '*log<sub>2</sub>* (CSF protein)',
+  '*log<sub>2</sub>* (CSF lactate)',
+  '*log<sub>10</sub>* (CSF lymphocyte)',
   '*log<sub>10</sub>* (CSF WBC)',
   '*log<sub>10</sub>* (CSF WBC)<sup>2</sup>',
-  'CSF Eosinophil > 0',
-  '*log<sub>10</sub>* (CSF Eosinophil)',
+  'CSF eosinophil > 0',
+  '*log<sub>10</sub>* (CSF eosinophil)',
   '*log<sub>10</sub>* (CSF RBC)',
-  'Cryptococcus +',
-  'Gram stain +'
+  'Evidence of cryptococcus',
+  'Positive CSF Gram stain'
 ) 
 
 cutpoints = c(-20,-16,-8,-4, -2,-1, log10(.5), log10(.9) ,0, log10(10/9),log10(2),1,2,4)
@@ -53,7 +53,7 @@ a_plot_m <-
     prob_outer = .95) +
      geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +
      scale_color_discrete(type=RColorBrewer::brewer.pal(name='Set1', n=3)[c(2,1,3)]) +
-     scale_x_continuous(name='TBM odd ratio', 
+     scale_x_continuous(name='TBM odds ratio', 
                         breaks = (function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))))(log(10^cutpoints)),
                         labels=lab.cutpoints) +
      ylab('')+
@@ -83,7 +83,7 @@ a_plot_m <-
 
 b = rstan::extract(m3$outputs, pars=c('b_HIV', 'b'))
 b_mX = rstan::extract(m3m$outputs, pars=c('b_HIV', 'b'))
-b_mXu = rstan::extract(m3m$outputs, pars=c('b_HIV', 'b'))
+b_mXu = rstan::extract(m3mu$outputs, pars=c('b_HIV', 'b'))
 
 b$b[,6]=-b$b[,6]
 b = cbind(b$b_HIV, b$b)
@@ -104,10 +104,10 @@ b_plot_m = td.misc::mcmc_intervals_multi(list('Selected' = b, `Incomplete Xpert`
   td.misc::change_ylabs(
     'HIV +',
     'GCS',
-    '*log<sub>2</sub>* (CSF Glucose)',
-    '*log<sub>2</sub>* (CSF Protein)',
-    '*log<sub>2</sub>* (CSF Lactate)',
-    '*log<sub>10</sub>* (CSF Lymphocyte)',
+    '*log<sub>2</sub>* (CSF glucose)',
+    '*log<sub>2</sub>* (CSF protein)',
+    '*log<sub>2</sub>* (CSF lactate)',
+    '*log<sub>10</sub>* (CSF lymphocyte)',
     '*log<sub>10</sub>* (CSF WBC)',
     top_down = T
   ) +
@@ -120,7 +120,7 @@ b_plot_m = td.misc::mcmc_intervals_multi(list('Selected' = b, `Incomplete Xpert`
 
 z = rstan::extract(m3$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert'))
 z_mX = rstan::extract(m3m$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
-z_mXu= rstan::extract(m3m$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
+z_mXu= rstan::extract(m3mu$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'))
 z = do.call(cbind, z)
 z_mX = do.call(cbind, z_mX)
 z_mXu = do.call(cbind, z_mXu)
@@ -150,8 +150,8 @@ z_plot_logit_m = (td.misc::mcmc_intervals_multi(list(Original = z, `Incomplete X
       "FPR<sub>Xpert</sup>",
       "TPR<sub>MGIT</sub>",
       "FPR<sub>MGIT</sub>",
-      "TPR<sub>Smear</sub>",
-      "FPR<sub>Smear</sub>"
+      "TPR<sub>ZN-Smear</sub>",
+      "FPR<sub>ZN-Smear</sub>"
     ) |> rev(),
     top_down = T
   ) + theme(axis.text.y = ggtext::element_markdown(family=NULL), legend.position = 'bottom')
@@ -174,4 +174,4 @@ z_plot_logit_m = (td.misc::mcmc_intervals_multi(list(Original = z, `Incomplete X
 
 # z_plot_logit_m$data$m = c(z_plot_m_data_m1, z_plot_m_data_m2)
 
-# saveRDS(list(a_plot = a_plot_m, b_plot = b_plot_m, z_plot = z_plot_logit_m), 'export/m3m_plot.RDS')
+saveRDS(list(a_plot = a_plot_m, b_plot = b_plot_m, z_plot = z_plot_logit_m), 'export/m3m_plot.RDS')

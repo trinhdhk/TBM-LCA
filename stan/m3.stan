@@ -43,7 +43,6 @@ parameters {
   real<lower=0> b_HIV_raw; //adjustment of RE with HIV Xd[,1]
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
-  // vector<lower=0>[3 * quad_RE] b_RE2_raw;
   vector[N] RE; //base random effect;
   
   ordered[2] z_Smear; 
@@ -59,7 +58,6 @@ transformed parameters {
   real<lower=0> b_HIV;
   vector[nB] b;
   vector<lower=0>[3] b_RE;
-  // vector<lower=0>[3 * quad_RE] b_RE2;
 #include includes/impute_model/transform_parameters.stan
   {
 #include includes/transform_parameters/penalty.stan
@@ -99,12 +97,6 @@ model {
       real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
       real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
       
-      // if (quad_RE){
-      //   z_Smear_RE += b_RE2[1]*(bac_load + RE[n])^2;
-      //   z_Mgit_RE  += b_RE2[2]*(bac_load + RE[n])^2;
-      //   z_Xpert_RE += b_RE2[3]*(bac_load + RE[n])^2;
-      // }
-      
       // Symptoms or motor palsy is missing
       if (N_Xd_miss > 0){
         int N_pattern = int_power(2, N_Xd_miss);
@@ -132,14 +124,6 @@ model {
       }
     } else { // HIV is missing, the situation got worse
 #include includes/impute_model/impute_priors.unobservedHIV.stan
-      if (is_nan(
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,1] + cs_a[:,2]*Xc_imp[n,1], L_Omega_cs) +
-        multi_normal_cholesky_lpdf(z_cs[n] | cs_a0 + cs_a[:,2]*Xc_imp[n,1], L_Omega_cs) +
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + mp_a[:,1] + mp_a[:,2]*Xc_imp[n,1], L_Omega_mp) +
-        multi_normal_cholesky_lpdf(z_mp[n] | mp_a0 + cs_a[:,2]*Xc_imp[n,1], L_Omega_mp)))
-        // This is to suppress the program from complaining at the start
-        target += not_a_number();
-
 #include includes/impute_model/impute_priors.unobsHIVpos.stan
 #include includes/impute_model/impute_priors.unobsHIVneg.stan
   
@@ -152,15 +136,11 @@ model {
         real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
         real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
         
-         // if (quad_RE){
-         //   z_Smear_RE += b_RE2[1]*(bac_load + RE[n])^2;
-         //   z_Mgit_RE  += b_RE2[2]*(bac_load + RE[n])^2;
-         //   z_Xpert_RE += b_RE2[3]*(bac_load + RE[n])^2;
-         // }
         // Symptoms or motor palsy is missing
         if (N_Xd_miss > 0){
           int N_pattern = int_power(2, N_Xd_miss);
-          vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,2:3], obs_Xd[n,2:3], a[2:3]);
+          row_vector[2] csmp_imp = [obs_Xd[n,2] ? Xd[n,2] : theta_cs_hiv2[1], obs_Xd[n,3] ? Xd[n,3] : theta_mp_hiv2[1]];
+          vector[N_pattern] pat_thetas[2] = get_patterns(csmp_imp, obs_Xd[n,2:3], a[2:3]);
           vector[N_pattern] log_liks;
           pat_thetas[2] += a0 + a[1] + dot_product(a[4:], X_compl[n]);
           
@@ -191,15 +171,11 @@ model {
         real z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*(bac_load + RE[n]);
         real z_Xpert_RE = z_Xpert[2] + b_RE[3]*(bac_load + RE[n]);
             
-        // if (quad_RE){
-        //   z_Smear_RE += b_RE2[1]*(bac_load + RE[n])^2;
-        //   z_Mgit_RE  += b_RE2[2]*(bac_load + RE[n])^2;
-        //   z_Xpert_RE += b_RE2[3]*(bac_load + RE[n])^2;
-        // }
         // Symptoms or motor palsy is missing
         if (N_Xd_miss > 0){
           int N_pattern = int_power(2, N_Xd_miss);
-          vector[N_pattern] pat_thetas[2] = get_patterns(Xd_imp[n,2:3], obs_Xd[n, 2:3], a[2:3]);
+          row_vector[2] csmp_imp = [obs_Xd[n,2] ? Xd[n,2] : theta_cs_hiv2[2], obs_Xd[n,3] ? Xd[n,3] : theta_mp_hiv2[2]];
+          vector[N_pattern] pat_thetas[2] = get_patterns(csmp_imp, obs_Xd[n, 2:3], a[2:3]);
           vector[N_pattern] log_liks;
           pat_thetas[2] += a0 + dot_product(a[4:], X_compl[n]);
           
@@ -221,9 +197,8 @@ model {
           bernoulli_logit_lpmf(Y_Xpert[n] | z_Xpert[1]) + bernoulli_logit_lpmf(Y_Mgit[n] | z_Mgit[1]) + bernoulli_logit_lpmf(Y_Smear[n] | z_Smear[1]));
         }
       }
-      target += log_mix(p_HIV[n], 
-      ll_HIV[1] + ll_z_mp[1] + ll_z_cs[1] + ll_Xc_imp_2[1],
-      ll_HIV[2] + ll_z_mp[2] + ll_z_cs[2] + ll_Xc_imp_2[2]);
+
+#include includes/impute_model/target.stan
     }
   }
 }
@@ -260,11 +235,7 @@ generated quantities {
       z_Smear_RE = z_Smear[2] + b_RE[1]*bac_load;
       z_Mgit_RE  = z_Mgit[2]  + b_RE[2]*bac_load;
       z_Xpert_RE = z_Xpert[2] + b_RE[3]*bac_load;
-       // if (quad_RE){
-       //  z_Smear_RE += b_RE2[1]*bac_load^2;
-       //  z_Mgit_RE  += b_RE2[2]*bac_load^2;
-       //  z_Xpert_RE += b_RE2[3]*bac_load^2;
-      // }
+     
       p_Smear = (1 - theta) * inv_logit(z_Smear[1]) + theta .* inv_logit(z_Smear_RE);
       p_Mgit  = (1 - theta) * inv_logit(z_Mgit[1])  + theta .* inv_logit(z_Mgit_RE);
       p_Xpert = (1 - theta) * inv_logit(z_Xpert[1]) + theta .* inv_logit(z_Xpert_RE);

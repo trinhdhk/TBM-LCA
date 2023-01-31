@@ -431,6 +431,81 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...)
   setNames(extract_holdout, extract_pars)
 }
 
+my_ggroc <- 
+  function(obs, pred, pred_rep = NULL, j_index = TRUE, cutoffs.at = seq(0,1,.1),...){
+    require(ggplot2)
+    require(plotROC)
+    
+    auc <- pROC::auc(obs~pred)
+    bounds <- c(auc, auc)
+    pred <- pred*100
+    for (.pred_rep in pred_rep){
+      rep_auc <- pROC::auc(obs~.pred_rep)
+      bounds <- c(min(c(bounds, rep_auc), na.rm=T), max(c(bounds, rep_auc), na.rm=T))
+    }
+    
+    coord <- if (j_index){
+      proc <- pROC::roc(obs~pred)
+      pROC::coords(proc, x='best', input='threshold')
+    } else c(threshold=NULL)
+    obs <- as.logical(obs) |> as.integer()
+    ._data_ <- data.frame(obs = obs, pred = pred)
+   
+    i <- 1
+    
+    for (.pred_rep in pred_rep){
+      i <- i+1
+      .colname <- paste0('pred_rep_', i)
+      ._data_ <- dplyr::mutate(._data_, {{.colname}} := .pred_rep*100)
+    }
+      plt <- 
+        ggplot(data=._data_) + 
+        annotate("text", x = 62.5/100, y = 22.5/100, label = paste0("AUC ", format(auc*100, digits = 3), "%"),
+                 parse = F, size = 5, colour = classifierplots:::fontgrey_str) + 
+        scale_x_continuous(name = "False Positive Rate (%)    (1-Specificity)", 
+                           limits = c(0, 1), expand = c(0.05, 0.05),
+                           breaks = c(0, 25, 50, 75, 100, if(j_index) round(100 - coord[['specificity']]*100,0))/100,
+                           labels = c(0, 25, 50, 75, 100, if(j_index) round(100 - coord[['specificity']]*100,0))
+        ) + 
+        scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
+                           limits = c(0, 1), expand = c(0.05, 0.05),
+                           breaks = c(0, 25, 50, 75, 100, if(j_index) round(coord[['sensitivity']]*100,0))/100,
+                           labels = c(0, 25, 50, 75, 100, if(j_index) round(coord[['sensitivity']]*100,0))
+        )
+      
+      
+      if (j_index){
+        plt <- plt + 
+          geom_hline(aes(yintercept=coord[['sensitivity']]), color = gray(.6), linetype = "dashed") +
+          geom_vline(aes(xintercept=1-coord[['specificity']]), color = gray(.6), linetype = "dashed")
+      }
+
+      if (length(pred_rep)){
+        for (i in seq_along(pred_rep))
+          plt <- plt + 
+            plotROC::geom_roc(
+              aes(d = obs, m=._data_[[paste0('pred_rep_', i)]]),
+              n.cuts = 0, alpha=.5, color = gray(.6), linewidth=.1
+            ) +
+            annotate("text", x = 62.5/100, y = 15/100, 
+                       label = paste0("(", 
+                                      format(bounds[1]*100, digits = 1),
+                                      "% - ", format(bounds[2]*100, digits = 1), "%)"), 
+                       parse = F, size = 3.3, colour = gray(.6))
+      }
+    plt <- plt + 
+      plotROC::geom_roc(
+        aes(
+          d = obs,
+          m = pred
+        ),
+        cutoffs.at = c(cutoffs.at*100, coord['threshold']),
+        color = '#ABC270',
+        ...
+      )
+    plt
+  }
+
 my_roc_plot <- 
   function(obs, pred, pred_rep = NULL, resamps = 2000, force_bootstrap = NULL, cutoff = TRUE){
     require(ggplot2)

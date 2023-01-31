@@ -7,8 +7,8 @@ library(dplyr)
 data_19EI <- readRDS('data/cleaned/data_19EI_3.RDS')
 
 data_19EI[is.na(GCSV) & GLASCOW == 15, GCSV := 5]
-data_19EI[is.na(GCSE) & GLASCOW == 15, GCSV := 5]
-data_19EI[is.na(GCSM) & GLASCOW == 15, GCSV := 5]
+data_19EI[is.na(GCSE) & GLASCOW == 15, GCSE := 4]
+data_19EI[is.na(GCSM) & GLASCOW == 15, GCSM := 6]
 data_19EI[, clin_contact_tb := clin_contact_tb %in% TRUE]
 # data_19EI <- data_19EI[!USUBJID %in% c("003-102")] # death?
 # data_19EI <- data_19EI[!USUBJID %in% c("003-306","003-335", "003-102")] # death?
@@ -154,6 +154,11 @@ Td <- data_19EI %$% cbind(
   suspectedHIV = DISDIA %in% c('DIA1', 'DIA10', 'DIA12', 'DIA3') | ISTBTREAT == 'C49488' | !is.na(TBTREATDATE),     #7
   sex = sex                                                           #8
 )
+ 
+#Td[Td[,6]==1, 4:5] <- 1 #everyone has tetra must have semi and para
+#Td[Td[,4]==0&Td[,5]==0, 6] <- 0 #''
+Xd[,3] = apply(Td[,4:6],1, any)
+Xd[,2] = apply(Td[,1:3],1, any)
 
 
 Tc <- data_19EI %$% cbind(

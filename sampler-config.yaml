@@ -1,4 +1,4 @@
-cores: 10
+cores: 20
 thin: 3
 iter: 10000 
 warmup: 2000
@@ -8,7 +8,6 @@ re_b: !expr c(3, 4, 5, 6, 7, 8)
 quad_Xc: 7
 penalty_family: t
 penalty_term: !expr c(0, 0)
-all_params: no
 pos_a: !expr c(1, 7, 11)
 neg_a: !expr c(8, 9, 10, 19)
 clean_state: yes

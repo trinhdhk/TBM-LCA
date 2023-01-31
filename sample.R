@@ -197,7 +197,7 @@ with(
     cli::cli_li('{.strong Model} {model}')
     cli::cli_li('Mode: {mode}')
     cli::cli_li('{fold} fold{?s} with {rep} repetition{?s}')
-    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N(0,2.5)", penalty_term))}]')
+    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N(0,1)", penalty_term))}]')
     cli::cli_li('{.strong Random seed:} {.field {seed}}')
     cli::cli_li('Stan configurations:')
     ulid <- cli::cli_ul()
@@ -256,8 +256,8 @@ with(
     if (model_no > 0 && any(penalty_term == 0)) pars <- c(pars, 'sp')
     if (model_no > 0 && all_params) pars <- c(pars, 
       "HIV_a0", "HIV_a",
-      "cs_a0", "cs_a", "L_Omega_cs",
-      "mp_a0", "mp_a", "L_Omega_mp",
+      "cs_a0", "cs_a", "cs_p",
+      "mp_a0", "mp_a", "mp_p",
       # "age_a0", "age_a", "age_sigma",
       "id_a0", "id_a", "id_sigma",
       if(model_no != 6) c( "L_Omega_csf", "L_sigma_csf", "L_sigma_gcs", "L_Omega_gcs", "csf_a0", "csf_a", "gcs_a0", "gcs_a") else c( 'mu_psi_csf', 'sigma_psi_csf','mu_lt_csf', 'sigma_lt_csf', 'psi0_csf','Q_csf'))

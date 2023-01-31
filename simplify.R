@@ -125,7 +125,7 @@ with(
     cli::cli_li('{.strong Model} {model}')
     cli::cli_li('Mode: {mode}')
     cli::cli_li('{fold} fold{?s} with {rep} repetition{?s}')
-    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N[0,2.5]", penalty_term))}]')
+    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N[0,1]", penalty_term))}]')
     cli::cli_li('{.strong Random seed:} {.field {seed}}')
     cli::cli_li('Stan configurations:')
     ulid <- cli::cli_ul()

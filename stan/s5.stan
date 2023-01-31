@@ -60,7 +60,7 @@ transformed parameters{
 }
 
 model {
-  int nu = 5;
+  int nu = 6;
   matrix[N, nX] X = append_col(to_matrix(Xd), to_matrix(Xc));
    // Imputation model ---------------------------------------------------------
   

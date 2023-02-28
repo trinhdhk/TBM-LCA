@@ -1,4 +1,4 @@
-m = m3t$outputs
+m = m3$outputs
 load('data/cleaned/data_input.Rdata')
 obs = with(data_19EI, obs_smear + obs_mgit + obs_xpert > 0)
 test = with(data_19EI, csf_smear + csf_mgit + csf_xpert > 0)
@@ -323,10 +323,10 @@ hiv_plot$plot3 =
   theme_bw()
 
 # Clinical symptoms
-cs_miss = prob_missingness(obs_Td[,1],
+cs_miss = prob_missingness(obs_Xd[,2],
                            lapply(seq_len(dim(X)[1]),
                                   function(i) 
-                                    cbind(X[i,,c(1,3,11)], cs_pred$pred[[2]], cs_pred$pred[[3]],
+                                    cbind(X[i,,c(1,3,11)], #cs_pred$pred[[2]][i,], cs_pred$pred[[3]][i,],
                                           obs, 
                                           (data_19EI[, .(csf_smear, csf_mgit, csf_xpert)])
                                           ))) |> t()

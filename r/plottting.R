@@ -268,16 +268,20 @@ wbc_plot = ggplot(wbcpredsum, aes(x=wbc)) +
   geom_line(aes(y=mean), 
             color=RColorBrewer::brewer.pal(name='Set1', n=3)[2], size=.8) + 
   scale_y_continuous(
-    name = 'TBM odd ratio',
-    breaks = log(10^c(-24,-20, -16,-12, -8,-4,-2, -1, 0)),
-    labels = c('1e-24','1e-20','1e-16','1e-12','1e-8', '1e-4', 0.01, .1, 1)
+    name = glue::glue('TBM odds ratio over reference value = {10^(scale$`scaled:center`$csfwbc*scale$`scaled:scale`$csfwbc) |> formatC(format = "f", digits=0)} cells/mm<sup>3</sup>'),
+    breaks = log(10^c(-24,-20, -16,-12, -8, -6, -4,-2, -1, 0)),
+    labels = c('1e-24','1e-20','1e-16','1e-12','1e-8','1e-6','1e-4', 0.01, .1, 1)
+    # expand=c(0,0),
   ) +
   # scale_y_continuous(name='', 
   #                    # trans = function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))),
   #                    breaks = (function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))))(log(10^cutpoints)),
   #                    labels=lab.cutpoints) +
-  coord_flip()+
-  theme_bw() 
+  coord_flip(
+    xlim = (log10(c(1, 10001)) - scale$`scaled:center`$csfwbc)/scale$`scaled:scale`$csfwbc,
+    ylim = c(log(10^-6), 0))+
+  theme_bw() +
+  theme(axis.text = ggtext::element_markdown())
   # theme(axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank())
 # load('data/cleaned/data_input.Rdata')
 # tb_dis = !data_19EI$other_dis_dx

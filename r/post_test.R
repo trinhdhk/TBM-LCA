@@ -1,7 +1,7 @@
 library(ggplot2)
 
 library(future)
-m3=m3t
+m3=m3
 thetas=rstan::extract(m3$outputs, pars=c('theta','Y0_theta', 'Y00_theta', 'Y000_theta'))
 S = list(
   a = thetas$Y0_theta[,1,] / thetas$theta,

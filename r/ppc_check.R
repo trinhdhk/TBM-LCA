@@ -93,7 +93,7 @@ simulate_data =
                  }) |> t()
     # brower()
     
-    Xc[, 8] = round(3*GCS[,1] + 5*GCS[,2] + 4*GCS[,3] - 3)/3;
+    Xc[, 8] = ifelse(Xc[,8] == -1, -1, round(3*GCS[,1] + 5*GCS[,2] + 4*GCS[,3] - 3)/3);
     
     # Xd[,4:10] = Xd[,4:10]
     # X[,19:20] = Xc[,9:10]

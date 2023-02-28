@@ -219,6 +219,122 @@ LCAModel <- R6::R6Class(
     roc_plot = function(
       which = c("Y", "C", "simulated_C", "smear", "mgit", "xpert"),
       C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
+      est = c("mean", "median"),
+      plot_rep = FALSE,
+      j_index = TRUE,
+      cutoffs.at = seq(0,1,.1),
+      theme = ggplot2::theme_bw(),
+      ...
+    ){
+      which <- match.arg(which)
+      est <- match.arg(est)
+      require(ggplot2)
+      require(patchwork)
+      
+      my_ggroc <- private$.misc$my_ggroc
+      
+      p_summary <- self$p
+      p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
+      get_pred <- function(x){
+        lapply(p_rep, function(.) .[[x]][[est]])
+      }
+      
+      # if plotting y, do faceting -------------
+      if (which == "Y"){
+        Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
+        Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
+        Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
+        
+        pred_reps = list(
+          force(get_pred('p_Smear')), 
+          force(get_pred('p_Mgit')),
+          force(get_pred('p_Xpert'))
+        )
+        patch <-
+          my_ggroc(
+            Y_Smear_all, 
+            p_summary$p_Smear[[est]], 
+            pred_reps[[1]],
+            j_index,
+            cutoffs.at, ...
+          ) + theme + ggplot2::ggtitle("ZN-Smear") + ggplot2::theme(axis.title = element_blank()) +
+          my_ggroc(
+            Y_Mgit_all, 
+            p_summary$p_Mgit[[est]], 
+            pred_reps[[2]],
+            j_index,
+            cutoffs.at, ...
+          ) + theme + ggplot2::ggtitle("MGIT") + ggplot2::theme(axis.title = element_blank()) +
+          my_ggroc(
+            Y_Xpert_all, 
+            p_summary$p_Xpert[[est]], 
+            pred_reps[[3]],
+            j_index,
+            cutoffs.at, ...
+          ) + theme + ggplot2::ggtitle("Xpert") + ggplot2::theme(axis.title = element_blank())
+        
+        gt <- patchwork::patchworkGrob(patch)
+        x <- list(gt, left = "True Positive Rate (%)    (Sensitivity)", bottom = "False Positive Rate (%)    (1-Specificity)")
+        class(x) <- 'multggplotGrob'
+        return(x)
+      }
+      
+      if (which == "smear") {
+        Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all
+        pred_rep = get_pred('p_Smear')
+        x <- my_ggroc(
+          Y_Smear_all, 
+          p_summary$p_Smear[[est]], 
+          pred_rep,
+          j_index,
+          cutoffs.at, ...
+        ) + theme + ggplot2::ggtitle("ZN-Smear")
+        return(x)
+      }
+      
+      if (which == "mgit") {
+        Y_Mgit_all  <- self$folds$inputs[[1]]$Y_Mgit_all
+        pred_rep = get_pred('p_Mgit')
+        x <- my_ggroc(
+          Y_Mgit_all, 
+          p_summary$p_Mgit[[est]], 
+          pred_rep,
+          j_index,
+          cutoffs.at, ...
+        ) + theme + ggplot2::ggtitle("MGIT")  
+        return(x)
+      } 
+      
+      if (which == "xpert") {
+        Y_Xpert_all <- self$folds$inputs[[1]]$Y_Xpert_all
+        pred_rep = get_pred('p_Xpert')
+        x <- my_ggroc(
+          Y_Xpert_all, 
+          p_summary$p_Xpert[[est]], 
+          pred_rep,
+          j_index,
+          cutoffs.at, ...
+        ) + theme + ggplot2::ggtitle("Xpert")
+        
+        return(x)
+      } 
+      
+      # if C ----------
+      not.na <- which(!is.na(C))
+      C <- na.omit(C)
+      pred_rep = get_pred('theta') |> lapply(function(x) x[not.na])
+      plt <- my_ggroc(
+        C, 
+        p_summary$theta[[est]][not.na], 
+        pred_rep,
+        j_index,
+        cutoffs.at, ...) + theme + ggplot2::ggtitle("TBM diagnosis")
+      
+      plt
+    },
+    roc_plot_legacy = function(
+      which = c("Y", "C", "simulated_C", "smear", "mgit", "xpert"),
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       resamps = 2000,
       force_bootstrap = NULL,
       est = c("mean", "median"),
@@ -233,6 +349,8 @@ LCAModel <- R6::R6Class(
       
       p_summary <- self$p
       p_rep <- if (self$n_rep == 1 || !plot_rep) NULL else self$p_rep
+      
+      
       
       if (which == "Y"){
         Y_Smear_all <- self$folds$inputs[[1]]$Y_Smear_all

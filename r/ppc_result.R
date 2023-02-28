@@ -18,9 +18,13 @@ extract_param_data <- function(par){
 
 plot.param_data = function(x, grob=TRUE, ..., plot=TRUE){
   require(ggplot2)
+  x_mean = dplyr::with_groups(dplyr::tibble(x), id, dplyr::summarise, med= median(val))
   plt = ggplot(data=x) + 
     geom_density(aes(x=val, color=id), adjust=1, size=.7) + 
     gghighlight::gghighlight(id == 0, use_group_by=FALSE, unhighlighted_params = list(size=.5, color = grey(.8))) +
+    geom_segment(aes(y = -.05, yend = -.05, x = quantile(med, .025), xend = quantile(med, .975)), data=x_mean[x_mean$id!=0,], color='black')+
+    geom_point(aes(y = -0.05, x=med), data=x_mean[x_mean$id==0,], color='red', size=1) +
+    # ggdist::geom_pointinterval(aes(x = med, xmin=.lower, xmax=.upper), data=x_mean) +
     theme_classic() + 
     scale_color_brewer(type='qual', palette='Set1')+
     xlab('Log odds ratio') + 

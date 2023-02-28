@@ -437,12 +437,17 @@ my_ggroc <-
     require(plotROC)
     
     auc <- pROC::auc(obs~pred)
-    bounds <- c(auc, auc)
+    auc_reps <- sapply(pred_rep, 
+                      \(pr){
+                        pROC::auc(obs~pr)
+                      })
+    ci_avail <- length(auc_reps) >= 100
+    bounds <- if (ci_avail) quantile(auc_reps, c(0.025, .975)) else range(auc_reps) 
     pred <- pred*100
-    for (.pred_rep in pred_rep){
-      rep_auc <- pROC::auc(obs~.pred_rep)
-      bounds <- c(min(c(bounds, rep_auc), na.rm=T), max(c(bounds, rep_auc), na.rm=T))
-    }
+    # for (.pred_rep in pred_rep){
+    #   rep_auc <- pROC::auc(obs~.pred_rep)
+    #   bounds <- c(min(c(bounds, rep_auc), na.rm=T), max(c(bounds, rep_auc), na.rm=T))
+    # }
     
     coord <- if (j_index){
       proc <- pROC::roc(obs~pred)
@@ -451,7 +456,7 @@ my_ggroc <-
     obs <- as.logical(obs) |> as.integer()
     ._data_ <- data.frame(obs = obs, pred = pred)
    
-    i <- 1
+    i <- 0
     
     for (.pred_rep in pred_rep){
       i <- i+1
@@ -481,17 +486,24 @@ my_ggroc <-
       }
 
       if (length(pred_rep)){
-        for (i in seq_along(pred_rep))
-          plt <- plt + 
-            plotROC::geom_roc(
-              aes(d = obs, m=._data_[[paste0('pred_rep_', i)]]),
-              n.cuts = 0, alpha=.5, color = gray(.6), linewidth=.1
-            ) +
-            annotate("text", x = 62.5/100, y = 15/100, 
-                       label = paste0("(", 
-                                      format(bounds[1]*100, digits = 1),
-                                      "% - ", format(bounds[2]*100, digits = 1), "%)"), 
-                       parse = F, size = 3.3, colour = gray(.6))
+        geom_roc_builder = function(i) {
+          i <- i
+          plotROC::geom_roc(
+            aes(d = obs, m=.data[[paste0('pred_rep_', (i))]]),
+            data = ._data_,
+            n.cuts = 0, alpha=.6, color = gray(.6), size=.2
+          ) 
+        }
+        for (i in seq_along(pred_rep)){
+          plt <- plt + geom_roc_builder(i)
+          # browser()
+        }
+        plt <- plt +
+          annotate("text", x = 62.5/100, y = 15/100, 
+                   label = paste0("(", if (ci_avail) "95%CI ", 
+                                  format(bounds[1]*100, digits = 3),
+                                  "% - ", format(bounds[2]*100, digits = 3), "%)"), 
+                   parse = F, size = 3.3, colour = gray(.6))
       }
     plt <- plt + 
       plotROC::geom_roc(
@@ -703,7 +715,7 @@ thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale =
 calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines","gam"), se = TRUE, knots=3, span=1, type=c('binary', 'linear'), hist = TRUE, hist.normalize = TRUE, yscale=.1, theme = ggplot2::theme_bw()){
   require(ggplot2)
   maincolor <- "#CD113B"
-  subcolor1 <- "#111111"
+  subcolor1 <- gray(.6) #"#111111"
   subcolor2 <- "#999999"
   
   pred_env = new.env(parent=baseenv())

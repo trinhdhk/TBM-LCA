@@ -1,6 +1,6 @@
 library(data.table)
 library(ggplot2)
-model <- readRDS('outputs/m3_t00_b345678_q7_r1_k1_2912.RDS')$outputs
+# model <- readRDS('outputs/m3_t00_b345678_q7_r1_k1_2912.RDS')$outputs
 theta <- rstan::extract(model, 'theta')$theta
 jsonlite::write_json(theta, 'export/m3_theta.json', )
 mean_theta <- apply(theta, 2, median)

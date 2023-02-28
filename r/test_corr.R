@@ -13,7 +13,7 @@ data_19EI[,
               as.integer(time_str[[1]])*24 + as.integer(time_str[[2]])
             })]
 
-model = readRDS('outputs/m3_t00_b345678_q7_r1_k1_2112.RDS')$outputs
+model = readRDS('outputs/m3_t00_b345678_q7_r1_k1_3012.RDS')$outputs
 X = rstan::extract(model, 'X')$X
 b = rstan::extract(model, c('b', 'b_HIV', 'b_RE'))
 RE = rstan::extract(model, 'RE')$RE
@@ -49,14 +49,20 @@ bd_dt =
 bd_dt[, log_culture_time := (log2(culture_time+1))][,  gph := log(growth_unit*culture_time)]
 # check correpondence with Xpert Level
 xpert_level = 
-  ggstatsplot::ggbetweenstats(bd_dt[xpert==T], x=xpert_level, y=burden, plot.type='box', pairwise.comparison=T, type='non-parametric', pairwise.display='all',
-                                  xlab = "Xpert semi-quantification level", ylab = "Standardised Mycobacillary burden")
+  ggstatsplot::ggbetweenstats(bd_dt[xpert==T], x=xpert_level, y=burden, plot.type='box', pairwise.comparison=F, type='non-parametric', pairwise.display='none',
+                              results.subtitle = FALSE,
+                              xlab = "Xpert semi-quantification level", ylab = "Standardised Mycobacillary burden")
 # check correspondence with culture time
 cultime = list(
-  pos=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & hiv], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1),
-                                      ylab = "Time to Culture positivity", xlab = "Standardised Mycobacillary burden"),
-  neg=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & !hiv], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1),
-                              ylab = "Time to Culture positivity", xlab = "Standardised Mycobacillary burden")
+  pos=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & hiv], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1, se=F),
+                                  results.subtitle = FALSE,
+                                  ylab = "Time to Culture positive (hours)", xlab = "Standardised Mycobacillary burden") + ggtitle('HIV +'),
+  neg=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & !hiv], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1, se=F),
+                                  results.subtitle = FALSE,
+                                  ylab = "Time to Culture positive (hours)", xlab = "Standardised Mycobacillary burden") + ggtitle('HIV -'),
+  overall=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1, se=F),
+                                      results.subtitle = FALSE,
+                                      ylab = "Time to Culture positive (hours)", xlab = "Standardised Mycobacillary burden")
 )
 cultimefit = lm(burden~hiv*log_culture_time,data=bd_dt[mgit==T])
 
@@ -82,6 +88,7 @@ area[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "
 defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.75),
                                        point.args = list(alpha=0),
                                       xlab = "Total score", ylab = "Predicted TBM risk (%)",
+                                      results.subtitle = FALSE,
                                       ggplot.component = scale_x_continuous(breaks = c(0, 3, 6, 9, 12, 14))) +
   geom_jitter(aes(color = tbm_dx), size=1, na.rm=TRUE, width=.3, height=1)+
   scale_color_brewer(type='qual', palette=7, name='Dx at discharge', guide = guide_legend(nrow=2, title.position = 'top')) +
@@ -93,6 +100,7 @@ defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-
 defscore2 = ggstatsplot::ggscatterstats(score_dt, x=score2, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.8),
                                        point.args = list(alpha=0),
                                        xlab = "Total score", ylab = "Predicted TBM risk (%)",
+                                       results.subtitle = FALSE,
                                        ggplot.component = scale_x_continuous(breaks = c(6, 9, 12, 14))) +
   geom_jitter(aes(color = tbm_dx), size=1, na.rm=TRUE, width=.3, height=1)+
   scale_color_brewer(type='qual', palette=7, name='Dx at discharge', guide = guide_legend(nrow=2, title.position = 'top')) +
@@ -102,9 +110,9 @@ defscore2 = ggstatsplot::ggscatterstats(score_dt, x=score2, y=ztheta, type = 'no
   theme(legend.position='bottom')
 
 saveRDS(list(
-  defscore = defscore,
-  defscore2 = defscore2,
-  xpertlv = xpert_level,
-  cultime = cultime,
+  defscore = defscore |> ggplotGrob(),
+  defscore2 = defscore2 |> ggplotGrob(),
+  xpertlv = xpert_level |> ggplotGrob(),
+  cultime = cultime |> sapply(ggplotGrob, simplify = F),
   cultimefit = cultimefit
 ), file = 'export/test_corr.RDS')

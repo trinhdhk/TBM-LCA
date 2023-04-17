@@ -1,5 +1,78 @@
 # Results
 
+
+```{r pop}
+data_dirty = data_dirty[USUBJID!='003-335'] #not-collected
+pop = data_dirty[,
+    (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE) &
+    !((diffday>=7)%in%TRUE) &
+    !(csf_mgit_contaminated %in% T) ]
+var = c()
+var[1] <- nrow(data_dirty)
+var[2] <- sum(is.na(data_dirty$wrong_name) | data_dirty$wrong_name, na.rm=TRUE)
+var[3] <- data_dirty[, sum(
+  (wrong_name%in%F) & 
+    ((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)))]
+var[4] <- with(data_dirty, sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    (is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
+var[5] <- with(data_dirty,sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    !(is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
+var[6] <- with(data_dirty, sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    csf_mgit_contaminated, na.rm=TRUE))
+var[7] <- with(data_dirty,  sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    !(csf_mgit_contaminated %in% T) &
+    (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+    ((csf_smear%in%T)|(csf_mgit%in%T)|(csf_xpert%in%T)), na.rm=TRUE))
+var[8] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      !(other_dis_dx_conf%in%T)&
+      !((DISDIA=='DIA1')%in%TRUE),
+    na.rm=TRUE))
+var[9] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE))  &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)&
+      (other_dis_dx_conf%in%T),
+    na.rm=TRUE))
+var[10] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) & 
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert) &
+      !(other_dis_dx_conf%in%T), 
+    na.rm=TRUE))
+var[11] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      (other_dis_dx_conf%in%T), 
+    na.rm=TRUE))
+var[12] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      # !(other_dis_dx_conf%in%T)&
+      ((DISDIA=='DIA1')%in%TRUE),
+    na.rm=TRUE))
+```
 ```{r calc_na}
 suspected_hiv <- data_dirty |> filter(DISDIA %in% c('DIA1', 'DIA10', 'DIA12'))
 n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
@@ -7,7 +80,7 @@ n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
 
 ## Clinical characteristics
 
-A total of `r nrow(data_dirty)` patients with suspected brain infection enrolled into the study. Of these,  `r nrow(data_19EI)` were included in the analysis. Reasons for exclusion are shown in Figure \@ref(fig:patient-flow). Characteristics of included individuals are summarised in table \@ref(tab:test-bl-tbl), overall and sratified by confirmatory test results. The median age of included individuals was `r quantile(data_19EI$age, .5, na.rm=TRUE) |> round(1)`, with little variation. HIV co-infection status was recorded for `r nrow(data_19EI) - na(data_19EI$hiv_stat)`/`r nrow(data_19EI)` (`r round((nrow(data_19EI) - na(data_19EI$hiv_stat))/nrow(data_19EI)*100, 0)`%) enrolled individuals. Both HIV prevalence and duration from symptom onset to hospitalisation in any test positive group was consistently higher than those in the other. Overall, there were `r var[5]` participants with valid TBM confirmatory tests, `r var[7]` were microbiologically confirmed (Figure \@ref(fig:venn-test)), while `r var[11]` were later confirmed with another disease. In the group not tested for TBM, `r var[9]` patients were microbiologically diagnosed with another pathogen than *Mtb*. For `r var[8]+var[10]` patients no confirmed diagnosis could be made, but they were unlikely to have TBM.
+Of the `r nrow(data_dirty)` patients enrolled into the study, `r nrow(data_19EI)` were included in the analysis (Figure \@ref(fig:patient-flow)). Characteristics of included individuals are summarised in Table \@ref(tab:test-bl-tbl), stratified by overall and specific confirmatory test results. The median age of included individuals was `r quantile(data_19EI$age, .5, na.rm=TRUE) |> round(1)` years. HIV co-infection status was recorded for `r nrow(data_19EI) - na(data_19EI$hiv_stat)`/`r nrow(data_19EI)` (`r round((nrow(data_19EI) - na(data_19EI$hiv_stat))/nrow(data_19EI)*100, 0)`%) individuals, amongst whom `r sum(data_19EI$hiv_stat, na.rm=TRUE)` (`r round(sum(data_19EI$hiv_stat, na.rm=TRUE)/sum(!is.na(data_19EI$hiv_stat))*100, 0)`%) were positive. Both HIV prevalence and duration from symptom onset to hospitalisation was consistently higher in any test positive group than in the negative and missing groups. There were `r var[5]-var[6]` participants with valid TBM confirmatory test results, of whom `r var[7]` were microbiologically confirmed TBM (Figure \@ref(fig:venn-test)), while `r var[11]` were later confirmed with another disease. Amongst the `r var[4]` patients that were not tested microbiologically for TBM, `r var[9]` were confirmed with another pathogen. For `r var[8]+var[10]` patients, from both the tested and the untested group, no confirmed diagnosis could be made.
 
 ## Model estimates
 
@@ -52,16 +125,15 @@ spc = \(name, hiv=NULL, fn=spc.est, sep = ' ', str = '{median} ({ci})' ) {
   gsub('\\s\\(', paste0(sep, '('), out)
 }
 ```
+Estimated coefficients for TBM diagnostic features are shown in Figure \@ref(fig:coef-est). HIV infection, miliary TB, and longer symptom duration are associated with higher risk of TBM. Of the laboratory variables, there is a strong increase of TBM risk with higher lymphocyte count and weaker increase with lower paired blood glucose, lower CSF glucose, higher CSF protein, and higher lactate. The relation of WBC with TBM risk is nonlinear, peaking at 238 WBC per mm^3^ of CSF. HIV infection and higher CSF protein associated with higher mycobacillary burden, while higher GCS, CSF glucose, WBC and lymphocyte count all associate with lower burden.
 
-Posterior estimates of sensitivity and specificity of ZN-Smear, MGIT, and Xpert are reported in Table \@ref(tab:mv-posterior). All three had over 99% specificity. Smear was the most sensitive test with `r sen('z_Smear', hiv=FALSE, str = 'median = {median} (95% CrI = {ci})')` for HIV negative patients and `r sen('z_Smear', hiv=TRUE, str = '{median} ({ci})')` for HIV positive patients. Xpert was the least sensitive, especially in HIV negative patients, with only `r sen('z_Xpert', hiv=FALSE, str = '{median} ({ci})')`, but its sensitivity was much higher and comparable to that of ZN-Smear in the HIV positive group: `r sen('z_Xpert', hiv=TRUE, str = '{median} ({ci})')`.
-
-Estimated coefficients for TB risk factors in the prevalence model are shown in Figure \@ref(fig:coef-est). Patients with HIV, miliary TB, and long symptom duration were in the higher risk group of TBM. Of the laboratory variables, increased TBM risk was associated with low CSF glucose, low paired blood glucose, high CSF protein, and high lactate, albeit not significant. Patients with approximately 200 WBC/mm^3^ in CSF were estimatedly at the highest risk. Amongst the factors that impact bacillary burden, HIV and higher CSF protein were both associated with higher burden, while glucose and WBC associated with lower burden. Although higher lymphocyte count in CSF relates to TBM, it was associated with a reduction in the expected mycobacterial burden, which reduced sensitivity.
+Estimates of sensitivity and specificity of ZN-Smear, MGIT, and Xpert are reported in Table \@ref(tab:mv-posterior). Specificity of each is > 99%. ZN-Smear is the most sensitive test with  `r sen('z_Smear', hiv=FALSE, str = '{median} ({ci})')` for HIV-negative patients and `r sen('z_Smear', hiv=TRUE, str = '{median} ({ci})')` for HIV-positive patients. Xpert is the least sensitive, especially in HIV-negative patients, with only `r sen('z_Xpert', hiv=FALSE, str = '{median} ({ci})')`. The sensitivity is much higher in the HIV-positive group, with `r sen('z_Xpert', hiv=TRUE, str = '{median} ({ci})')`, being comparable to ZN-Smear .
 
 ## Model validation 
 
-Our selected model showed good discrimination with cross-validated AUCs of `r (pROC::auc(response = data_19EI$csf_smear, predictor = m3$p$p_Smear$mean)*100) |> round(0)`% for ZN Smear, `r (pROC::auc(response = data_19EI$csf_mgit, predictor = m3$p$p_Mgit$mean)*100) |> round(0)`% for MGIT, and  `r (pROC::auc(response = data_19EI$csf_xpert, predictor = m3$p$p_Xpert$mean)*100) |> round(0)`% for Xpert (Figure \@ref(fig:model-metrics)). The model was also well calibrated: estimated probabilities and smoothed frequency of positive tests showed overall agreement [@VanCalster2019], with a slight drop at the upper tail of for MGIT culturing and Xpert. When comparing TBM risk prediction against hospital diagnosis, the AUC was  `r (pROC::auc(response = !data_19EI$other_dis_dx, predictor = m3$p$theta$mean)*100) |> round(0)`% and the calibration plot shows a good correspondence tiny over-estimation at the middle of the curve with intercept = 0.025 and slope = 0.98. 
+Our selected indicator model showed good discrimination with AUCs of `r (pROC::auc(response = data_19EI$csf_smear, predictor = m3$p$p_Smear$mean)*100) |> round(1)`% for ZN Smear, `r (pROC::auc(response = data_19EI$csf_mgit, predictor = m3$p$p_Mgit$mean)*100) |> round(1)`% for MGIT, and  `r (pROC::auc(response = data_19EI$csf_xpert, predictor = m3$p$p_Xpert$mean)*100) |> round(1)`% for Xpert (Figure \@ref(fig:model-metrics)). The model was also well calibrated: estimated probabilities and smoothed frequency of positive tests showed good overall agreement [@VanCalster2019]. When comparing TBM risk prediction against the final hospital diagnosis, the AUC was  `r (pROC::auc(response = !data_19EI$other_dis_dx, predictor = m3$p$theta$mean)*100) |> round(1)`% and the calibration plot showed a good correspondence between the two.
 
-## Updated estimated TBM risk if some or all confirmatory tests are negative
+## Updated TBM risk if some or all confirmatory tests are negative
 
 ```{r load-fit, include=FALSE}
 post_test = list()
@@ -79,13 +151,13 @@ post_test$get_sample <- function(name, hiv=FALSE){
   })
 }
 
-post_test$get_est <- function(name, hiv=FALSE, inv=FALSE, str = ' {median} ({ci[[1]]} - {ci[[2]]})'){
+post_test$get_est <- function(name, hiv=FALSE, inv=FALSE, str = ' {median} ({ci[[1]]} - {ci[[2]]})', digits=1){
   est = post_test$get_sample(name, hiv)
   f = if (inv) {\(x) 1/x} else I
   
-  mean = mean(est, na.rm=TRUE) |> f() |> formatC(digits=2, format='f')
-  median = median(est, na.rm=TRUE) |> f() |> formatC(digits=2, format='f')
-  ci = quantile(est, c(.025, .975), na.rm=TRUE) |> f() |> sort() |> formatC(digits=2, format='f')
+  mean = mean(est, na.rm=TRUE) |> f() |> formatC(digits=digits, format='f')
+  median = median(est, na.rm=TRUE) |> f() |> formatC(digits=digits, format='f')
+  ci = quantile(est, c(.025, .975), na.rm=TRUE) |> f() |> sort() |> formatC(digits=digits, format='f')
   glue::glue(str)
 }
 
@@ -94,19 +166,19 @@ post_test_tbl = data.frame(
     Smear = c('-', '?', '-', '-', '-'),
     MGIT = c('?', '?', '-', '?', '-'),
     Xpert = c('?', '-', '?', '-', '-'),
-    HIV_neg = c(post_test$get_est("smear"),
-                post_test$get_est("xpert"), 
-                post_test$get_est("smear_mgit"), 
-                post_test$get_est("smear_xpert"),
+    HIV_neg = c(post_test$get_est("smear", digits=2),
+                post_test$get_est("xpert", digits=2), 
+                post_test$get_est("smear_mgit", digits=2), 
+                post_test$get_est("smear_xpert", digits=2),
                 # post_test$get_est("mgit_xpert"),
-                post_test$get_est("all")
+                post_test$get_est("all", digits=2)
                 ),
-    HIV_pos = c(post_test$get_est("smear", hiv=TRUE),
-                post_test$get_est("xpert", hiv=TRUE), 
-                post_test$get_est("smear_mgit", hiv=TRUE), 
-                post_test$get_est("smear_xpert", hiv=TRUE), 
+    HIV_pos = c(post_test$get_est("smear", hiv=TRUE, digits=2),
+                post_test$get_est("xpert", hiv=TRUE, digits=2), 
+                post_test$get_est("smear_mgit", hiv=TRUE, digits=2), 
+                post_test$get_est("smear_xpert", hiv=TRUE, digits=2), 
                 # post_test$get_est("mgit_xpert", hiv=TRUE),
-                post_test$get_est("all", hiv=TRUE))
+                post_test$get_est("all", hiv=TRUE, digits=2))
   )
 
 post_test_tbl_inv = data.frame(
@@ -130,8 +202,8 @@ post_test_tbl_inv = data.frame(
   )
 ```
  
-<!--Figure \@ref(fig:fit-post-test-change) demonstrates TBM probability in our population given a chronological scenario where ZN Smear, Xpert, and MGIT culture results sequentially returned negative over time. --> The changes in probability to have TBM relative to the pre-test values are shown in Table \@ref(tab:tbl-post-test) for 5 scenarios. A negative ZN-Smear only was associated with a median of `r post_test$get_est("smear", inv = TRUE, str = '{median}')`-fold reduction in TBM risk for HIV-uninfected patients and a `r post_test$get_est("smear", hiv=TRUE, inv = TRUE, str='{median}')`-fold reduction for HIV-infected patients. Having both a negative Smear and MGIT was associated with a `r round(1/.41,2)` times lower probability of TBM. With all tests negative, the TBM probability reduced by `r post_test$get_est("all", inv = TRUE, str = '{median}')` and `r post_test$get_est("all", hiv=TRUE, inv = TRUE, str = '{median}')` for HIV negative and positive respectively. 
+The changes in TBM risk relative to the pre-test values are shown in Table \@ref(tab:tbl-post-test) for the five scenarios. A negative ZN-Smear only was associated with `r post_test$get_est("smear", inv = TRUE, str = '{median}')`-fold reduction in TBM risk for HIV-negative patients and a `r post_test$get_est("smear", hiv=TRUE, inv = TRUE, str='{median}')`-fold reduction for HIV-positive patients. Having both a negative Smear and MGIT was associated with a `r post_test$get_est("smear_mgit", hiv=FALSE, inv = TRUE, str='{median}')` and `r post_test$get_est("smear_mgit", hiv=TRUE, inv = TRUE, str='{median}')` times lower probability of TBM. With all tests negative, the TBM probability reduced by `r post_test$get_est("all", inv = TRUE, str = '{median}')` and `r post_test$get_est("all", hiv=TRUE, inv = TRUE, str = '{median}')` for HIV negative and positive patients respectively. 
 
 ## Simplified model
 
-In the simplified model, HIV infection, longer symptom duration at hospitalisation, and TB evidences found on clinical examination or chest X-Ray were significantly associated with a TBM diagnosis (Figure \@ref(fig:simplified-model-plot)). Focal neurological deficit and cranial nerve palsy, without the existence of laboratorial tests, both showed as weak risk factors in this multivariate context. Headache was shown as a risk factor for TBM, as opposed to psychosis. Our simplified model had good AUC against binary class generated from our prevalence model. The best cut-point maximising Youden's index of 23.4% had sensitivity of 86.0% and specificity of 68.0%. We built a screening score table by selecting rounded values within the 50% credible intervals of every coefficient (Table \@ref(tab:score-table)). Continuous features were cut into bins so that each bin accounts for 0.5 points increase in the total calculation.
+Overall, most included diagnostic features in the simplified prevalence model are suggestive of TBM (Figure \@ref(fig:simplified-model-plot)). The association is not clear with focal neurological deficit. Of the two additional features, headache was a risk factor for TBM, while psychosis made another diagnosis more likely. Our simplified model had good AUC. The cutpoint maximising Youden's index is at a probability to have TBM of 30.7%, where our model was 79.0% sensitive and 75.0% specific. We used this cutpoint to derive a screening score table by selecting values within the 50% credible intervals of every coefficient. All the scores and the threshold were subsequently multiplied by a factor of 2 to make the calculation easier (Table \@ref(tab:score-table)).

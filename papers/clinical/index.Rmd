@@ -1,24 +1,26 @@
 ---
-title: 'A novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Analysis Approach'
+title: 'A novel scoring system to diagnose Tuberculous meningitis using Bayesian Latent class analysis'
 author:
   - Trinh Huu Khanh Dong:
       email: trinhdhk@oucru.org
       institute: [oucru, kcl]
-      correspondence: true
+      correspondence: yes
   - Joseph Donovan:
       institute: [oucru, lshtm]
-  - Thu Dang-Anh Do:
+  - Thu Dang Anh Do:
       institute: [oucru]
   - Ngoc My Nghiem:
       institute: [oucru, htd]
   - Tan Van Le:
-      institute: [oucru]
+      institute: [oucru, oxford]
+  - Thuong Thuong Thuy Nguyen:
+      institute: [oucru, oxford]
   - Guy E. Thwaites:
       institute: [oucru, oxford]
   - Ronald B. Geskus:
       institute: [oucru, oxford]
 institute:
-  - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Vietnam 
+  - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Viet Nam 
   - kcl: King's College London, United Kingdom
   - lshtm: London School of Hygiene and Tropical Medicine, United Kingdom
   - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
@@ -35,7 +37,7 @@ params:
 
 ```{r setup, include=FALSE}
 options(tinytex.engine_args = '-shell-escape')
-knitr::opts_chunk$set(echo = FALSE, dpi=300, dev=params$dev) #, dev = 'png'
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, dpi=300, dev=params$dev) #, dev = 'png'
 flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='fixed')
 ```
 
@@ -140,16 +142,9 @@ setDT(data_dirty)
 
 # Load model 3's fit and metrics
 load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
-load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
-# m3 = new.env()
-m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS')) |> as.environment()
-# load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = zz)
+m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_plot.RDS')) |> as.environment()
+m3$p = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3p.RDS'))
 load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
-# m3$rocs = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_roc_iscb.RDS'))
-# m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib.RDS'))
-# m3$roc = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_ROC.RDS'))
-# m3_roc = readRDS(file.path(data_dir, '..', 'export', 'm3_roc.RDS')) 
-# 3_calib = readRDS(file.path(data_dir, '..', 'export', 'm3_calib.RDS')) 
 s_plots <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS'))
 ```
 

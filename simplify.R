@@ -78,7 +78,7 @@ create_folds <-
     folds
   }
 
-argparser$model <- 's1'
+argparser$model <- 's5'
 results <- new.env(parent=emptyenv())
 results$.META <- argparser
 

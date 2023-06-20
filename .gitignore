@@ -28,3 +28,4 @@ papers/clinical/*.png
 .DS_Store
 desktop.files.json
 papers/clinical/desktop.files.json
+r/data_process

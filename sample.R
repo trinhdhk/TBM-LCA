@@ -8,7 +8,7 @@ rstan::rstan_options(javascript = FALSE, auto_write = TRUE)
 
 args <- 
   arg_parser("TBM-LCA model runner - Written by Trinh Dong") %>%
-  add_argument("model", help = "model to run") %>%
+  add_argument("model", help = "model to run, use 'list' to list the usable models", default="") %>%
   # add_argument("--help", help = "print this help page and exit", short = "-h", flag = TRUE)
   add_argument("--input", help = "input Rdata file", 
                default = "data/cleaned/data_input.Rdata", short = "-i") %>%
@@ -35,7 +35,6 @@ args <-
   add_argument("--penalty-term", help = "Penalty scale term, if 0 then auto adaptation is performed, second term == -1 will make it follow the first", nargs = 2, default = 0, short = "-P") %>%
   add_argument("--all-params", help = "Whether to expose imputation params, ignored for m0", flag = TRUE, short="-a") %>%
   add_argument("--quad-Xc", help = "Add quadratic effect for continuous variable, number are the positions in Xc", default = 0, nargs = Inf, short = '-q') %>%
-  add_argument("--pca-n-FA", help = "Number of latent factors for PCA, 0 for no PCA", default = 0, short = "-P") %>%
   add_argument("--re-b", help = "Position of continuous variable to be included as predictor in bacillary burden model [0=none, 1=age, 2=illness day, 3=blood glucose, 4=csf glucose, 5=csf lympho, 6=csf protein, 7=csf lacate, 8=csf neutro, 9=gcs, 10=csf eos, 11=csf rbc, 12+=quadratic variables if exists]", nargs = Inf, default = NA, short = "-B") %>%
   add_argument("--include-d", help = "Add fixed outer effect for the bacillary burden", flag=TRUE) %>%
   add_argument("--pos-a", help = "Position of positive coefficients [0=none, 1=hiv, 2=tb symptoms, 3=motor palsy, 4=nerve palsy, 5=past TB contact, 6=xray PTB, 7=xray MTB, 8=crypto, 9=age, 10=illness day, 11=blood glucose, 12=csf glucose, 13=csf lympho, 14=csf protein, 15=csf lacate, 16=csf neutro, 17=gcs, 18=csf eos, 19=csf rbc, 20+=quadratic variables if exists", nargs = Inf, default = 0, short = '-p') %>%
@@ -48,6 +47,10 @@ args <-
   add_argument("--hiv-missing", help = "HIV missing treating condition, 0: all is 0, 1: MAR for suspected, 2: MAR for all ", default=1, nargs=1)
 argparser <- parse_args(args)
 
+if (argparser$model == "list") {
+  print(list.files('stan', pattern= '^m.*.stan'))
+  q("no")
+}
 # Functions to create folds
 create_folds <- function(recipe, K, N, seed, cache_file=NULL, n_FA, B, lifted_spc, quad_RE){
   inp <- 
@@ -113,9 +116,6 @@ with(
     my_stan_model <- if (use_rstan_compiler) rstan::stan_model else misc$my_stan_model
     # If no name for output file, do auto-inference
     model_no <- as.numeric(substr(model, 2,2))
-    if (pca_n_FA == 0 && grepl('_pca', model)) stop('Number of latent factor for PCA must be positive!')
-    is_pca <- grepl('_pca', model) || pca_n_FA > 0
-    if (is_pca && !grepl('_pca', model)) model <- paste0(model, '_pca')
     if (is.na(output_file)) output_file <- paste(model,"RDS",sep=".")
     output_name <- fs::path_ext_remove(fs::path_file(output_file))
     stopifnot(!(length(intersect(pos_a, neg_a)) > 0
@@ -137,7 +137,6 @@ with(
     re_b <- if (all(is.na(re_b))) 0 else re_b
     if (length(penalty_term)==1) penalty_term <- rep(penalty_term, 2)
     if (penalty_term[1] < 0 || penalty_term[2] < -1) stop('Invalid penalty term(s)')
-    n_FA <- if (any(!pca_n_FA %in% 0)) as.vector(pca_n_FA) else vector()
     B <- if (any(!re_b %in% 0)) as.array(as.numeric(re_b)) else vector()
     pos_a <- if (any(!pos_a %in% 0)) as.array(as.numeric(pos_a)) else vector()
     neg_a <- if (any(!neg_a %in% 0)) as.array(as.numeric(neg_a)) else vector()
@@ -268,7 +267,6 @@ with(
     if (model == 'm3e') pars <- c(pars, 'z_NegCrypto')
     if (model == 'm3i') pars <- c(pars, 'b_mp')
     if (model == 'm4d') pars <- c(pars, "a2")
-    if (is_pca) pars <- c(pars, "L_csf")
     # if (model_no == 5) pars <- c(pars, "b_cs")
     if (fold == 1 && all_params) pars <- NA
     if (include_d) pars <- c(pars, c('d'))

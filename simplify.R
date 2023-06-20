@@ -158,10 +158,11 @@ with(
     obs_test <- as.logical(with(recipe$data_19EI, obs_smear + obs_mgit + obs_xpert > 0))
     test <- as.logical(with(recipe$data_19EI, csf_smear + csf_mgit + csf_xpert > 0))
     impute_data <- cbind(X_extra, obs = obs_test, test = test)
+    cli::cli_alert("Impute extra variables")
     X_extra <- lapply(seq_len(dim(Xd)[1]),
                       function(i) {
-                        dat <- cbind(impute_data, hiv = Xd[i,,1], id = Xc[i,,1])
-                        imp <- mice::mice(dat, m=1, maxit=50, print=FALSE)
+                        dat <- cbind(impute_data, hiv = Xd[i,,1], id = Xc[i,,1], gcs = Xc[i,,2])
+                        imp <- mice::mice(dat, m=1, maxit=100, print=FALSE)
                         comp <- mice::complete(imp)
                         comp[extra_x] |> as.matrix()
                       }) 

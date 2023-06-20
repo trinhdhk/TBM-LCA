@@ -1,4 +1,7 @@
 library(ggplot2)
+m3=readRDS('/home/lca2/TBM-LCA/outputs/m3_t00_b345678_q7_r1_k1_3103.RDS')
+m3m = readRDS('/home/lca2/TBM-LCA/outputs/m3mX_t00_b345678_q7_r1_k1_1104.RDS')
+m3mu = readRDS('/home/lca2/TBM-LCA/outputs/m3mXu_t00_b345678_q7_r1_k1_1104.RDS')
 a = rstan::extract(m3$outputs, pars=c('a0', 'a'))
 a_mX = rstan::extract(m3m$outputs, pars=c('a0', 'a'))
 a_mXu = rstan::extract(m3mu$outputs, pars=c('a0', 'a'))
@@ -22,17 +25,17 @@ labs = c(
   'Past noticed TB contact',
   'Glasgow coma score',
   'Pulmonary TB/X-ray',
-  'Miliary TB/X-Ray',
+  'Miliary TB/X-ray',
   '*log<sub>2</sub>* (Symptom duration, days)',
   '*log<sub>2</sub>* (Paired blood glucose)',
   '*log<sub>2</sub>* (CSF glucose)',
   '*log<sub>2</sub>* (CSF protein)',
   '*log<sub>2</sub>* (CSF lactate)',
   '*log<sub>10</sub>* (CSF lymphocyte)',
-  '*log<sub>10</sub>* (CSF WBC)',
-  '*log<sub>10</sub>* (CSF WBC)<sup>2</sup>',
+  '*log<sub>10</sub>* (CSF white cell)',
+  '*log<sub>10</sub>* (CSF white cell)<sup>2</sup>',
   'CSF eosinophil > 0',
-  '*log<sub>10</sub>* (CSF eosinophil)',
+  '*log<sub>10</sub>* (CSF eosinophi)',
   '*log<sub>10</sub>* (CSF RBC)',
   'Evidence of cryptococcus',
   'Positive CSF Gram stain'
@@ -108,7 +111,7 @@ b_plot_m = td.misc::mcmc_intervals_multi(list('Selected' = b, `Incomplete Xpert`
     '*log<sub>2</sub>* (CSF protein)',
     '*log<sub>2</sub>* (CSF lactate)',
     '*log<sub>10</sub>* (CSF lymphocyte)',
-    '*log<sub>10</sub>* (CSF WBC)',
+    '*log<sub>10</sub>* (CSF white cell)',
     top_down = T
   ) +
   geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +

@@ -1,5 +1,5 @@
 ppc = readRDS('outputs/ppc_check.RDS')
-orig = readRDS('outputs/m3_t00_b345678_q7_r1_k1_3012.RDS')
+orig = readRDS('outputs/m3_t00_b345678_q7_r1_k1_3103.RDS')
 ppc_merged = rstan::sflist2stanfit(ppc)
 
 # We will visually check for a[1], a[2], a[3], a[11], a[18]
@@ -25,7 +25,8 @@ plot.param_data = function(x, grob=TRUE, ..., plot=TRUE){
     geom_segment(aes(y = -.05, yend = -.05, x = quantile(med, .025), xend = quantile(med, .975)), data=x_mean[x_mean$id!=0,], color='black')+
     geom_point(aes(y = -0.05, x=med), data=x_mean[x_mean$id==0,], color='red', size=1) +
     # ggdist::geom_pointinterval(aes(x = med, xmin=.lower, xmax=.upper), data=x_mean) +
-    theme_classic() + 
+    # theme_classic() + 
+    ggpubr::theme_classic2() +
     scale_color_brewer(type='qual', palette='Set1')+
     xlab('Log odds ratio') + 
     ylab('Density')+

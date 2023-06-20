@@ -49,6 +49,8 @@ parameters {
   vector[nB] b_raw;
   vector<lower=0>[3] b_RE_raw;
   vector[N] RE; //base random effect;
+
+  vector[5] b_obs_raw;
   
   ordered[2] z_Smear; 
   ordered[2] z_Mgit;
@@ -64,12 +66,16 @@ transformed parameters {
   real<lower=0> b_HIV;
   vector[nB] b;
   vector<lower=0>[3] b_RE;
+  vector[5] b_obs;
+  
 #include includes/impute_model/transform_parameters.stan
   
   {
 #include includes/transform_parameters/penalty.stan
 #include includes/transform_parameters/a_transform.stan
-#include includes/transform_parameters/b_transform.stan   
+#include includes/transform_parameters/b_transform.stan  
+
+    b_obs = b_obs_raw * SP[2];
   }
 }
 
@@ -93,8 +99,10 @@ model {
     }
   }
   z_obs[1] ~ logistic(0, 1);
-  z_obs[2] ~ logistic(logit(.99), 1);
+  if (unsure_spc) z_obs[2] ~  logistic(logit(0.8), 1); else z_obs[2] ~ logistic(logit(.9), 1);
   
+  b_obs_raw[1:4] ~ normal(0, 2);
+  b_obs_raw[5] ~ normal(0, inv(sd_X[1]));
   for (n in 1:N){
     // If HIV is observed
     if (obs_Xd[n,1]==1){
@@ -133,8 +141,8 @@ model {
           
           int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] == 3 ? 1 : 0;  
           log_liks[i] = logprob_theta + log_mix(theta, 
-          bernoulli_logit_lpmf(obs | z_obs[2]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-          bernoulli_logit_lpmf(obs | z_obs[1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
+          bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
+          bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
         }
         target += log_sum_exp(log_liks);
         
@@ -160,8 +168,8 @@ model {
         
         int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] == 3 ? 1 : 0;  
         target += log_mix(theta, 
-        bernoulli_logit_lpmf(obs | z_obs[2]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-        bernoulli_logit_lpmf(obs | z_obs[1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
+        bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
+        bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
         
       }
     } else { // HIV is missing, the situation got worse
@@ -206,8 +214,8 @@ model {
             
             int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] == 3 ? 1 : 0;  
             log_liks[i] = logprob_theta + log_mix(theta, 
-            bernoulli_logit_lpmf(obs | z_obs[2]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-            bernoulli_logit_lpmf(obs | z_obs[1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
+            bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
+            bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
             
           }
           ll_HIV[1] = log_sum_exp(log_liks);
@@ -232,8 +240,8 @@ model {
           
           int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] == 3 ? 1 : 0;  
           ll_HIV[1] = log_mix(theta, 
-          bernoulli_logit_lpmf(obs | z_obs[2]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-          bernoulli_logit_lpmf(obs | z_obs[1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
+          bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
+          bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
         }
       }
       
@@ -274,8 +282,8 @@ model {
             
             int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] == 3 ? 1 : 0;  
             log_liks[i] = logprob_theta + log_mix(theta, 
-            bernoulli_logit_lpmf(obs | z_obs[2]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2], 
-            bernoulli_logit_lpmf(obs | z_obs[1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
+            bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2], 
+            bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
             
           }
           ll_HIV[2] = log_sum_exp(log_liks);
@@ -300,8 +308,8 @@ model {
           
           int obs = obs_Smear[n] + obs_Mgit[n] + obs_Xpert[n] == 3 ? 1 : 0;  
           ll_HIV[2] = log_mix(theta, 
-            bernoulli_logit_lpmf(obs | z_obs[2]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-            bernoulli_logit_lpmf(obs | z_obs[1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
+            bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
+            bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*Xd_imp[n,1] + b_obs[2]*Xd_imp[n,2] + b_obs[3]*Xd[n,6] + b_obs[4]*Xd[n,7] + b_obs[5]*Xc_imp[n,1]) + ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]);
         }
       }
 #include includes/impute_model/target.stan
@@ -365,9 +373,9 @@ generated quantities {
           { 0, 0 };
         int obs = obs_Smear2_all[n] + obs_Mgit2_all[n] + obs_Xpert_all[n] == 3 ? 1 : 0;  
         log_lik[n] = log_mix(theta[n],
-        bernoulli_logit_lpmf(obs | z_obs[2]) + 
+        bernoulli_logit_lpmf(obs | z_obs[2] + b_obs[1]*X[n,1] + b_obs[2]*X[n,2] + b_obs[3]*X[n,6] + b_obs[4]*X[n,7] + b_obs[5]*X[n,11]) + 
         ll_Smear[2] + ll_Mgit[2] + ll_Xpert[2],
-        bernoulli_logit_lpmf(obs | z_obs[1]) + 
+        bernoulli_logit_lpmf(obs | z_obs[1] + b_obs[1]*X[n,1] + b_obs[2]*X[n,2] + b_obs[3]*X[n,6] + b_obs[4]*X[n,7] + b_obs[5]*X[n,11]) + 
         ll_Smear[1] + ll_Mgit[1] + ll_Xpert[1]
         
         );

@@ -310,7 +310,8 @@ with(
                                   iter = iter,
                                   elbo_samples = max(warmup, 100),
                                   adapt_iter = 200,
-                                  tol_rel_obj = 1e-5)
+                                  importance_resampling = TRUE, 
+                                  tol_rel_obj = 1e-4)
     }
     
     

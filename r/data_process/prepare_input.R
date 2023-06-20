@@ -50,10 +50,11 @@ data_19EI = dplyr::left_join(
                              csf_xpert=GeneXpert,
                              csf_mgit_contaminated = Contaminated,
                              Volume, diffday, wrong_name, GrowthUnit, TimeToPositive, XpertLevel),
-  by='USUBJID')
+  by='USUBJID') |> filter(USUBJID != '003-335') #not really in the study
 
 #csf smear should not be missing if xpert or mgit is available. they were forgotten to input
 data_19EI[, csf_smear := ifelse(is.na(csf_smear)&(!is.na(csf_mgit)|!is.na(csf_xpert)), FALSE, csf_smear)]
+data_19EI[USUBJID == '003-357', age := 30]
 
 saveRDS(data_19EI, 'export/data_dirty.RDS')
 

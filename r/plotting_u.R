@@ -1,10 +1,10 @@
-z = rstan::extract(m3t$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert')) |> 
+z = rstan::extract(m3$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert')) |> 
   do.call(what=cbind,) |>
   `colnames<-`(paste0(rep(c('z_Smear', 'z_Mgit', 'z_Xpert'), each=2), "[", 1:2, "]"))
-z_mX = rstan::extract(m3mX$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs')) |>
+z_mX = rstan::extract(m3m$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs')) |>
   do.call(what=cbind,) |>
   `colnames<-`(paste0(rep(c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'), each=2), "[", 1:2, "]"))
-z_mXu= rstan::extract(m3mXu$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs')) |>
+z_mXu= rstan::extract(m3mu$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs')) |>
   do.call(what=cbind,) |>
   `colnames<-`(paste0(rep(c('z_Smear', 'z_Mgit', 'z_Xpert', 'z_obs'), each=2), "[", 1:2, "]"))
 z_plot_u =td.misc::mcmc_intervals_multi(

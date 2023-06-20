@@ -9,5 +9,5 @@ penalty_family: t
 penalty-term: 0
 all_params: yes
 clean_state: yes
-extra_x: !expr c( "clin_headache", "clin_psychosis")
+extra_x: !expr c( "clin_headache", "clin_fever", "clin_neckstiff", "clin_psychosis")
 use_rstan_compiler: yes

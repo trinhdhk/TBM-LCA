@@ -4,18 +4,65 @@ library(tidyverse)
 load('data/cleaned/data_input.Rdata')
 scale = purrr::transpose(scale_Xc)
 model = m3
+
+#### p_test for C=1
+p_test_RE =rstan::extract(model$outputs, c('z_Xpert_RE', 'z_Smear_RE', 'z_Mgit_RE'))
+hiv = rstan::extract(model$outputs, 'X')$X[,,1] |> apply(2, as.logical)
+p_test_re_all =  lapply(p_test_RE, \(x) apply(x, 1, \(.x) mean(plogis(.x))))
+p_test_re_hiv = lapply(p_test_RE, \(x) {
+  x[!hiv] = NA
+  apply(x, 1, \(.x) mean(plogis(.x), na.rm=T))
+  })
+p_test_re_nonhiv = lapply(p_test_RE, \(x) {
+  x[hiv] = NA
+  apply(x, 1, \(.x) mean(plogis(.x), na.rm=T))
+})
+
+summp = function(p) {
+  summ = sapply(p, function(pp) c(mean = mean(pp),
+                           quantile(pp, c(.5, 0.025, .975)))) |>
+    t()
+  rownames(summ) <- gsub('_RE', '[2]', rownames(summ))
+  cbind(as.data.frame(summ), parameter=rownames(summ))
+}
+p_re_summary <- summp(p_test_re_all)
+p_re_summary_hiv <- summp(p_test_re_hiv)
+p_re_summary_nohiv <- summp(p_test_re_nonhiv)
+
+summp = function(p) {
+  summ = sapply(p, function(pp) c(mean = mean(pp),
+                                  quantile(pp, c(.5, 0.025, .975)))) |>
+    t()
+  rownames(summ) <- gsub('_RE', '[2]', rownames(summ))
+  cbind(as.data.frame(summ), parameter=rownames(summ))
+}
+p_re_summary <- summp(p_test_re_all)
+p_hiv_pos_summary <- summp(p_test_re_hiv)
+p_hiv_neg_summary <- summp(p_test_re_nonhiv)
+
+
+## p_test for spc
+
+#### p_test for C=1
+p_test0 =rstan::extract(model$outputs, c('z_Xpert', 'z_Smear', 'z_Mgit')) |> lapply("[",,1) |> lapply(plogis)
+p_test0_summary = sapply(p_test0, function(pp) c(mean = mean(pp),
+                                                 quantile(pp, c(.5, 0.025, .975)))) |> t() |> as.data.frame()
+rownames(p_test0_summary) = paste0(rownames(p_test0_summary), '[1]')
+p_test0_summary$parameter = rownames(p_test0_summary)
+p_summary = rbind(p_test0_summary, p_re_summary)
+
 a = rstan::extract(model$outputs, pars=c('a0', 'a'))
 # a$a[,1:ncol(Xd)] = a$a[,1:ncol(Xd)] * 2
 a$a[,18] = -a$a[,18]
 a = cbind(a$a0, a$a) 
 colnames(a) = c('a0', paste0('a[',1:(ncol(a)-1),']'))
 a_orig = a
-for (i in 11:(ncol(a_orig)-2)) a_orig[,i] = a_orig[,i]/scale$`scaled:scale`[[i-10]]
+for (i in 12:(ncol(a_orig)-1)) a_orig[,i] = a_orig[,i]/scale$`scaled:scale`[[i-11]]
 # intercept_translation = unlist(scale$`scaled:center`) * a_orig[, 11:(ncol(a_orig)-2)]
 # intercept_translation[, 'a[18]'] = -intercept_translation[, 'a[18]'] + 15 * a_orig[, 'a[18]']
 # intercept_translation[, 'a[18]'] = intercept_translation[, 'a[18]']  (15 * (-a_orig[,'a[18]']))
 # a_orig[,1] = a_orig[,1] - apply(intercept_translation,1,sum)
-scale_wbc2 = sd(Xc[,7])
+scale_wbc2 = sd(Xc[,7]^2)
 a_orig[,ncol(a_orig)]=a_orig[,ncol(a_orig)]/scale_wbc2
 labs = c(
   'Intercept', 
@@ -26,7 +73,7 @@ labs = c(
   'Past noticed TB contact',
   'Glasgow coma score',
   'Pulmonary TB/X-ray',
-  'Miliary TB/X-Ray',
+  'Miliary TB/X-ray',
   '*log<sub>2</sub>* (Symptom duration, days)',
   '*log<sub>2</sub>* (Paired blood glucose)',
   '*log<sub>2</sub>* (CSF glucose)',
@@ -53,80 +100,81 @@ add_annotate = function(tab, text = '{f2(mean)}; {f2(`50%`)} [{f2(`2.5%`)}; {f2(
     )
 }
 
-p_hiv_neg_summary = {
-  z = rstan::extract(model$outputs, pars=c("z_Smear", "z_Mgit", "z_Xpert"))
-  z = sapply(z, plogis, simplify = FALSE)
-  z = sapply(z, function(x) {apply(x, 2, function(.x) {
-    m = c(mean(.x), median(.x), quantile(.x, c(.025, .975)))
-    names(m) <- c('mean', '50%', '2.5%', '97.5%')
-    m
-    })}, simplify = FALSE)
-  z = sapply(z, t, simplify = FALSE)
-  z = sapply(1:3, function(i) {
-    m = z[[i]]
-    rownames(m) = paste0(names(z)[i], '[',1:2,']')
-    m
-  }, simplify = FALSE)
-  do.call(rbind, z)
-} |> add_annotate()
+# p_hiv_neg_summary = {
+#   z = rstan::extract(model$outputs, pars=c("z_Smear", "z_Mgit", "z_Xpert"))
+#   z = sapply(z, plogis, simplify = FALSE)
+#   z = sapply(z, function(x) {apply(x, 2, function(.x) {
+#     m = c(mean(.x), median(.x), quantile(.x, c(.025, .975)))
+#     names(m) <- c('mean', '50%', '2.5%', '97.5%')
+#     m
+#     })}, simplify = FALSE)
+#   z = sapply(z, t, simplify = FALSE)
+#   z = sapply(1:3, function(i) {
+#     m = z[[i]]
+#     rownames(m) = paste0(names(z)[i], '[',1:2,']')
+#     m
+#   }, simplify = FALSE)
+#   do.call(rbind, z)
+# } #|> add_annotate()
+# p_hiv_neg_summary[c('z_Smear[2]', 'z_Mgit[2]', 'z_Xpert[2]'),]=NULL
 
-p_hiv_pos_summary = {
-  z = rstan::extract(model$outputs, pars=c("z_Smear", "z_Mgit", "z_Xpert"))
-  b = rstan::extract(model$outputs, pars=c("b_HIV", "b_RE"))
-  k = 1
-  for (i in c("z_Smear", "z_Mgit", "z_Xpert")){
-    z[[i]][,2] = z[[i]][,2] + b$b_HIV * b$b_RE[,k]
-    k = k+1
-  }
-  
-  z = sapply(z, plogis, simplify = FALSE)
-  z = sapply(z, function(x) {apply(x, 2, function(.x) {
-    m = c(mean(.x), median(.x), quantile(.x, c(.025, .975)))
-    names(m) <- c('mean', '50%', '2.5%', '97.5%')
-    m
-  })}, simplify = FALSE)
-  z = sapply(z, t, simplify = FALSE)
-  z = sapply(1:3, function(i) {
-    m = z[[i]]
-    rownames(m) = paste0(names(z)[i], '[',1:2,']')
-    m
-  }, simplify = FALSE)
-  do.call(rbind, z)
-} |> add_annotate()
-
-p_summary = {
-  z = rstan::extract(model$outputs, pars=c("z_Smear", "z_Mgit", "z_Xpert"))
-  z.neg = sapply(z, plogis, simplify = FALSE)
-  
-  b = rstan::extract(model$outputs, pars=c("b_HIV", "b_RE"))
-  k = 1
-  for (i in c("z_Smear", "z_Mgit", "z_Xpert")){
-    z[[i]][,2] = z[[i]][,2] + b$b_HIV * b$b_RE[,k]
-    k = k+1
-  }
-  z.pos = sapply(z, plogis, simplify = FALSE)
-  
-  hiv = rstan::extract(model$outputs, pars='X')$X[,,1]
-  p_hiv = apply(hiv,1,mean)
-  z2 = sapply(1:3, function(i) z.pos[[i]][,2] * (p_hiv) + z.neg[[i]][,2] * (1-p_hiv) , simplify = FALSE)
-  z3 = lapply(1:3, function(i) cbind(z.neg[[i]][,1], z2[[i]]))
-  names(z3) = names(z)
-  z = z3
-  
-  
-  z = sapply(z, function(x) {apply(x, 2, function(.x) {
-    m = c(mean(.x), median(.x), quantile(.x, c(.025, .975)))
-    names(m) <- c('mean', '50%', '2.5%', '97.5%')
-    m
-  })}, simplify = FALSE)
-  z = sapply(z, t, simplify = FALSE)
-  z = sapply(1:3, function(i) {
-    m = z[[i]]
-    rownames(m) = paste0(names(z)[i], '[',1:2,']')
-    m
-  }, simplify = FALSE)
-  do.call(rbind, z)
-}
+# p_hiv_pos_summary = {
+#   z = rstan::extract(model$outputs, pars=c("z_Smear", "z_Mgit", "z_Xpert"))
+#   b = rstan::extract(model$outputs, pars=c("b_HIV", "b_RE"))
+#   k = 1
+#   for (i in c("z_Smear", "z_Mgit", "z_Xpert")){
+#     z[[i]][,2] = z[[i]][,2] + b$b_HIV * b$b_RE[,k]
+#     k = k+1
+#   }
+#   
+#   z = sapply(z, plogis, simplify = FALSE)
+#   z = sapply(z, function(x) {apply(x, 2, function(.x) {
+#     m = c(mean(.x), median(.x), quantile(.x, c(.025, .975)))
+#     names(m) <- c('mean', '50%', '2.5%', '97.5%')
+#     m
+#   })}, simplify = FALSE)
+#   z = sapply(z, t, simplify = FALSE)
+#   z = sapply(1:3, function(i) {
+#     m = z[[i]]
+#     rownames(m) = paste0(names(z)[i], '[',1:2,']')
+#     m
+#   }, simplify = FALSE)
+#   do.call(rbind, z)
+# } |> add_annotate()
+# 
+# p_summary = {
+#   z = rstan::extract(model$outputs, pars=c("z_Smear", "z_Mgit", "z_Xpert"))
+#   z.neg = sapply(z, plogis, simplify = FALSE)
+#   
+#   b = rstan::extract(model$outputs, pars=c("b_HIV", "b_RE"))
+#   k = 1
+#   for (i in c("z_Smear", "z_Mgit", "z_Xpert")){
+#     z[[i]][,2] = z[[i]][,2] + b$b_HIV * b$b_RE[,k]
+#     k = k+1
+#   }
+#   z.pos = sapply(z, plogis, simplify = FALSE)
+#   
+#   hiv = rstan::extract(model$outputs, pars='X')$X[,,1]
+#   p_hiv = apply(hiv,1,mean)
+#   z2 = sapply(1:3, function(i) z.pos[[i]][,2] * (p_hiv) + z.neg[[i]][,2] * (1-p_hiv) , simplify = FALSE)
+#   z3 = lapply(1:3, function(i) cbind(z.neg[[i]][,1], z2[[i]]))
+#   names(z3) = names(z)
+#   z = z3
+#   
+#   
+#   z = sapply(z, function(x) {apply(x, 2, function(.x) {
+#     m = c(mean(.x), median(.x), quantile(.x, c(.025, .975)))
+#     names(m) <- c('mean', '50%', '2.5%', '97.5%')
+#     m
+#   })}, simplify = FALSE)
+#   z = sapply(z, t, simplify = FALSE)
+#   z = sapply(1:3, function(i) {
+#     m = z[[i]]
+#     rownames(m) = paste0(names(z)[i], '[',1:2,']')
+#     m
+#   }, simplify = FALSE)
+#   do.call(rbind, z)
+# }
 
 z_summary = rstan::summary(model$outputs, pars=c('z_Smear', 'z_Mgit', 'z_Xpert'))$summary |> add_annotate()
 a_summary = rstan::summary(model$outputs, pars=c('a0', 'a'))$summary |> add_annotate()
@@ -157,7 +205,7 @@ a_plot <-
      scale_color_discrete(type=RColorBrewer::brewer.pal(name='Set1', n=3)[c(2,1,3)], 
                           breaks = c('a', 'a_orig'),
                           labels=c('Matched', 'Original')) + 
-     scale_x_continuous(name='TBM odd ratio',
+     scale_x_continuous(name='TBM odds ratio',
                         # breaks=log(10^cutpoints),
                         minor_breaks = NULL,
                         breaks = (function(x) ifelse(x==0, 0, sign(x) * sqrt(abs(x))))(log(10^cutpoints)),
@@ -204,7 +252,7 @@ b_plot = td.misc::mcmc_intervals_multi(list(b_orig),
     '*log<sub>2</sub>* (CSF protein)',
     '*log<sub>2</sub>* (CSF lactate)',
     '*log<sub>10</sub>* (CSF lymphocyte)',
-    '*log<sub>10</sub>* (CSF WBC)',
+    '*log<sub>10</sub>* (CSF white cell)',
     top_down = T
   ) +
   geom_vline(aes(xintercept=0), color=grey(.5), alpha=.5) +
@@ -260,7 +308,7 @@ argmax_wbc = (wbcpredsum$wbc[which.max(wbcpredsum$mean)]+scale$`scaled:center`$c
 wbc_plot = ggplot(wbcpredsum, aes(x=wbc)) +
   geom_ribbon(aes(ymax=h,ymin=l), alpha=.4, fill = RColorBrewer::brewer.pal(name='Set1', n=3)[2])+
   geom_ribbon(aes(ymax=hh,ymin=ll), alpha=.2, fill = RColorBrewer::brewer.pal(name='Set1', n=3)[2]) + 
-  scale_x_continuous(name = 'CSF WBC',
+  scale_x_continuous(name = 'CSF white cell count (cells/mm<sup>3</sup>)',
                      breaks = c((log10(c(1, 11, 101, 1001, 10001)) - scale$`scaled:center`$csfwbc)/scale$`scaled:scale`$csfwbc, wbcpredsum$wbc[which.max(wbcpredsum$mean)]),
                      labels = c(0, 10, 100, 1000, 10000, round(10^argmax_wbc,0)), expand=c(0,0)) +
   geom_hline(aes(yintercept=0), color=grey(.5), alpha=.5) +
@@ -268,7 +316,7 @@ wbc_plot = ggplot(wbcpredsum, aes(x=wbc)) +
   geom_line(aes(y=mean), 
             color=RColorBrewer::brewer.pal(name='Set1', n=3)[2], size=.8) + 
   scale_y_continuous(
-    name = glue::glue('TBM odds ratio over reference value = {10^(scale$`scaled:center`$csfwbc*scale$`scaled:scale`$csfwbc) |> formatC(format = "f", digits=0)} cells/mm<sup>3</sup>'),
+    name = glue::glue('TBM odds ratio relative to reference value = {10^(scale$`scaled:center`$csfwbc*scale$`scaled:scale`$csfwbc) |> formatC(format = "f", digits=0)} cells/mm<sup>3</sup>') |> unclass(),
     breaks = log(10^c(-24,-20, -16,-12, -8, -6, -4,-2, -1, 0)),
     labels = c('1e-24','1e-20','1e-16','1e-12','1e-8','1e-6','1e-4', 0.01, .1, 1)
     # expand=c(0,0),
@@ -281,7 +329,7 @@ wbc_plot = ggplot(wbcpredsum, aes(x=wbc)) +
     xlim = (log10(c(1, 10001)) - scale$`scaled:center`$csfwbc)/scale$`scaled:scale`$csfwbc,
     ylim = c(log(10^-6), 0))+
   theme_bw() +
-  theme(axis.text = ggtext::element_markdown())
+  theme(axis.title.x = ggtext::element_markdown(), axis.title.y = ggtext::element_markdown())
   # theme(axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank())
 # load('data/cleaned/data_input.Rdata')
 # tb_dis = !data_19EI$other_dis_dx
@@ -318,3 +366,4 @@ wbc_plot = ggplot(wbcpredsum, aes(x=wbc)) +
 # pseudo.fit$coefficients = a_plot$data$m
 # nomo = rms::nomogram(pseudo.fit)
 save(z_plot, z_plot_logit, a_plot, b_plot, ab_plot, wbc_plot, file = 'export/m3_plot.Rdata')
+saveRDS(a_orig, 'export/a_orig.RDS')

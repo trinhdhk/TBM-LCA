@@ -14,7 +14,7 @@ joindt <- plyr::join_all(
     data$INEX[, .(USUBJID, INITIAL, YOB, SEX, ENROLL)],
     data$BASE[, .(USUBJID, ISHIV, ISCHRONIC, ISDIABETE, ISFEVER, ISCONTUBER, ILLNESSDAY, 
              ISREDUCED, ISWEIGHT, ISNSWEAT, ISCOUGH, NONE, ISHEADACHE, ISLOCALSEIZURE, ISGENNERALSEIZURE, 
-             ISPSYCHOSIS, ISLANGCHANGE, ISMOVEMENT,
+             ISPSYCHOSIS, ISLANGCHANGE, ISMOVEMENT, NECKSTIFF, TEMPERATURE,
              HEMIPLEGIA, PARAPLEGIA, TETRAPLEGIA, 
              GENCONVUL, LOCALCONVUL, 
              GLASCOW, GCSE, GCSM, GCSV)],
@@ -44,7 +44,8 @@ joindt <- mutate(joindt,
                           ISWEIGHT, ISNSWEAT, ISCOUGH, ISCONTUBER, HEMIPLEGIA, PARAPLEGIA, TETRAPLEGIA, ISREDUCED),
                         function(x) {fcase(x == 'C49488', TRUE,
                                            x == 'N', FALSE
-                        )}))
+                        )})) |>
+  mutate(across(c(ISHEADACHE, ISLOCALSEIZURE, ISGENNERALSEIZURE, ISFEVER, GENCONVUL, LOCALCONVUL, NECKSTIFF, ISPSYCHOSIS), function(x) ifelse(x%in%c('UNKNOWN', 'UNK', 'UNSURE'), NA, x)))
 # joindt <- joindt[-(1:35),] # remove since they are A MESS!!!!!
 
 # joindt <- joindt[RANDO=='YES']
@@ -61,6 +62,10 @@ joindt[,`:=`(
   ),
   clin_headache = (ISHEADACHE == 'C49488'),
   clin_psychosis = (ISPSYCHOSIS == 'C49488'),
+  clin_fever = (ISFEVER | TEMPERATURE >= 37.5) %in% T,
+  clin_neckstiff = (NECKSTIFF == 'YES'),
+  clin_convul =  (GENCONVUL == 'C49488') | (LOCALCONVUL == 'C49488'),
+  clin_brainsymptoms = (ISHEADACHE == 'C49488') | (ISFEVER | TEMPERATURE >= 37.5) | (GENCONVUL == 'C49488') | (LOCALCONVUL == 'C49488') | (ISHEADACHE == 'C49488') | (NECKSTIFF == 'YES') | (ISLOCALSEIZURE == 'C49488') | (ISGENNERALSEIZURE == 'C49488') | ISREDUCED | (GLASCOW < 15),
   clin_illness_day = as.numeric(ILLNESSDAY),
   clin_symptoms = ISWEIGHT | ISNSWEAT | ISCOUGH,
   clin_contact_tb = ISCONTUBER,

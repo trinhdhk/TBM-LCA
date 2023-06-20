@@ -13,7 +13,8 @@ data_19EI[,
               as.integer(time_str[[1]])*24 + as.integer(time_str[[2]])
             })]
 
-model = readRDS('outputs/m3_t00_b345678_q7_r1_k1_3012.RDS')$outputs
+# model = readRDS('outputs/m3_t00_b345678_q7_r1_k1_3012.RDS')$outputs
+model = m3$outputs
 X = rstan::extract(model, 'X')$X
 b = rstan::extract(model, c('b', 'b_HIV', 'b_RE'))
 RE = rstan::extract(model, 'RE')$RE
@@ -54,15 +55,15 @@ xpert_level =
                               xlab = "Xpert semi-quantification level", ylab = "Standardised Mycobacillary burden")
 # check correspondence with culture time
 cultime = list(
-  pos=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & hiv], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1, se=F),
+  pos=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & hiv], x=culture_time, y=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=2, se=F),
                                   results.subtitle = FALSE,
-                                  ylab = "Time to Culture positive (hours)", xlab = "Standardised Mycobacillary burden") + ggtitle('HIV +'),
-  neg=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & !hiv], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1, se=F),
+                                  xlab = "Time to Culture positive (hours)", ylab = "Standardised Mycobacillary burden") + ggtitle('HIV +'),
+  neg=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0 & !hiv], x=culture_time, y=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=2, se=F),
                                   results.subtitle = FALSE,
-                                  ylab = "Time to Culture positive (hours)", xlab = "Standardised Mycobacillary burden") + ggtitle('HIV -'),
-  overall=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0], y=culture_time, x=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=1, se=F),
+                                  xlab = "Time to Culture positive (hours)", ylab = "Standardised Mycobacillary burden") + ggtitle('HIV -'),
+  overall=ggstatsplot::ggscatterstats(bd_dt[mgit==TRUE & growth_unit>0], x=culture_time, y=burden, type = 'non-parametric', smooth.line.args = list(method='loess',span=2, se=F),
                                       results.subtitle = FALSE,
-                                      ylab = "Time to Culture positive (hours)", xlab = "Standardised Mycobacillary burden")
+                                      xlab = "Time to Culture positive (hours)", ylab = "Standardised Mycobacillary burden")
 )
 cultimefit = lm(burden~hiv*log_culture_time,data=bd_dt[mgit==T])
 
@@ -85,7 +86,7 @@ score_dt = data.table(
 area = expand.grid(score = seq(0, 14, .01), y=seq(-25, 20,.1)) |> setDT()
 # score_dt[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "Probable TBM")]
 area[, def := fcase(score < 6, "Unknown", score < 9, "Possible TBM", default = "Probable TBM") |> factor(levels = c('Unknown', 'Possible TBM', 'Probable TBM'), ordered=TRUE)]
-defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.75),
+defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.8,se=F),
                                        point.args = list(alpha=0),
                                       xlab = "Total score", ylab = "Predicted TBM risk (%)",
                                       results.subtitle = FALSE,
@@ -97,7 +98,7 @@ defscore = ggstatsplot::ggscatterstats(score_dt, x=score, y=ztheta, type = 'non-
   scale_y_continuous(breaks = qlogis(c(1e-10, 1e-4, 0.01, .1, .5, .9, .99, .9999, .99999999)), labels = c(1e-8, 1e-2, 1, 10, 50, 90, 99, 99.99, 100)) +
   theme(legend.position='bottom')
 
-defscore2 = ggstatsplot::ggscatterstats(score_dt, x=score2, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.8),
+defscore2 = ggstatsplot::ggscatterstats(score_dt, x=score2, y=ztheta, type = 'non-parametric', smooth.line.args = list(method='loess',span=.8,se=F),
                                        point.args = list(alpha=0),
                                        xlab = "Total score", ylab = "Predicted TBM risk (%)",
                                        results.subtitle = FALSE,
@@ -112,6 +113,7 @@ defscore2 = ggstatsplot::ggscatterstats(score_dt, x=score2, y=ztheta, type = 'no
 saveRDS(list(
   defscore = defscore |> ggplotGrob(),
   defscore2 = defscore2 |> ggplotGrob(),
+  defscorecombined = defscore+(defscore2+scale_fill_brewer(palette=7, name='Case definition', guide = guide_none())+theme(axis.title.y = element_blank()))+patchwork::plot_layout(guide='collect')&theme(legend.position = 'bottom'),
   xpertlv = xpert_level |> ggplotGrob(),
   cultime = cultime |> sapply(ggplotGrob, simplify = F),
   cultimefit = cultimefit

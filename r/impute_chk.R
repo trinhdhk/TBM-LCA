@@ -255,14 +255,15 @@ prob_missingness = function(obs, completed){
          })
 }
 
-resid_missingess = function(y, e){
+resid_missingess = function(y, e, p){
+  if (!is.matrix(p)) dim(p)=dim(y)
   family = if (identical(sort(unique(as.numeric(y))), c(0,1))){
     binomial
   } else gaussian
   sapply(seq_len(dim(y)[1]), 
          \(i) {
            fit = glm(y[i,]~e[i,], family=family)
-           residuals(fit)
+           residuals(fit, type='response')
          }) |> t() 
 }
 
@@ -274,7 +275,7 @@ library(data.table)
 hiv_miss = prob_missingness(obs_Xd[Td[,7]==1,1], 
                             lapply(1:1000,
                                    function(i) 
-                                     cbind(X[i,Td[,7]==1,c(2,3,11:18)],
+                                     cbind(X[i,Td[,7]==1,c(11)],
                                            data_19EI[Td[,7]==1, .(obs_smear, csf_smear, csf_mgit, csf_xpert)]
                                        ))) |> t()
 #hiv_pred_smooth = hiv2$pred[, Td[,7]==1]
@@ -294,18 +295,19 @@ hiv_plot = list()
 hiv_plot$plot1 = 
   ggplot() + 
   # geom_hex(aes(y=hiv2$pred[1:100,Td[,7]==1], x=hiv_miss[1:100,], fill = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=100), alpha=..ncount..)) + #fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)
-   geom_hex(aes(y=X[401:600,Td[,7]==1,1], x=hiv_miss[401:600,], fill = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200), alpha=..ncount..)) + #fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[401:600,Td[,7]==1,1], x=hiv_miss[401:600,], color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200), fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=200)), alpha=.5, span=.5, method='loess',se=F)) + 
+   geom_hex(aes(y=X[201:700,Td[,7]==1,1] |> c(), x=hiv_miss[201:700,]|>c(), fill = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=500), alpha=..ncount..)) + #fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=2)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[201:700,Td[,7]==1,1]|>c(), x=hiv_miss[201:700,]|>c(), color = rep(as.logical(obs_Xd[Td[,7]==1,1]),each=500), fill = rep(as.logical(obs_Xd[Td[,7]==1,1]), each=500)), alpha=.5, span=.5, method='loess',se=F)) + 
   # scale_x_continuous(trans='logit', breaks = c(.5, .75, .95, .99), limits=c(0.2, .9999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,0.7), trans='log10') + guides(alpha='none', fill='none')+
+  scale_y_continuous(limits=c(0,1), oob=scales::squish)+
   ylab("P(HIV)")+
   xlab('P(Response)') +
   theme_bw()
 
 hiv_plot$plot2 = 
   ggplot()+
-  geom_density(aes(x=resid_missingess(X[1:500,Td[,7]==1,1], hiv_miss[1:500,]), fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=500)), color='transparent', alpha=.5, adjust=.5) +
+  geom_density(aes(x=resid_missingess(X[1:500,Td[,7]==1,1], qlogis(hiv_miss[1:500,]), rep(as.logical(obs_Xd[Td[,7]==1,1]),each=500))|>c(), fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=500)), color='transparent', alpha=.5, adjust=.5) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Residual') +
   ylab('Density') +
@@ -313,8 +315,8 @@ hiv_plot$plot2 =
 
 hiv_plot$plot3 = 
   ggplot()+
-  geom_hex(aes(y=resid_missingess(X[601:800,Td[,7]==1,1], hiv_miss[601:800,]), x = hiv_miss[601:800,], fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200), alpha = ..count..)) + 
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[601:800,Td[,7]==1,1], hiv_miss[601:800,]), x = hiv_miss[601:800,], color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200))), method='loess', span=.5, se=FALSE)) +
+  geom_hex(aes(y=resid_missingess(X[601:800,Td[,7]==1,1], hiv_miss[601:800,], rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200))|>c(), x = hiv_miss[601:800,]|>c(), fill=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200), alpha = ..count..)) + 
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[601:800,Td[,7]==1,1], hiv_miss[601:800,], rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200))|>c(), x = hiv_miss[601:800,]|>c(), color=rep(as.logical(obs_Xd[Td[,7]==1,1]),each=200))), method='loess', span=.5, se=FALSE)) +
   # scale_x_continuous(trans='logit', breaks = c(.25, .75, .95, .99, .999), limits=c(0.2, .9999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -338,8 +340,8 @@ cs_plot = list()
 
 cs_plot$plot1 = 
   ggplot() + 
-  geom_hex(aes(y=X[1:200,,2], x=cs_miss[1:200,], fill = rep(as.logical(obs_Xd[,2]),each=200), alpha=..count..)) + #,fill = rep(as.logical(obs_Xd[,2]), each=100)
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,,2], x=cs_miss[1:200,], color = rep(as.logical(obs_Xd[,2]),each=200),fill = rep(as.logical(obs_Xd[,2]), each=200)), alpha=.5,method='loess', se=FALSE)) + 
+  geom_hex(aes(y=X[1:200,,2]|>c(), x=cs_miss[1:200,]|>c(), fill = rep(as.logical(obs_Xd[,2]),each=200), alpha=..count..)) + #,fill = rep(as.logical(obs_Xd[,2]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,,2]|>c(), x=cs_miss[1:200,]|>c(), color = rep(as.logical(obs_Xd[,2]),each=200),fill = rep(as.logical(obs_Xd[,2]), each=200)), alpha=.5,method='loess',span=.5, se=FALSE)) + 
   scale_x_continuous(trans='logit')+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -349,7 +351,7 @@ cs_plot$plot1 =
 
 cs_plot$plot2 =
   ggplot()+
-  geom_density(aes(x=resid_missingess(X[1:500,,2], cs_miss[1:500,]), fill=rep(as.logical(obs_Xd[,2]),each=500)), color='transparent', alpha=.5, adjust=1) +
+  geom_density(aes(x=resid_missingess(X[1:500,,2], cs_miss[1:500,], rep(as.logical(obs_Xd[,2]),each=500)) |> c(), fill=rep(as.logical(obs_Xd[,2]),each=500)), color='transparent', alpha=.5, adjust=1) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Residual') +
   ylab('Density') +
@@ -357,8 +359,8 @@ cs_plot$plot2 =
 
 cs_plot$plot3 =
   ggplot()+
-  geom_hex((aes(y=resid_missingess(X[1:200,,2], cs_miss[1:200,]), x = cs_miss[1:200,], fill=rep(as.logical(obs_Xd[,2]),each=200), alpha=..count..))) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,,2], cs_miss[1:200,]), x = cs_miss[1:200,], color=rep(as.logical(obs_Xd[,2]),each=200))), method='loess',se=FALSE)) +
+  geom_hex((aes(y=resid_missingess(X[1:200,,2], cs_miss[1:200,], rep(as.logical(obs_Xd[,2]),each=200)) |> c(), x = cs_miss[1:200,]|>c(), fill=rep(as.logical(obs_Xd[,2]),each=200), alpha=..count..))) +
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,,2], cs_miss[1:200,], rep(as.logical(obs_Xd[,2]),each=200)) |> c(), x = cs_miss[1:200,] |> c(), color=rep(as.logical(obs_Xd[,2]),each=200))), method='loess',se=FALSE)) +
   scale_x_continuous(trans='logit') +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -384,8 +386,8 @@ mp_plot = list()
 
 mp_plot$plot1 = 
   ggplot() + 
-  geom_hex(aes(y=X[1:200,,3], x=mp_miss[1:200,], fill = rep(as.logical(obs_Xd[,3]),each=200), alpha=..count..)) + #,fill = rep(as.logical(obs_Xd[,3]), each=100)
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,,3], x=mp_miss[1:200,], color = rep(as.logical(obs_Xd[,3]),each=200),fill = rep(as.logical(obs_Xd[,3]), each=200)), alpha=.7,method='loess',span=.7, se=FALSE)) + 
+  geom_hex(aes(y=X[1:200,,3]|>c(), x=mp_miss[1:200,]|>c(), fill = rep(as.logical(obs_Xd[,3]),each=200), alpha=..count..)) + #,fill = rep(as.logical(obs_Xd[,3]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,,3]|>c(), x=mp_miss[1:200,]|>c(), color = rep(as.logical(obs_Xd[,3]),each=200),fill = rep(as.logical(obs_Xd[,3]), each=200)), alpha=.7,method='loess',span=.7, se=FALSE)) + 
   # scale_x_continuous(trans='logit', )+
   scale_y_continuous(limits=c(0,1), oob=scales::squish) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
@@ -396,7 +398,7 @@ mp_plot$plot1 =
 
 mp_plot$plot2 = 
   ggplot() +
-  geom_density(aes(x=resid_missingess(X[1:500,,3], mp_miss[1:500,]), fill=rep(as.logical(obs_Xd[,3]),each=500)), color='transparent', alpha=.5, adjust=.5) +
+  geom_density(aes(x=resid_missingess(X[1:500,,3], mp_miss[1:500,], rep(as.logical(obs_Xd[,3]),each=500))|>c(), fill=rep(as.logical(obs_Xd[,3]),each=500)), color='transparent', alpha=.5, adjust=.5) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Residual') +
   ylab('Density') +
@@ -405,8 +407,8 @@ mp_plot$plot2 =
 
 mp_plot$plot3 = 
   ggplot()+
-  geom_hex((aes(y=resid_missingess(X[1:200,,3], mp_miss[1:200,]), x = mp_miss[1:200,], fill=rep(as.logical(obs_Xd[,3]),each=200), alpha=..count..))) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,,3], mp_miss[1:200,]), x = mp_miss[1:200,], color=rep(as.logical(obs_Xd[,3]),each=200))),method='loess', se=FALSE)) +
+  geom_hex((aes(y=resid_missingess(X[1:200,,3], mp_miss[1:200,], rep(as.logical(obs_Xd[,3]),each=200))|>c(), x = mp_miss[1:200,]|>c(), fill=rep(as.logical(obs_Xd[,3]),each=200), alpha=..count..))) +
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,,3], mp_miss[1:200,], rep(as.logical(obs_Xd[,3]),each=200))|>c(), x = mp_miss[1:200,]|>c(), color=rep(as.logical(obs_Xd[,3]),each=200))),method='loess', se=FALSE)) +
   # scale_x_continuous(trans='logit', breaks = c(.5, .9, .99, .999, .9999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -424,8 +426,8 @@ id_miss = prob_missingness(obs_Xc[,1],
 id_plot = list()
 id_plot$plot1 = 
   ggplot() + 
-  geom_hex(aes(y=X[1:200,,11], x=id_miss[1:200,], fill = rep(as.logical(obs_Xc[,1]),each=200), alpha=..count..)) + #, fill = rep(as.logical(obs_Xc[,1]), each=100)
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,,11], x=id_miss[1:200,], color = rep(as.logical(obs_Xc[,1]),each=200),fill = rep(as.logical(obs_Xc[,1]), each=200)), alpha=.5, method='loess', se=FALSE)) + 
+  geom_hex(aes(y=X[1:200,,11] |> c(), x=id_miss[1:200,] |> c(), fill = rep(as.logical(obs_Xc[,1]),each=200), alpha=..count..)) + #, fill = rep(as.logical(obs_Xc[,1]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,,11] |> c(), x=id_miss[1:200,] |> c(), color = rep(as.logical(obs_Xc[,1]),each=200),fill = rep(as.logical(obs_Xc[,1]), each=200)), alpha=.5, method='loess',span=.5, se=FALSE)) + 
   scale_x_continuous(trans='logit', breaks=c(0.4, .8, .95, .99, .999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -435,7 +437,7 @@ id_plot$plot1 =
 
 id_plot$plot2 = 
   ggplot()+
-  geom_density(aes(x=resid_missingess(X[1:500,,11], id_miss[1:500,]), fill=rep(as.logical(obs_Xc[,1]),each=500)), color='transparent', alpha=.5, adjust=2) +
+  geom_density(aes(x=resid_missingess(X[1:500,,11], id_miss[1:500,], rep(as.logical(obs_Xc[,1]),each=500)) |> c(), fill=rep(as.logical(obs_Xc[,1]),each=500)), color='transparent', alpha=.5, adjust=2) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Residual') +
   ylab('Density') +
@@ -443,8 +445,8 @@ id_plot$plot2 =
 
 id_plot$plot3 = 
   ggplot()+
-  geom_hex((aes(y=resid_missingess(X[1:200,,11], id_miss[1:200,]), x = id_miss[1:200,], fill=rep(as.logical(obs_Xc[,1]),each=200), alpha=..count..))) + 
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,,11], id_miss[1:200,]), x = id_miss[1:200,], color=rep(as.logical(obs_Xc[,1]),each=200))), method='loess', se=FALSE)) +
+  geom_hex((aes(y=resid_missingess(X[1:200,,11], id_miss[1:200,], rep(as.logical(obs_Xc[,1]),each=200)) |> c(), x = id_miss[1:200,] |> c(), fill=rep(as.logical(obs_Xc[,1]),each=200), alpha=..count..))) + 
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,,11], id_miss[1:200,], rep(as.logical(obs_Xc[,1]),each=200)) |> c(), x = id_miss[1:200,] |> c(), color=rep(as.logical(obs_Xc[,1]),each=200))), method='loess', span=.5,se=FALSE)) +
   scale_x_continuous(trans='logit', breaks=c(0.4, .8, .95, .99, .999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -464,8 +466,8 @@ ft = Xc[,8] > -1
 # gcs2$pred2 = 12 - 3*gcs2$pred
 gcs_plot$plot1 = 
   ggplot() + 
-  geom_hex(aes(y=X[1:200,ft,18] + rnorm(length(X[1:200,ft,18]),0,.01), x=gcs_miss[1:200,ft], fill = rep(as.logical(obs_Xc[ft,8]),each=200), alpha=..count..)) + #,fill = rep(as.logical(obs_Xc[,8]), each=100)
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,ft,18], x=gcs_miss[1:200,ft], color = rep(as.logical(obs_Xc[ft,8]),each=200),fill = rep(as.logical(obs_Xc[ft,8]), each=200)), alpha=.5,method='loess', se=FALSE)) + 
+  geom_hex(aes(y=(X[1:200,ft,18] + rnorm(length(X[1:200,ft,18]),0,.01)) |> c(), x=gcs_miss[1:200,ft] |> c(), fill = rep(as.logical(obs_Xc[ft,8]),each=200), alpha=..count..)) + #,fill = rep(as.logical(obs_Xc[,8]), each=100)
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth(aes(y=X[1:200,ft,18] |> c(), x=gcs_miss[1:200,ft] |> c(), color = rep(as.logical(obs_Xc[ft,8]),each=200),fill = rep(as.logical(obs_Xc[ft,8]), each=200)), alpha=.5,method='loess',span=.5, se=FALSE)) + 
   scale_x_continuous(trans='logit', breaks = c(.4, .8, .95, .99, .999))+
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+
@@ -476,7 +478,7 @@ gcs_plot$plot1 =
 
 gcs_plot$plot2 = 
   ggplot()+
-  geom_density(aes(x=resid_missingess(12-3*X[1:500,ft,18], gcs_miss[1:500,ft]), fill=rep(as.logical(obs_Xc[ft,8]),each=500)), color='transparent', alpha=.5, adjust=1) +
+  geom_density(aes(x=resid_missingess(12-3*X[1:500,ft,18], gcs_miss[1:500,ft], rep(as.logical(obs_Xc[ft,8]),each=500)) |> c(), fill=rep(as.logical(obs_Xc[ft,8]),each=500)), color='transparent', alpha=.5, adjust=1) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   xlab('Residual') +
   ylab('Density') +
@@ -484,8 +486,8 @@ gcs_plot$plot2 =
 
 gcs_plot$plot3 = 
   ggplot()+
-  geom_hex(aes(y=resid_missingess(X[1:200,ft,18], gcs_miss[1:200,ft]), x = gcs_miss[1:200,ft], fill=rep(as.logical(obs_Xc[ft,8]),each=200), alpha=..count..)) +
-  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,ft,18], gcs_miss[1:200,ft]), x = gcs_miss[1:200,ft], color=rep(as.logical(obs_Xc[ft,8]),each=200))),method='loess', se=FALSE)) +
+  geom_hex(aes(y=resid_missingess(X[1:200,ft,18], gcs_miss[1:200,ft], rep(as.logical(obs_Xc[ft,8]),each=200)) |> c(), x = gcs_miss[1:200,ft] |> c(), fill=rep(as.logical(obs_Xc[ft,8]),each=200), alpha=..count..)) +
+  ggfx::with_outer_glow(colour = '#ffffff', sigma=1, expand=3, x = geom_smooth((aes(y=resid_missingess(X[1:200,ft,18], gcs_miss[1:200,ft], rep(as.logical(obs_Xc[ft,8]),each=200)) |> c(), x = gcs_miss[1:200,ft] |> c(), color=rep(as.logical(obs_Xc[ft,8]),each=200))),method='loess', se=FALSE)) +
   scale_x_continuous(trans='logit', breaks = c(.4, .8, .95, .99, .999)) +
   scale_discrete_manual(c('color', 'fill'), name = '', breaks = c(FALSE, TRUE), labels=c('Imputed', 'Observed'), values = unlist(color) |> setNames(c('FALSE', 'TRUE')))+
   scale_alpha_continuous(range=c(0.2,.7), trans='log10') + guides(alpha='none', fill='none')+

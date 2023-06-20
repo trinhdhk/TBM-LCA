@@ -466,17 +466,7 @@ my_ggroc <-
       plt <- 
         ggplot(data=._data_) + 
         annotate("text", x = 62.5/100, y = 22.5/100, label = paste0("AUC ", format(auc*100, digits = 3), "%"),
-                 parse = F, size = 5, colour = classifierplots:::fontgrey_str) + 
-        scale_x_continuous(name = "False Positive Rate (%)    (1-Specificity)", 
-                           limits = c(0, 1), expand = c(0.05, 0.05),
-                           breaks = c(0, 25, 50, 75, 100, if(j_index) round(100 - coord[['specificity']]*100,0))/100,
-                           labels = c(0, 25, 50, 75, 100, if(j_index) round(100 - coord[['specificity']]*100,0))
-        ) + 
-        scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
-                           limits = c(0, 1), expand = c(0.05, 0.05),
-                           breaks = c(0, 25, 50, 75, 100, if(j_index) round(coord[['sensitivity']]*100,0))/100,
-                           labels = c(0, 25, 50, 75, 100, if(j_index) round(coord[['sensitivity']]*100,0))
-        )
+                 parse = F, size = 5, colour = classifierplots:::fontgrey_str) 
       
       
       if (j_index){
@@ -514,6 +504,20 @@ my_ggroc <-
         cutoffs.at = c(cutoffs.at*100, coord['threshold']),
         color = '#ABC270',
         ...
+      ) + style_roc() + 
+      scale_x_continuous(name = "True Negative Rate (%)    (Specificity)", 
+                         guide = guide_axis(n.dodge = 1, check.overlap = T),
+                         limits = c(0, 1), expand = c(0.05, 0.05),
+                         minor_breaks = seq(10, 90, 20),
+                         breaks = c(seq(0, 100, 20), if(j_index) round(100 - coord[['specificity']]*100,0))/100,
+                         labels = c(seq(100, 0, -20), if(j_index) round(coord[['specificity']]*100,0))
+      ) + 
+      scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
+                         guide = guide_axis(n.dodge = 1, check.overlap = T),
+                         limits = c(0, 1), expand = c(0.05, 0.05),
+                         minor_breaks = seq(10, 90, 20),
+                         breaks = c(seq(0, 100, 20), if(j_index) round(coord[['sensitivity']]*100,0))/100,
+                         labels = c(seq(0, 100, 20), if(j_index) round(coord[['sensitivity']]*100,0))
       )
     plt
   }
@@ -808,11 +812,12 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
     
     # browser()
     # if linear then plot point
-    if (type == 'linear'){
-      # browser()
-      p <- p + 
-        ggplot2::geom_point(aes(x = pred, y = as.numeric(obs)), alpha=.5, color=grDevices::grey(.5), size=.5)
-    }
+    # if (type == 'linear'){
+    #   # browser()
+    # 
+    #     p <- p+
+    #     ggplot2::geom_point(aes(x = pred, y = as.numeric(obs)), alpha=.5, color=grDevices::grey(.5), size=.5)
+    # }
     p + 
       ggplot2::annotate(
         "text", x = .99, y = .05, hjust='right', vjust='bottom',

@@ -1,7 +1,7 @@
 # Extract from 19EI myco data
 library(data.table)
-myco19 <- readxl::read_excel('data/raw/19EI/mycols 010421.xlsx')
-myco19add <- readxl::read_excel('data/raw/19EI/req2004chithu2.xlsx')
+# myco19 <- readxl::read_excel('data/raw/19EI/mycols 010421.xlsx')
+# myco19add <- readxl::read_excel('data/raw/19EI/req2004chithu2.xlsx')
 setDT(myco19); setDT(myco19add)
 
 myco19sumAdd = myco19add[,`:=`(

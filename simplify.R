@@ -78,7 +78,7 @@ create_folds <-
     folds
   }
 
-argparser$model <- 's1'
+argparser$model <- 's5'
 results <- new.env(parent=emptyenv())
 results$.META <- argparser
 
@@ -125,7 +125,7 @@ with(
     cli::cli_li('{.strong Model} {model}')
     cli::cli_li('Mode: {mode}')
     cli::cli_li('{fold} fold{?s} with {rep} repetition{?s}')
-    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N[0,2.5]", penalty_term))}]')
+    cli::cli_li('{.strong Prior family:} {.field {prior_family_name}} with {.strong scales} = [{toString(ifelse(penalty_term==0, "~N[0,1]", penalty_term))}]')
     cli::cli_li('{.strong Random seed:} {.field {seed}}')
     cli::cli_li('Stan configurations:')
     ulid <- cli::cli_ul()
@@ -158,10 +158,11 @@ with(
     obs_test <- as.logical(with(recipe$data_19EI, obs_smear + obs_mgit + obs_xpert > 0))
     test <- as.logical(with(recipe$data_19EI, csf_smear + csf_mgit + csf_xpert > 0))
     impute_data <- cbind(X_extra, obs = obs_test, test = test)
+    cli::cli_alert("Impute extra variables")
     X_extra <- lapply(seq_len(dim(Xd)[1]),
                       function(i) {
-                        dat <- cbind(impute_data, hiv = Xd[i,,1], id = Xc[i,,1])
-                        imp <- mice::mice(dat, m=1, maxit=50, print=FALSE)
+                        dat <- cbind(impute_data, hiv = Xd[i,,1], id = Xc[i,,1], gcs = Xc[i,,2])
+                        imp <- mice::mice(dat, m=1, maxit=100, print=FALSE)
                         comp <- mice::complete(imp)
                         comp[extra_x] |> as.matrix()
                       }) 

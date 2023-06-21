@@ -4,14 +4,19 @@ HIV_a0 ~ normal(0, 2.5);
 HIV_a ~ normal(0, 2.5);
 
 // - Clinical symptoms
-L_Omega_cs ~ lkj_corr_cholesky(4);
-cs_a0 ~ normal(0, 2.5);
-to_vector(cs_a) ~ normal(0, 2.5);
+{
+  cs_p ~ beta(10, 10);
+  cs_a0 ~ normal(0, 2.5);
+  cs_a ~ normal(0, 2.5);
+}
+
 
 // - Motor palsy
-L_Omega_mp ~ lkj_corr_cholesky(4);
-mp_a0 ~ normal(0, 2.5);
-to_vector(mp_a) ~ normal(0, 2.5);
+{
+  mp_p ~ beta(10, 10);
+  mp_a0 ~ normal(0, 2.5);
+  mp_a ~ normal(0, 2.5);
+}
 
 // - Illness day
 id_a0 ~ normal(0, 2.5);
@@ -25,10 +30,11 @@ csf_a0 ~ normal(0, 2.5);
 to_vector(csf_a) ~ normal(0,2.5);
 
 // - GCS
-gcs_a0      ~ exponential(20);
-to_vector(gcs_a) ~ normal(0, 2.5);
+gcs_a0      ~ double_exponential(0, 0.05);
+to_vector(gcs_a) ~ normal(0, .25);
 L_Omega_gcs ~ lkj_corr_cholesky(4);
-L_sigma_gcs ~ normal(0, 0.25);
+L_sigma_gcs ~ normal(0, 0.1);
+
 
 
 // - Blood

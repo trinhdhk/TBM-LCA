@@ -68,6 +68,27 @@ sLCAModel <- R6::R6Class(
       classifierplots::density_plot(as.integer(C), (p_summary$theta[[est]][not.na])) + theme() + ggplot2::ggtitle("Positive TBM")
     },
     roc_plot = function(
+      which = c('C', 'simulated_C'),
+      C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
+      est = c("mean", "median"),
+      plot_rep = FALSE,
+      j_index = TRUE, cutoffs.at = seq(0,1,.1),
+      theme = ggplot2::theme_bw(),
+      resamps_C = 200,
+      ...
+    ){
+      require(ggplot2)
+      require(patchwork)
+      est <- match.arg(est)
+      which <- match.arg(which)
+      
+      if (which=='C') 
+        return(super$roc_plot(which, C, est, plot_rep, j_index, cutoffs.at, theme, ...))
+    
+      stop('Simulated C is not implemented! Use roc_plot_legacy instead.')
+            
+    },
+    roc_plot_legacy = function(
       which = c("C", "simulated_C"),
       C = self$recipe$data_19EI[,tbm_dx|csf_smear|csf_mgit|csf_xpert],
       resamps = 2000,

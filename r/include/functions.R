@@ -431,6 +431,97 @@ extract_K_fold <- function(list_of_stanfits, list_of_holdouts, pars = NULL, ...)
   setNames(extract_holdout, extract_pars)
 }
 
+my_ggroc <- 
+  function(obs, pred, pred_rep = NULL, j_index = TRUE, cutoffs.at = seq(0,1,.1),...){
+    require(ggplot2)
+    require(plotROC)
+    
+    auc <- pROC::auc(obs~pred)
+    auc_reps <- sapply(pred_rep, 
+                      \(pr){
+                        pROC::auc(obs~pr)
+                      })
+    ci_avail <- length(auc_reps) >= 100
+    bounds <- if (ci_avail) quantile(auc_reps, c(0.025, .975)) else range(auc_reps) 
+    pred <- pred*100
+    # for (.pred_rep in pred_rep){
+    #   rep_auc <- pROC::auc(obs~.pred_rep)
+    #   bounds <- c(min(c(bounds, rep_auc), na.rm=T), max(c(bounds, rep_auc), na.rm=T))
+    # }
+    
+    coord <- if (j_index){
+      proc <- pROC::roc(obs~pred)
+      pROC::coords(proc, x='best', input='threshold')
+    } else c(threshold=NULL)
+    obs <- as.logical(obs) |> as.integer()
+    ._data_ <- data.frame(obs = obs, pred = pred)
+   
+    i <- 0
+    
+    for (.pred_rep in pred_rep){
+      i <- i+1
+      .colname <- paste0('pred_rep_', i)
+      ._data_ <- dplyr::mutate(._data_, {{.colname}} := .pred_rep*100)
+    }
+      plt <- 
+        ggplot(data=._data_) + 
+        annotate("text", x = 62.5/100, y = 22.5/100, label = paste0("AUC ", format(auc*100, digits = 3), "%"),
+                 parse = F, size = 5, colour = classifierplots:::fontgrey_str) 
+      
+      
+      if (j_index){
+        plt <- plt + 
+          geom_hline(aes(yintercept=coord[['sensitivity']]), color = gray(.6), linetype = "dashed") +
+          geom_vline(aes(xintercept=1-coord[['specificity']]), color = gray(.6), linetype = "dashed")
+      }
+
+      if (length(pred_rep)){
+        geom_roc_builder = function(i) {
+          i <- i
+          plotROC::geom_roc(
+            aes(d = obs, m=.data[[paste0('pred_rep_', (i))]]),
+            data = ._data_,
+            n.cuts = 0, alpha=.6, color = gray(.6), size=.2
+          ) 
+        }
+        for (i in seq_along(pred_rep)){
+          plt <- plt + geom_roc_builder(i)
+          # browser()
+        }
+        plt <- plt +
+          annotate("text", x = 62.5/100, y = 15/100, 
+                   label = paste0("(", if (ci_avail) "95%CI ", 
+                                  format(bounds[1]*100, digits = 3),
+                                  "% - ", format(bounds[2]*100, digits = 3), "%)"), 
+                   parse = F, size = 3.3, colour = gray(.6))
+      }
+    plt <- plt + 
+      plotROC::geom_roc(
+        aes(
+          d = obs,
+          m = pred
+        ),
+        cutoffs.at = c(cutoffs.at*100, coord['threshold']),
+        color = '#ABC270',
+        ...
+      ) + style_roc() + 
+      scale_x_continuous(name = "True Negative Rate (%)    (Specificity)", 
+                         guide = guide_axis(n.dodge = 1, check.overlap = T),
+                         limits = c(0, 1), expand = c(0.05, 0.05),
+                         minor_breaks = seq(10, 90, 20),
+                         breaks = c(seq(0, 100, 20), if(j_index) round(100 - coord[['specificity']]*100,0))/100,
+                         labels = c(seq(100, 0, -20), if(j_index) round(coord[['specificity']]*100,0))
+      ) + 
+      scale_y_continuous(name = "True Positive Rate (%)    (Sensitivity)", 
+                         guide = guide_axis(n.dodge = 1, check.overlap = T),
+                         limits = c(0, 1), expand = c(0.05, 0.05),
+                         minor_breaks = seq(10, 90, 20),
+                         breaks = c(seq(0, 100, 20), if(j_index) round(coord[['sensitivity']]*100,0))/100,
+                         labels = c(seq(0, 100, 20), if(j_index) round(coord[['sensitivity']]*100,0))
+      )
+    plt
+  }
+
 my_roc_plot <- 
   function(obs, pred, pred_rep = NULL, resamps = 2000, force_bootstrap = NULL, cutoff = TRUE){
     require(ggplot2)
@@ -628,7 +719,7 @@ thinhist_subplot.binary <- function(x, y, normalize = TRUE, digits = 2, yscale =
 calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loess","splines","gam"), se = TRUE, knots=3, span=1, type=c('binary', 'linear'), hist = TRUE, hist.normalize = TRUE, yscale=.1, theme = ggplot2::theme_bw()){
   require(ggplot2)
   maincolor <- "#CD113B"
-  subcolor1 <- "#111111"
+  subcolor1 <- gray(.6) #"#111111"
   subcolor2 <- "#999999"
   
   pred_env = new.env(parent=baseenv())
@@ -721,11 +812,12 @@ calib_curve <- function(pred, pred_rep = NULL, obs, title = NULL, method=c("loes
     
     # browser()
     # if linear then plot point
-    if (type == 'linear'){
-      # browser()
-      p <- p + 
-        ggplot2::geom_point(aes(x = pred, y = as.numeric(obs)), alpha=.5, color=grDevices::grey(.5), size=.5)
-    }
+    # if (type == 'linear'){
+    #   # browser()
+    # 
+    #     p <- p+
+    #     ggplot2::geom_point(aes(x = pred, y = as.numeric(obs)), alpha=.5, color=grDevices::grey(.5), size=.5)
+    # }
     p + 
       ggplot2::annotate(
         "text", x = .99, y = .05, hjust='right', vjust='bottom',

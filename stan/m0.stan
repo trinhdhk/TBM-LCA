@@ -25,7 +25,7 @@ parameters {
 }
 
 model {
-  int nu = 4;
+  int nu = 6;
   // Main model ---------------------------------------------------------------
 #include includes/main_prior/m0.stan
   

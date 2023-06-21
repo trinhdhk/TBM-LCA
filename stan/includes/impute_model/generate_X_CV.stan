@@ -11,9 +11,9 @@
     for (n in 1:N_all){
       if (Td_all[n,7]==0) {
         if (obs_Td_all[n,8]==1){
-          z_HIV[n] = (Td_all[n,8]==1) ? inv_Phi(0.0043) : inv_Phi(0.0021);
+          z_HIV[n] = (Td_all[n,8]==1) ? logit(0.0043) : logit(0.0021);
         } else {
-          z_HIV[n] = inv_Phi(0.0032);
+          z_HIV[n] = logit(0.0032);
         }
       } else{
         z_HIV[n] = HIV_a0 + HIV_a[1]*obs_test_all[n] + HIV_a[2]*test_all[n];
@@ -22,7 +22,7 @@
     Xd_imp[:,1] = binary_rng(impute_binary(Xd_all[:,1], obs_Xd_all[:,1], z_HIV), obs_Xd_all[:,1]);
   }
   
-  //Age & illness day
+  //illness day
   {
     int j =1; int k= 1;
     for (n in which_not(keptin)){
@@ -45,40 +45,91 @@
   Xc_imp[which(keptin),1] = impute_cont_1d(Xc[:, 1], obs_Xc[:, 1], id_imp);
   
   // Clinical symptoms
+  // {
+  //   int Td_cs_valid[N_valid,3] = Td_all[which_not(keptin),1:3];
+  //   int obs_cs_valid[N_valid,3] = obs_Td_all[which_not(keptin),1:3];
+  //   vector[3] Mu_cs[N_valid];
+  //   int CS_imp_valid[N_valid, 3];
+  //   int j = 1;
+  //   if (sum(keptin) < N_all){
+  //     for (n in which_not(keptin)){
+  //       Mu_cs[j] = cs_a0 + cs_a[:,1]*Xd_imp[n,1] + cs_a[:,2]*Xc_imp[n,1] + cs_a[:,2]*obs_test_all[n] + cs_a[:,3]*test_all[n];
+  //       j += 1;
+  //     }
+  //     CS_imp_valid = multi_probit_partial_rng(Td_cs_valid, obs_cs_valid, Mu_cs, L_Omega_cs);
+  //     Xd_imp[which_not(keptin),2] = to_vector(any(CS_imp_valid));
+  //   }
+  //   Xd_imp[which(keptin),2] = binary_rng(impute_binary_cmb(Xd[:,2], obs_Xd[:,2], to_array_2d(append_all(z_cs)), obs_cs), obs_Xd[:,2]); //Clinical Symptoms
+  // }
+  
   {
-    int Td_cs_valid[N_valid,3] = Td_all[which_not(keptin),1:3];
-    int obs_cs_valid[N_valid,3] = obs_Td_all[which_not(keptin),1:3];
-    vector[3] Mu_cs[N_valid];
-    int CS_imp_valid[N_valid, 3];
-    int j = 1;
-    if (sum(keptin) < N_all){
-      for (n in which_not(keptin)){
-        Mu_cs[j] = cs_a0 + cs_a[:,1]*Xd_imp[n,1] + cs_a[:,2]*Xc_imp[n,1] + cs_a[:,2]*obs_test_all[n] + cs_a[:,3]*test_all[n];
-        j += 1;
+    for (n in 1:N_all){
+      if (obs_Xd_all[n,2] == 0) {
+        real theta_cs = inv_logit(cs_a0 + cs_a[1]*Xd_imp[n,1] + cs_a[2]*Xc_imp[n,1] + cs_a[3]*obs_test_all[n] + cs_a[4]*test_all[n]); 
+        real cs_lp_theta = 0;
+        real cs_p_1mtheta = 1;
+        for (i in 1:3) {
+          if (obs_Td_all[n,i] == 1) {
+            cs_lp_theta += bernoulli_lpmf(Td_all[n,i] | cs_p[i]);
+            if (Td_all[n,i] == 1) cs_p_1mtheta = 0;
+          }
+        }
+        if (sum(Td_all[n,1:3]) == 0) {
+          cs_lp_theta = log(exp(cs_lp_theta) - prod(1-cs_p));
+        }
+        cs_lp_theta -= log1m(prod(1 - cs_p));
+        Xd_imp[n,2] = bernoulli_rng(theta_cs * exp(cs_lp_theta) / (theta_cs*exp(cs_lp_theta) + (1-theta_cs)*cs_p_1mtheta));
+      } else {
+        Xd_imp[n,2] = Xd_all[n,2];
       }
-      CS_imp_valid = multi_probit_partial_rng(Td_cs_valid, obs_cs_valid, Mu_cs, L_Omega_cs);
-      Xd_imp[which_not(keptin),2] = to_vector(any(CS_imp_valid));
     }
-    Xd_imp[which(keptin),2] = binary_rng(impute_binary_cmb(Xd[:,2], obs_Xd[:,2], to_array_2d(append_all(z_cs)), obs_cs), obs_Xd[:,2]); //Clinical Symptoms
+    // vector[N_all] theta_cs = cs_a0 + cs_a[1]*to_vector(Xd_all[:,1]) + cs_a[2]*to_vector(Xc_imp[:,1]) + cs_a[3]*to_vector(obs_test_all) + cs_a[4]*to_vector(test_all);
+    // Xd_imp[:,2] = binary_rng(impute_binary(Xd_all[:,2], obs_Xd_all[:,2], to_array_1d(theta_cs)), obs_Xd_all[:,2]);
+    // vector[N_all] theta_mp = mp_a0 + mp_a[1]*to_vector(Xd_all[:,1]) + mp_a[2]*to_vector(Xc_imp[:,1]) + mp_a[3]*to_vector(obs_test_all) + mp_a[4]*to_vector(test_all);
+    // Xd_imp[:,3] = binary_rng(impute_binary(Xd_all[:,3], obs_Xd_all[:,3], to_array_1d(theta_mp)), obs_Xd_all[:,3]);
   }
   
   // Motor palsy
+  
   {
-    int Td_mp_valid[N_valid,3] = Td_all[which_not(keptin),4:6];
-    int obs_mp_valid[N_valid,3] = obs_Td_all[which_not(keptin),4:6];
-    vector[3] Mu_mp[N_valid];
-    int mp_imp_valid[N_valid, 3];
-    int j = 1;
-    if (sum(keptin) < N_all){
-      for (n in which_not(keptin)){
-        Mu_mp[j] = mp_a0 + mp_a[:,1]*Xd_imp[n,1] + mp_a[:,2]*Xc_imp[n,1] + mp_a[:,2]*obs_test_all[n] + mp_a[:,3]*test_all[n];
-        j += 1;
+    for (n in 1:N_all){
+      if (obs_Xd_all[n,3] == 0) {
+        real theta_mp = inv_logit(mp_a0 + mp_a[1]*Xd_imp[n,1] + mp_a[2]*Xc_imp[n,1] + mp_a[3]*obs_test_all[n] + mp_a[4]*test_all[n]); 
+        real mp_lp_theta = 0;
+        real mp_p_1mtheta = 1;
+        for (i in 4:6) {
+          if (obs_Td_all[n,i] == 1){
+            mp_lp_theta += bernoulli_lpmf(Td_all[n,i] | mp_p[i-3]);
+            if (Td_all[n,i] == 1) mp_p_1mtheta = 0;
+          }
+        }
+        if (sum(Td_all[n, 4:6]) == 0) {
+          mp_lp_theta = log(exp(mp_lp_theta) - prod(1-mp_p));
+        }
+        mp_lp_theta -= log1m(prod(1 - mp_p));
+        Xd_imp[n,3] = bernoulli_rng(theta_mp * exp(mp_lp_theta) / (theta_mp*exp(mp_lp_theta) + (1-theta_mp)*mp_p_1mtheta));
+      } else {
+        Xd_imp[n,3] = Xd_all[n,3];
       }
-      mp_imp_valid = multi_probit_partial_rng(Td_mp_valid, obs_mp_valid, Mu_mp, L_Omega_mp);
-      Xd_imp[which_not(keptin),3] = to_vector(any(mp_imp_valid));
     }
-    Xd_imp[which(keptin),3] = binary_rng(impute_binary_cmb(Xd[:,3], obs_Xd[:,3], to_array_2d(append_all(z_mp)), obs_mp), obs_Xd[:,3]); 
   }
+  
+  // {
+  //   int Td_mp_valid[N_valid,3] = Td_all[which_not(keptin),4:6];
+  //   int obs_mp_valid[N_valid,3] = obs_Td_all[which_not(keptin),4:6];
+  //   vector[3] Mu_mp[N_valid];
+  //   int mp_imp_valid[N_valid, 3];
+  //   int j = 1;
+  //   if (sum(keptin) < N_all){
+  //     for (n in which_not(keptin)){
+  //       Mu_mp[j] = mp_a0 + mp_a[:,1]*Xd_imp[n,1] + mp_a[:,2]*Xc_imp[n,1] + mp_a[:,2]*obs_test_all[n] + mp_a[:,3]*test_all[n];
+  //       j += 1;
+  //     }
+  //     mp_imp_valid = multi_probit_partial_rng(Td_mp_valid, obs_mp_valid, Mu_mp, L_Omega_mp);
+  //     Xd_imp[which_not(keptin),3] = to_vector(any(mp_imp_valid));
+  //   }
+  //   Xd_imp[which(keptin),3] = binary_rng(impute_binary_cmb(Xd[:,3], obs_Xd[:,3], to_array_2d(append_all(z_mp)), obs_mp), obs_Xd[:,3]); 
+  // }
   
   // CSF lab
   {

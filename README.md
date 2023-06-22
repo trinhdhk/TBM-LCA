@@ -1,4 +1,6 @@
-# An Latent Class Diagnostic Model for *Tuberculous meningitis* (#TBM-LCA)
+# A Latent Class Diagnostic Model for *Tuberculous meningitis* (TBM-LCA)
+
+<img align="center" src="https://trinhdong.shinyapps.io/TBMLCA/_w_73114c35/assets/hex.svg" width="100" height="100" />
 
 ## Introduction
 

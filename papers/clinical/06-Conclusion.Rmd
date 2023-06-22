@@ -1,4 +1,25 @@
-In conclusion, despite many past attempts to quantify microbiological test performance and develop diagnostic methods for TBM, this is amongst the first studies to utilise LCM and rigorously validate many assumptions made by the model. It was developed using a large cohort of adults with brain infection in Vietnam. Leveraging Bayesian inference, we extended the classical LCM and estimated individual mycobacillary burden. In a supplementary analysis, this burden showed good correspondence with a laboratory-based quantification (Clinical supplementary document). Our results therefore have a high relevance for clinical practice and research. Until a better gold standard is developed, can be used as reference for both the diagnosis of TBM and the estimation of severity - in both research and clinical settings.
+In conclusion, despite many past attempts to quantify microbiological test performance and develop diagnostic methods for TBM, this is amongst the first studies to utilise LCM and rigorously validate many assumptions made by the model. It was developed using a large cohort of adults with brain infection in Vietnam. Leveraging Bayesian inference, we extended the classical LCM and estimated individual mycobacillary burden. Our findings therefore have relevance for both clinical practice and research. Until a better gold standard for TBM diagnosis is developed, our model could be used as reference for both the diagnosis of TBM and the estimation of severity, both for research and clinical care.
+
+# Acknowledgements
+
+The study is funded by the Wellcome Trust under the following grants: 204904/Z/16/Z, 225167/Z/22/Z, 225167/A/22/Z, and 217650/Z/19/Z.
+
+Below is the contribution of every co-author included in the manuscript:
+  
+  - Trinh Huu Khanh Dong proposed and conducted the analyses and wrote most of the content of the manuscript.
+  - Joseph Donovan wrote the clinical content, proposed additional content that help clarify the technical content.
+  - Thu Dang Anh Do conducted the mycobiological experiments and provided the data.
+  - Ngoc My Nghiem and Hang Thi Ty Vu collected the data and conducted the non-mycobological laboratory experiments. 
+  - Le Van Tan supervised the data collection and laboratory experiments, provided the data, edited the manuscript, and supervise the overall content.
+  - Thuong Thuong Thuy Nguyen propose the study question and supervised the mycobiological experiments.
+  - Nghia Dang Trung Ho, Oanh Kieu Nguyet Pham, Phu Hoan Nguyen, and Vinh-Chau Van Nguyen are clinicians at the HTD. They all supervised and performed clinical assessment for all participants in the study.
+  - Guy E. Thwaites supervised the whole analysis and content writing, oversaw the study experiments.
+  - Ronald B. Geskus proposed the latent class model and closely supervised the analyses and content writing. 
+
+# Conflicts of interest
+
+There is no conflict of interest in the scope of this paper.
+
 
 # References
 

@@ -1,0 +1,146 @@
+---
+title: 'A novel scoring system for diagnosis of Tuberculous Meningitis: a Bayesian Latent Class Analysis'
+site: bookdown::bookdown_site
+bibliography: includes/references.bib
+csl: includes/clinical-infectious-diseases.csl
+fontsize: 12pt
+output:
+  bookdown::pdf_book:
+    base_format: rmarkdown::latex_document
+    toc: no
+    pandoc_args:
+      - '--lua-filter=includes/scholarly-metadata.lua'
+      - '--lua-filter=includes/author-info-blocks.lua'
+      - '--standalone'
+    latex_engine: xelatex
+    highlight: pygments
+    includes:
+      in_header: includes/header.tex
+---
+
+```{r setup, include=FALSE}
+options(tinytex.engine_args = '-shell-escape')
+knitr::opts_chunk$set(echo = FALSE, dpi=300) #, dev = 'png'
+flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='fixed')
+```
+
+```{r library, include=FALSE}
+library(gtsummary)
+library(dplyr)
+library(data.table)
+library(magrittr, include.only = '%$%')
+library(ggplot2)
+library(patchwork)
+library(officedown)
+
+# All the misc functions go here.
+my_fn <- new.env()
+
+## Add labels accross a tbl
+my_fn$add_labels <- \(.data, ...){
+  cols <- list(...)
+  for (i in seq_along(cols))
+    attr(.data[[names(cols)[i]]], 'label') <- cols[[i]]
+  .data
+}
+
+## Register a knit engine for stan code highlight
+my_fn$stan_knitr_engine <- \(options){
+  out <- c('\\begin{Shaded}','\\begin{minted}{stan}', options$code, '\\end{minted}','\\end{Shaded}')
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(stan_code = my_fn$stan_knitr_engine)
+
+## Gist to number equations
+## https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
+my_fn$is_docx_output <- function (fmt = knitr:::pandoc_to()) {
+  if (length(fmt) == 0) {
+    return(FALSE)
+  } else {
+    return(fmt == "docx")
+  }
+}
+
+my_fn$numberEq.docx <- function (eq, lab, envir = docx.eqcounter) {
+  assign(x = "counter", value = get(x = "counter", envir = envir)+1, envir = envir)
+  assign(x = gsub("eq:", "", lab), value = get(x = "counter", envir = envir), envir = envir)
+  lab <- get("counter", envir = envir)
+  return(c('$$', eq, '\\;\\;\\;\\;(', lab, ')', '$$'))
+}
+my_fn$labEq.docx <- function (lab, envir = docx.eqcounter) {
+  return(paste0('(', get(x = gsub("eq:", "", lab), envir = envir), ')'))
+}
+
+docx.eqcounter <- new.env()
+docx.eqcounter$counter <- 0
+  
+# Register a knit engine for formula
+my_fn$aligned_formula_knit <- \(options){
+  out <- my_fn$numberEq.docx(options$code, lab = options$fml.lab)
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
+
+# Register diagrammer graphviz
+my_fn$diagrammer_engine <- \(options){
+  grviz_opt = formals(DiagrammeR::grViz)
+  grviz_opt = grviz_opt[names(grviz_opt) != 'diagram']
+  new_opt = options[names(options) %in% names(grviz_opt)]
+  # not_grviz_opt = opt[!names(opt %in% c('diagram', name(grviz_opt)))]
+  grviz_opt = modifyList(grviz_opt, new_opt)
+  dia_call <- purrr::partial(DiagrammeR::grViz, diagram = options$code)
+  
+  out <- do.call(dia_call, grviz_opt) 
+  options$code <- out$x$diagram
+  options$engine <- 'dot'
+  options$echo <- FALSE
+  knitr::knit_engines$get('dot')(options)
+  # options$results <- 'asis'
+  # knitr::engine_output(options, options$code, '')
+}
+knitr::knit_engines$set(diagrammer = my_fn$diagrammer_engine)
+
+# Global theming for ggplots
+my_fn$plot_theme <-
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+na = \(x) sum(is.na(x))
+```
+
+```{r data, include=FALSE}
+data_dir <- '../../data/cleaned/'
+load(file.path(data_dir, 'data_input.Rdata'))
+data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
+setDT(data_dirty)
+load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
+# m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS'))
+m3 = new.env()
+load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = m3)
+```
+\doublespacing
+# Abstract {-}
+
+## Background {-}
+
+*Tuberculous meningitis* (TBM) is the most lethal form of tuberculosis. There is no gold standard. There is a uniform case definition, which is based on expertise and comes with high uncertainty. We developed a model using latent class analysis (LCA) that provides a statistical scoring system estimating individual TBM risk amongst adults with suspected brain infection, taking into account the uncertainty of TBM diagnosis.
+
+## Methods {-}
+
+The model contains two components: i) diagnostic test model relating latent TBM status to three tests as manifest variables, each providing different ways to detect bacteria. The local independence between manifest variables is taken into account via latent bacillary burden. Three different linear mixed-effect models are considered; ii) a diagnostic prevalence model relating latent TBM status to known risk factors. A Bayesian approach was used to incorporate prior knowledge and reduce the degrees of freedom. Missing data was dealt with depending on anticipated missing mechanisms. All considered models were validated using 5 repeated 20-fold cross validations. Hospital diagnosis made by physicians at the end of follow-up allowed us to perform pseudo validation of the prevalence model.   
+
+## Results {-}
+
+Our selected model showed good AUC of 92.4%, 92.9%, and 96.1% and good calibration (intercepts = 0.05, 0.1, 0.17 and slopes = 1.1, 1.2, 1.3)  for the three tests. The prevalence model had an AUC of 93.9%, and a calibration intercept and slope of -0.01 and 0.97. 
+
+## Conclusion {-}
+
+Compared to the uniform case definition, our model provides a well-calibrated scoring system with good correspondence to current clinical judgement. Our model also gives an insight into the mechanistic pathway from TBM to test results via disease bacillary burden at diagnosis.
+

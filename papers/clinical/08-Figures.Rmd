@@ -3,7 +3,7 @@
 \newpage
 \blandscape
 
-```{r skeleton-model, fig.show='hold', fig.width=12, fig.align="center", fig.cap="Basic model design: Unknown TBM status is linked with test results. The probability of a positive test depends on bacillary burden, which in turn depends on modulating factors. TBM risk factors help determining an individual's TBM status. Test positive probabilities are for demonstration only and do not correspond to the real ones.", fig.id='skeleton-model'}
+```{r skeleton-model, fig.show='hold', fig.width=12, fig.align="center", fig.cap="Basic model design: Unknown TBM status is linked with test results. The probability of a positive test depends on bacillary burden, which in turn depends on modulating factors. TBM risk factors help determining an individual’s TBM status. Test positive probabilities are for demonstration only and do not correspond to the real ones.", fig.id='skeleton-model'}
 
 fig_svg <- cowplot::ggdraw() + 
   cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5*3))
@@ -14,7 +14,7 @@ plot(fig_svg)
 
 <!-- Result -->
 
-```{diagrammer patient-flow, fig.show="hold", out.width="100%", out.height="10cm",  fig.align="center", fig.cap="Patient recruitment flow", fig.id="patient-flow"}
+```{diagrammer patient-flow, fig.show="hold", out.width="100%", out.height="10cm",  fig.align="center", fig.cap="Participant recruitment flow", fig.id="patient-flow"}
 #check final number
 digraph patientflow {
   # compound = true;
@@ -32,7 +32,7 @@ digraph patientflow {
 
   subgraph exclude1{
     WrongName [label ="@@2 excluded due to mis-matched names"]
-    LowVolume [label = "@@3 excluded due to low CSF volume collected within 7 days"]
+    LowVolume [label = "@@3 excluded due to low CSF volume collected within 7 days "]
     Tested [label = "@@5 tested for TBM"]
   }
   
@@ -46,8 +46,8 @@ digraph patientflow {
   # {rank=same; WrongName; LowVolume}
   {rank=same; Tested; NotTested}
   
-  TBM [label = "@@7 confirmed TBM\l\n@@12 suspected TBM\l\n@@11 confirmed other cause\l\n@@8 unconfirmed cause\l"]
-  NotTBM [label = "@@9 confirmed other disease\l\n@@10 unconfirmed cause\l"]
+  TBM [label = "@@7 confirmed TBM\l\n@@12 suspected TBM\l\n@@11 confirmed other cause\l\n@@8 unconfirmed cause \l"]
+  NotTBM [label = "@@9 confirmed other disease\l\n@@10 unconfirmed cause \l"]
   {rank=same; TBM; NotTBM};
   
   Total:s -> n1:n[dir=none];
@@ -105,7 +105,7 @@ plot(eulfit,
        fontsize = 10))
 ```
 
-```{r coef-est, out.width="90%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Prevalence model: TBM odds ratios by diagnostic features, except WBC count; B: TBM odds ratio by CSF WBC count ($cell/mm^3$) over reference value = 154 $cell/mm^3$; C: Modulating factors impacting individual bacillary burden, given they have TBM. In A and C: dot, thick and thin lines are medians, 50\\% and 95\\% credible intervals. In B: the blue line is median odds ratio, the inner and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="coef-est", warning=FALSE, message=FALSE}
+```{r coef-est, out.width="90%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Prevalence model: TBM odds ratios by diagnostic features, except WCC; B: TBM odds ratio by CSF WCC ($cells/mm^3$) over reference value = 154 $cells/mm^3$; C: Modulating factors impacting individual bacillary burden, given they have TBM. In A and C: dot, thick and thin lines are medians, 50\\% and 95\\% credible intervals. In B: the blue line is median odds ratio, the inner and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="coef-est", warning=FALSE, message=FALSE}
 
 library(patchwork)
 
@@ -143,7 +143,7 @@ ab_plot = (m3$a_plot + ggtitle("Prevalence model")) /
 ab_plot
 ```
 
-```{r model-metrics, fig.align="center", fig.cap='Performance of the selected prelavance model, assuming the final hospital diagnosis is the true status. A: ROC curve and AUC: AUC values are presented as “average (min - max over 5 repetitions of cross-validation)”; B: Calibration plot, showing the relationship between the predicted probability and observe outcome, smoothed by a loess curve. The grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average. The cross validation procedure is explained in the Statistical supplementary document.' , fig.dim=c(10, 5), message=FALSE, warning=FALSE, out.width='100%', fig.id="model-metrics"}
+```{r model-metrics, fig.align="center", fig.cap='Performance of the selected prevalence model, assuming the final hospital diagnosis is the true status. A: ROC curve and AUC: AUC values are presented as “average (min - max over 5 repetitions of cross-validation)”; B: Calibration plot, showing the relationship between the predicted probability and observe outcome, smoothed by a loess curve. The grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average. The cross-validation procedure is explained in the Statistical supplementary document.' , fig.dim=c(10, 5), message=FALSE, warning=FALSE, out.width='100%', fig.id="model-metrics"}
 
 # roc_y <- do.call(gridExtra::arrangeGrob, m3$ROC$Y)
 # m3$calib$Y[[3]] = m3$calib$Y[[3]] + theme(axis.title.y = element_blank())
@@ -156,13 +156,13 @@ ab_plot
   plot_annotation(tag_levels = 'A')
 ```
 
-```{r simplified-model-plot, fig.align='center', fig.cap="A: Posterior estimates of coefficients of clinical TBM risk factors. Points, thick and thin lines are medians, 50\\% and 95\\% credible intervals. B \\& C : Performance of the simplifed prelavance model, assuming the final hospital diagnosis is the true status. B: ROC plot and AUC. AUC values are presented as “average (min - max over 20 repetitions of cross-validation)”. C: Calibration plot, showing the relationship between the predicted probability and observe outcome, smoothed by a loess curve. The grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average. The cross validation procedure is explained in the Statistical supplementary document.", message=FALSE, warning=FALSE, out.width='100%', dpi=600, fig.dim=c(10, 10), fig.id = "simplified-model-plot"}
+```{r simplified-model-plot, fig.align='center', fig.cap="A: Posterior estimates of coefficients of clinical TBM risk factors. Points, thick and thin lines are medians, 50\\% and 95\\% credible intervals. B \\& C: Performance of the simplified prevalence model, assuming the final hospital diagnosis is the true status. B: ROC plot and AUC. AUC values are presented as “average (min - max over 20 repetitions of cross-validation)”. C: Calibration plot, showing the relationship between the predicted probability and observe outcome, smoothed by a loess curve. The grey lines are fitted curves from each 20-fold cross validation and coloured lines represents their average. The cross-validation procedure is explained in the Statistical supplementary document.", message=FALSE, warning=FALSE, out.width='100%', dpi=600, fig.dim=c(10, 10), fig.id = "simplified-model-plot"}
 # tmp_svg <- cowplot::ggdraw() + 
 #   cowplot::draw_image(magick::image_read_svg("includes/a_plog_s.svg", width=212*5, height=159*5))
 # plot(tmp_svg)
 y_labs_s = s_plots$a_plot_s$scales$get_scales('y')$labels
 # y_labs_s[3] = "*log<sub>2</sub>* (Symptom duration (days))"
-y_labs_s[10] = "TB-suggestive symptoms"
+# y_labs_s[10] = "TB-suggestive symptoms"
 # y_labs_s[11] = "HIV"
 # y_labs_s[12] = "Intercept"
 a_plot_s<- (s_plots$a_plot_s |> td.misc::change_ylabs(rev(y_labs_s), top_down = TRUE)) #+ scale_x_continuous(name="TBM odds ratio")

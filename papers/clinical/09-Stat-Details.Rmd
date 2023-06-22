@@ -2,13 +2,12 @@
 \pagebreak
 \newpage
 
-# (APPENDIX) Supplementary Documents {.unlisted .unnumbered}
-
-# Statistical supplementary document {.unnumbered}
+# (APPENDIX) supplementary appendixs {.unlisted .unnumbered}
 
 <!-- :::{custom-style="Title"} -->
-<!-- Supplementary document -->
+<!-- supplementary appendix -->
 <!-- ::: -->
+
 \pagenumbering{roman}
 \setcounter{table}{0}
 \setcounter{figure}{0}
@@ -17,11 +16,15 @@
 \renewcommand{\thetable}{S\arabic{table}}
 \renewcommand{\thefigure}{S\arabic{figure}}
 \renewcommand{\thepage}{S\roman{page}}
+\renewcommand{\thesection}{S}
 
-# Model Specification Details {#appendix-model-spec}
+# Statistical supplementary appendix {.unnumbered}
+\localtableofcontentswithrelativedepth{+2}
+
+## Model Specification Details {#appendix-model-spec}
 
 <!-- ## Overview -->
-## Mathematical parametrisation {#mathematical-parametrisation}
+### Mathematical parametrisation {#mathematical-parametrisation}
 
 Our model consists of two components:
 
@@ -32,9 +35,9 @@ Our model consists of two components:
   
   > where $X$ and $\alpha$ are vectors of covariate values and coefficients.
 
-2.  *Indicator model*: three logistic regression models, one for each confirmatory test, that quantify the probability of having a positive test result depending on TBM status and additional variables as described in Supplementary Table \@ref(tab:model-archs). Similar to previous studies [@qu1996; @hadgu2002; @schumacher2016], we allow the test result to depend on the unobserved bacillary burden and systematic noise of the procedure. Both are in turn regressed on relevant bio-markers and an unobserved random effect. Presumably, TBM patients with lower bacillary burden are less likely to test positive. Our models 1,2 and 5 are similar in spirit to models M1, M3 and M4 in the previous paper [@schumacher2016]. In their models, they did not make the direct link between the covariates and bacillary burden, which is what we do in our models 3 and 4. These two models are in-between M3 and M4.
+2.  *Indicator model*: three logistic regression models, one for each confirmatory test, that quantified the probability of having a positive test result depending on TBM status and additional variables as described in Supplementary Table \@ref(tab:model-archs). Similar to previous studies [@qu1996; @hadgu2002; @schumacher2016], we allowed the test result to depend on the unobserved bacillary burden and systematic noise of the procedure. Both were in turn regressed on relevant biomarkers and an unobserved random effect. Presumably, TBM patients with lower bacillary burden are less likely to test positive. Our models 1,2 and 5 are similar in spirit to models M1, M3 and M4 in Schumacher *et.al.* [@schumacher2016]. In their models, they did not make the direct link between the covariates and bacillary burden, which is what we do in our models 3 and 4. These two models are in-between M3 and M4.
 
-We give a detailed description of the structure of our indicator models. For $1 \leq i \leq 660$, let $C_i \in \{0,1\}$, and $\theta_i = P(C_i=1)$ be the *true TBM status* and the *probability of having TBM*; {$y^{ZN\mbox{-}Smear}_i$, $y^{MGIT}_i$, and $y^{Xpert}_i$} are the *observed test outcomes*. The joint distribution of the observed test results is:
+We give a detailed description of the structure of our indicator models in Supplementary Table \@ref(tab:model-archs). For $1 \leq i \leq 659$, let $C_i \in \{0,1\}$, and $\theta_i = P(C_i=1)$ be the *true TBM status* and the *probability of having TBM*; {$y^{ZN\mbox{-}Smear}_i$, $y^{MGIT}_i$, and $y^{Xpert}_i$} are the *observed test outcomes*. The joint distribution of the observed test results is:
 
 $$
 \begin{aligned}
@@ -44,7 +47,7 @@ P_i &= P(y^{ZN\mbox{-}Smear}_i,y^{Mgit}_i,y^{Xpert}_i) \\
 \end{aligned} 
 $$ {#eq:lca-fml}
 
-Under the assumption that test results are mutually independent given TBM status, we obtain the likelihood function for Model 1 in Supplementary Table \@ref(tab:model-archs). The contribution to the likelihood for individual $i$ is:
+Under the assumption that test results are mutually independent given TBM status, we obtained the likelihood function for Model 1. The contribution to the likelihood for individual $i$ is:
 
 $$
 \begin{aligned}
@@ -53,7 +56,7 @@ P_i &= \theta_i \times P(y^{ZN\mbox{-}Smear}_i | C_i=1) \times P(y^{Mgit}_i | C_
 \end{aligned}
 $$ {#eq:classic-lca-fml}
 
-This independence assumption is likely to be too strong, because all tests are based on the detection of *Mtb* in the CSF. Therefore, we introduce a latent variable, denoted as bacillary burden. For models 2 and 3, we assume that the test results are independent conditionally on TBM status and bacillary burden ($B$) [@schumacher2016]. Individuals without TBM have zero bacillary burden. The contribution to the likelihood, conditionally on bacillary burden $B_i$, becomes:
+This independence assumption is likely to be too strong, because all tests are based on the detection of *Mtb* in the CSF. Therefore, we introduced a latent variable, denoted as bacillary burden. For models 2 and 3, we assumed that the test results were independent conditionally on TBM status and bacillary burden ($B$) [@schumacher2016]. Individuals without TBM have zero bacillary burden by nature. The contribution to the likelihood, conditionally on bacillary burden $B_i$, becomes:
 
 $$
 \begin{aligned}
@@ -65,7 +68,7 @@ P_i| B_i &= P(y^{ZN\mbox{-}Smear}_i,y^{Mgit}_i,y^{Xpert}_i | B_i) \\
 \end{aligned} 
 $$ {#eq:re-lca-fml}
 
-Bacillary burden is defined as a unitless, standardised variable, which in turn depends on a set of features (denoted as modulating factors $V_i$) via a linear regression. We use a mixed-effects logistic regression to capture the association between $B$ and test results ($y^{(t)}$). In model 3 we assume:
+We defined Bacillary burden as a unitless, standardised variable (i.e., following a Standard Normal distribution), which in turn depends on a set of features (denoted as modulating factors $V_i$) via a linear regression. We used a mixed-effects logistic regression to capture the association between $B$ and test results ($y^{(t)}$). In model 3 we assumed:
 
 $$
 \begin{aligned}
@@ -74,7 +77,7 @@ $$
 \end{aligned} 
 $$ {#eq:bd}
 
-where $(t) \in$ \{ZN-Smear, Mgit, Xpert\}, $z^{(t)}_0$ is the intercept, and $\beta^{(t)}_{B}$ is the coefficient of bacillary burden on the result of test $(t)$, $\gamma$ is the vector of coefficients for $V_i$, and the individual random effect $r_i$ quantifies the fluctuation of bacillary burden not explained by $V_i$. $V_i$ and $r_i$ are assumed to be independent of each other. Model 2 is a special case of model 3 in which the $\beta^{(t)}$ are equal over $(t)$, which is the same as Model M3 in the previous study [@schumacher2016]. Model 3 assumes that for each pair of modulating factors, although their impact on test results (as expressed by $\beta^{(t)}$) could differ by test, their relative contribution (as measured by the pairwise ratios of their corresponding parameters) is constrained to be identical:
+where $(t) \in$ \{ZN-Smear, Mgit, Xpert\}, $z^{(t)}_0$ is the intercept, and $\beta^{(t)}_{B}$ is the coefficient of bacillary burden on the result of test $(t)$, $\gamma$ is the vector of coefficients for $V_i$, and the individual random effect $r_i$ quantifies the fluctuation of bacillary burden not explained by $V_i$. $V_i$ and $r_i$ are assumed to be independent of each other. Model 2 is a special case of model 3 in which the $\beta^{(t)}$ are equal over $(t)$, which is the same as Model M3 in Schumacher *et.al.* [@schumacher2016]. Model 3 assumes that for each pair of modulating factors, although their impact on test results (as expressed by $\beta^{(t)}$) could differ by test, their relative contribution (as measured by the pairwise ratios of their corresponding parameters) is constrained to be identical:
 
 $$
 \frac{\gamma^{[k]} \beta^{(t)}}{\gamma^{[l]} \beta^{(t)}} = \frac{\gamma^{[k]}}{\gamma^{[l]}}
@@ -82,12 +85,12 @@ $${#eq:constr}
 
 for each two elements $\gamma^{[k]}$ and $\gamma^{[l]}$ of vector $\gamma$.
 
-In model 4, we additionally capture the sample-wise fluctuation that is not explained by the bacillary burden (Formula @eq:model-4). This fluctuation is modelled by one extra random effect ($u_i$), with coefficient $\upsilon^{(t)}$. Contrary to $r_i$ and  $\beta^{(t)}$, it is not related to the modulating factors $V_i$. unique for each individual that is not related to the modulating factors $V$.
+In model 4, we additionally captured the sample-wise fluctuation not explained by the bacillary burden (@eq:model-4). This fluctuation was modelled by one extra standardised random effect ($u_i$), with coefficient $\upsilon^{(t)}$ serving as the standard deviation of $u_i$. Contrary to $r_i$ and  $\beta^{(t)}$, it was not related to the modulating factors $V_i$ and was unique for each individual. We used penalisation on \(\upsilon^{(t)}\) and \(\beta^{(t)}\), as specified via the prior. 
 
 $$
 \begin{aligned}
-\mathrm{logit}[P(y^{(t)}_i | C_i = 1, B_i)]  &= z^{(t)}_0 + B_i \times \beta^{(t)} + \upsilon^{(t)} u_i \\
-&= z^{(t)}_0 + (V_i^T \gamma + r_i) \beta^{(t)} + \upsilon^{(t)} u_i
+\mathrm{logit}[P(y^{(t)}_i | C_i = 1, B_i)]  &= z^{(t)}_0 + B_i \times \beta^{(t)} + u_i \upsilon^{(t)} \\
+&= z^{(t)}_0 + (V_i^T \gamma + r_i) \beta^{(t)} + u_i \upsilon^{(t)} 
 \end{aligned} 
 $$ {#eq:model-4}
 
@@ -108,7 +111,7 @@ model_archs <-
       'Test results depend on individual bacillary burden; impact of bacillary burden on test result is the same across all tests',
       'Impact of bacillary burden differs between tests',
       'Added technical fluctuation as a second random effect; fixed effects only contribute to bacillary burden',
-      'modulating factors also contribute to technical fluctuation (i.e. direct associtations between V and P(Y), not mediated by mycobacillary burden)'
+      'Modulating factors also contribute to technical fluctuation (i.e. direct associations between V and P(Y), not mediated by mycobacillary burden)'
     )
   ) 
 
@@ -116,17 +119,17 @@ model_archs |>
   flextable::flextable() |>
   flextable::set_header_labels(
     Model='Model', 
-    Def='Base description (Only additional effects compared to the preceded number are mentioned)'
+    Def='Base description\n(Only additional effects compared to the preceeding number are mentioned)'
   ) |>
-  flextable::width(j=1, width=.5)|>
-  flextable::align(j=1, align='center') |>
-  flextable::width(j=2, width=5) |>
-  flextable::theme_vanilla()
+  flextable::theme_vanilla() |>
+  flextable::width(j=1, width=1)|>
+  flextable::width(j=2, width=4.5) |>
+  flextable::align(j=1, part='all', align='center')
 ```
 
-Posterior distributions were estimated using 4 chains, each with 2000 warm-up and 8000 effective iterations with a thinning of 2 (i.e. keeping every second iteration).
+Posterior distributions were estimated using 4 chains, each with 2000 warm-up and 8000 effective iterations with a thinning of 2 (i.e., keeping every second iteration).
 
-## Simplified model
+### Simplified model
 
 The simplified prevalence model only includes diagnostic features for which a lumbar puncture is not needed. We didn't fit another latent class model, because it is likely to give worse TBM allocation than the LCM based on the full set of variables. Instead, we generated the response variable $\hat{C}_i \in \{0, 1\}$ from the posterior distribution of the individual probability $\theta_i$ to have TBM as fitted from the best performing model in Supplementary Table \@ref(tab:model-archs) (see Supplementary Table \@ref(tab:elpd-tbl)). The generated values were regressed on the restricted set of diagnostic features $K$. Hence:
 
@@ -139,13 +142,13 @@ $$
 
  > where $\kappa$ is the vector of coefficients for the covariates $K$
 
-To do this in `Stan`, we first generated 400 sets of individual TBM statuses $\hat{C}_1, \ldots \hat{C}_660$ from the selected LCM. Then we related each set to the diagnostic features (with missing values completed in the best performing LCM model in Supplementary Table \@ref(tab:model-archs). Per set, we ran one MCMC chain with 2000 warm-up and 4000 effective iterations. Finally, we combined all these chains for posterior summaries.
+To do this in `Stan`, we first generated 400 sets of individual TBM statuses $\hat{C}_1, \ldots \hat{C}_{659}$ from the posterior distrbution of the selected LCM. Then we related each set to the diagnostic features (with missing values completed in the best performing LCM model in Supplementary Table \@ref(tab:model-archs). Per set, we ran one MCMC chain with 2000 warm-up and 4000 effective iterations. To reduce the memory footprint, we thinned the chains by 40. Finally, we combined all these chains for posterior summaries.
 
-## Preprocessing and imputation {#appendix-data}
+### Preprocessing and imputation {#appendix-data}
 
-### Data preprocessing
+#### Data preprocessing
 
-The choice of diagnostic features $X$ and modulating factors $V$ was inspired by the uniform case definition [@marais2010]. Prior knowledges of different predictors were shown in Supplementary Table \@ref(tab:predictor-tab). Days from symptom onset to admission and CSF biomarkers were transformed to a logarithmic scale as they were right-skewed. We followed Gelman's scale-matching method [@gelman2008], n which continuous predictors were centred by their empirical means and subsequently scaled by 2 times their standard deviations (sd) while binary ones were kept as is. Since CSF eosinophil count was heavily zero-inflated, we created an extra indicator for count > 0 and rescaled the positive values by their sd. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* (RGCS = RGCSV + RGCSE + RGCSM) so that a $GCS = 15$ would be equivalent to $RGCS = 0$, while $GCS = 3$ would be translated to $RGCS = 12$ (Supplementary Table \@ref(tab:gcs-tab)). This transformation facilitated the choice of prior in the imputation process as all of them shared the minimum of 0 for the healthy condition (instead of starting at arbitrary numbers) and also improved numerical stability during sampling. We scaled down the auxiliary variables RGCSE, RGCSM, and RGCSV to the range $[0, 1]$. Hence $RGCS = 3 RGCSE + 4 RGCSV + 5 RGCSM$. Binary variables were dummy-coded into 0 for "Negative" / "No" and 1 for "Positive" / "Yes".
+The choice of diagnostic features $X$ and modulating factors $V$ was inspired by the uniform case definition [@marais2010]. Prior knowledges of different predictors is shown in Supplementary Table \@ref(tab:predictor-tab). Symptom duration and CSF biomarkers were transformed to a logarithmic scale as they were right-skewed. We followed Gelman's scale-matching method [@gelman2008], in which continuous predictors were centred by their empirical means and subsequently scaled by 2 times their standard deviations (sd). Binary features were kept as is. Since CSF eosinophil count was heavily zero-inflated, we created an extra indicator for count > 0 and rescaled the positive values by their sd. Glasgow Coma Score (GCS) and its components (Voice - GCSV, Eyes - GCSE, and Muscle - GCSM) were translated to *Reversed GCS* (RGCS = RGCSV + RGCSE + RGCSM) so that a $GCS = 15$ would be equivalent to $RGCS = 0$, while $GCS = 3$ would be translated to $RGCS = 12$ (Supplementary Table \@ref(tab:gcs-tab)). This transformation facilitated the choice of prior in the imputation process as all of them shared the minimum of 0 for the healthy condition (instead of starting at arbitrary numbers) and also improved numerical stability during sampling. We scaled down the auxiliary variables RGCSE, RGCSM, and RGCSV to the range $[0, 1]$. Hence $RGCS = 3 RGCSE + 4 RGCSV + 5 RGCSM$. Binary variables were dummy-coded into 0 for "Negative" / "No" and 1 for "Positive" / "Yes".
 
 \newpage
 
@@ -176,36 +179,17 @@ tibble::tribble(
   flextable::theme_vanilla()
 ```
 
-### Imputation strategy {#stat-impute}
+#### Imputation strategy {#stat-impute}
 
-Our imputation models are summarised in Supplementary Figure \@ref(fig:impute-model), together with the variables that were used as regressors. For each incomplete variable, the missing values were sampled from a distribution fitted to corresponding observed values, which formed part of the MCMC sampling procedure. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Numerical features were imputed using Multivariate linear regression:
+Our imputation models are summarised in Supplementary Figure \@ref(fig:impute-model), together with the variables that were used as regressors. mputation was not done separately but as part of the MCMC sampling process. Potentially correlated variables were grouped together and sampled from a multivariate distribution. Numerical features were imputed using Multivariate linear regression:
 
 $$
 X_{cont} \sim \mathcal{N}(L^T\psi, \Sigma)
 $$ {#eq:cont-sim}
 
-where $X_{cont}$ is the vector of continuous variables with missing values, and $L^T$ is the vector of regressors used in the respective imputation model, with coefficients $\psi$. $\mathcal{N}$ is the Normal distribution in univariate case and Multivariate Normal distribution otherwise with $\Sigma$ as the variance-covariance matrix. Composite variables (*TB-suggestive symptoms*, *local neurological deficit*, and *RGCS*) were imputed via their corresponding compartments. The method used was, however, different between binary (*TB-suggestive symptoms* and *local neurological deficit*) and ordinal variables (*RGCS*), in lights of the technical difficulty: 
+where \(X_{cont}\) is the vector of continuous variables with missing values, and \(L^T\) is the vector of regressors used in the respective imputation model, with coefficients \(\psi\). \(\mathcal{N}\) is the Normal distribution in univariate case and Multivariate Normal distribution otherwise with \(\Sigma\) as the variance-covariance matrix. Composite variables (\emph{TB-suggestive symptoms}, \emph{focal neurological deficit}, and \emph{RGCS}) were imputed via their corresponding compartments.
 
-  a. For *TB-suggestive symptoms* and *local neurological deficit*, we built a small LCM in which the composite variable was the latent class whose manifest variables were the corresponding components. Relevant regressors were added to estimate the class probability, as in the prevalence model. Strictly say, the classic LCM does not reflect the correct relationship, as the composite variables, by their definition, are *true* when and only when at least one component is *true*, i.e.
-    
-  $$
-    X = \mathrm{I}(\sum_{j=1}^J{X_j} > 0)
-  $$ 
-    
-where $X$ in the composite variable whose $J$ components are $X_j$, and I is the indicator function. Hence, we added two extra constraints to the manifest variables: (i) the false positive rates of all $X_j$ must be 0 (i.e. if $P(X_j=1 | X=0) = 0$), and (ii), without losing generality, given $X = 1$, the true positive rate of the last manifest variable is the probability of all other manifest variables negative, i.e. $P(X_J = 1 | X = 1) = \prod_{j=1}^{J-1}P(X_j=0|X=1)$ for j = 1..j-1. This is obvious because we know that at least one manifest variable must be 1 given $X = 1$, hence we have
-  
-$$
-\begin{aligned}
-1 - P(X_J = 1|X=1) &= P(X_J = 0|X=1)\\
- &= 1 - \prod_{j=1}^{J-1}P(X_j=0|X=1)
-\end{aligned}
-$$
-
-Strictly judged, this is an imperfect method, because we assumed that as long as at least one in the three compartments is observed negative, the others are independently distributed. However, as we are only interested in the composite variables, is does not matter whatever value the missing compartments receive, as the composite is definitely positive.
-
-  b. For *RGCS*, we imputed it components via a Multivariate Normal distribution as if they are continuous variables in the sampling step, similar to [@eq:cont-sim]. However, when estimating the model performance and doing inference, the values were rounded to nearest integers to reflect the nature of the features.
-
-```{dot impute-model, echo=FALSE, out.width="100%", fig.align="center", fig.cap="Imputation strategy for variables with missing values. Variables contributing to the LCM are in white boxes with solid borders. Variables in ovals with dashed borders were used in the imputation model. They make up the composite variables (mentioned in the top of the grey boxes that were used in the LCM).  Variables in a grey box were imputed together via a multivariate regression. Arrows demonstrate covariate $\\rightarrow$ response relations. \"Mycobacterial test done\" is defined as \"ZN-Smear, MGIT and Xpert were done for the patient\""}
+```{dot impute-model, echo=FALSE, out.width="100%", fig.align="center", fig.cap="Imputation strategy for variables with missing values. Variables contributing to the LCM are in white boxes with solid borders. Variables in ovals with dashed borders were used in the imputation model. They make up the composite variables that were used in the LCM (mentioned in the top of the grey boxes). Variables in a grey box were imputed together via a multivariate regression. Arrows demonstrate covariate $\\rightarrow$ response relations. ``Mycobacterial test done\" is defined as ``ZN-Smear, MGIT and Xpert were performed on the patient's CSF sample\""}
 
 digraph imp_model{
   rankdir = TB;
@@ -287,7 +271,7 @@ digraph imp_model{
   BldGlu[label="Blood glucose", shape="box"];
   CsfGlu[label="CSF glucose", shape="box"]; 
   CsfLymp[label="CSF lymphocyte count", shape="box"];
-  CsfNeu[label="CSF neutrophil count", shape="box"];
+  CsfNeu[label="CSF white cell count", shape="box"];
   CsfPro[label="CSF protein", shape="box"];
   CsfLac[label="CSF lactate", shape="box"];
   # GCS[label="Glasgow Coma Score", shape="box"];
@@ -329,38 +313,36 @@ digraph imp_model{
 }  
 ```
 
-There are, though, some exceptions: headache, neck stiffness, and psychosis (Supplementary Table \@ref(tab:missing-handling)). All of them only appear in the simplified prevalence model and were imputed using predictive mean matching method [@mice]. The imputation is done 400 times separately for 400 training datasets.Their donors are other complete variables imputed within the full model. 
+For *headache*, *neck stiffness*, and *psychosis* (Supplementary Table \@ref(tab:missing-handling), which only appear in the simplified prevalence model, we used predictive mean matching [@mice]. The imputation is done once for each of the 400 generated datasets with TBM statuses. Their donors are other completed variables imputed within the full model.
 
-## Choice of priors {#appendix-stat-prior-choices}
+### Choice of priors {#appendix-stat-prior-choices}
 
-### Main model
+#### Main model
 
-For the prevalence model, we chose a Student's *t* distribution with 6 degrees of freedom ($t_6$) for the intercept, in which we fixed the mean to 0 and scale to 3 because its absolute value is unlikely to be higher than 6 (which is equivalent to an probability range of (0.002 - 0.998)) [@boonstra2019]. For the regression coefficients, we used *t* distributions with mean set to 0 and as scales we chose a prior $Half\mbox{-}Normal(0, 1.2)$. This acts as a shrinkage term, reflecting our belief that the absolute values of the coefficients are smaller than 4.8 (which is equivalent to an odds ratio range of 0.008 - 121) [@prior-choice; @vanerp2019], but we left some room for our belief to be wrong. For high-impact diagnostic features (marked as "strong" in Supplementary Table \@ref(tab:predictor-tab)), priors were truncated at 0, so that only values in the expected direction were accepted in the MCMC chains. Hence we chose:
+For the prevalence model, we chose a Student's *t* distribution with 6 degrees of freedom ($t_6$) for the intercept, in which we fixed the mean to 0 and scale to 3 because its absolute value is unlikely to be higher than 6 (which is equivalent to an probability range of (0.002 - 0.998)) [@boonstra2019]. For the regression coefficients, we used $t_6$ distributions with mean set to 0 and as scales we chose a prior $Half\mbox{-}Normal(0, 1.2)$. This acted as a shrinkage term, reflecting our belief that the absolute values of the coefficients are smaller than 4.8 (which is equivalent to a range of 0.008 - 121 for odds ratio) [@prior-choice; @vanerp2019], but we left some room for our belief to be wrong. Hence we chose:
 
 $$
 \begin{aligned}
-\sigma &\sim Normal(0, 1) \\
 \alpha_0 &\sim t_6(0, 3)\\
 \alpha_{binary} &\sim t_6(0, \sigma)\\
-\alpha_{continuous} &\sim t_6(0, \frac{\sigma}{2sd})
+\alpha_{continuous} &\sim t_6(0, \frac{\sigma}{2sd})\\
+\sigma &\sim Normal(0, 1.2)\mathsf{T}[0, \infty) \\
 \end{aligned}
 $$
+where $\mathscr{D}\ \mathsf{T}[0, \infty)$ is the distribution $\mathscr{D}$ truncated to the non-negative half line; $\sigma$ is the adaptive penalty term; $\alpha_0$, $\alpha_{binary}$, and $\alpha_{continuous}$ are the intercept, coefficients for the binary covariates, and coefficients for the continuous covariates included in the prevalence model; $sd$ is the empirical standard deviation of the continuous variables after the imputation and differs by each variable. For high-impact diagnostic features (marked as "strong" in Supplementary Table \@ref(tab:predictor-tab), priors on the parameters were truncated at 0, so that only values in the expected direction were accepted in the MCMC chains.
 
-where $\sigma$ is the adaptive penalty term; $\alpha_0$, $\alpha_{binary}$, and $\alpha_{continuous}$ are the intercept, coefficients for the binary covariates, and coefficients for the continuous covariates included in the prevalence model; $sd$ is the empirical standard deviation of the continuous variables after the imputation and differs by variables.
-
-For the indicator model, our choice of priors was based on information collected from several previous studies [@nhu2013; @thwaites2004; @heemskerk2018].  A visual justification is given in Supplementary Figure \@ref(fig:mv-priors), where our chosen prior distributions are compared with  results  from  previous studies. As suggested by the TBM literature, we used highly informative priors for false positive rate ($FPR = 1-\mbox{Specificity}$) and weakly informative priors for true positive rate ($TPR = \mbox{Sensitivity}$), given the discrepancies in TPR between the studies (@eq:priors_response).
+For the indicator model, our choice of priors was based on information collected from several previous studies [@nhu2013; @thwaites2004; @heemskerk2018].  A visual justification is given in Supplementary Figure \@ref(fig:mv-priors). As suggested by the TBM literature, we used highly informative priors for false positive rate ($\mbox{FPR} = 1-\mbox{Specificity}$) and weakly informative priors for true positive rate ($\mbox{TPR} = \mbox{Sensitivity}$), given the discrepancies in TPR between the studies (@eq:priors_response).
 
 $$
 \begin{aligned}
-  1-Spc_{Xpert} &\sim Logistic(logit(0.005), 0.7) \\
-  1-Spc_{MGIT}  &\sim Logistic(logit(0.001), 1) \\
-  1-Spc_{ZN\mbox{-}Smear} &\sim Logistic(logit(0.001), 1) \\ 
-  Sen_{Xpert},\ Sen_{MGIT},\ Sen_{ZN\mbox{-}Smear} &\sim Logistic(0, .5)
+1-\mathrm{Spec}_{Xpert} &\sim Logistic(\mathrm{logit}(0.005), 0.7) \\
+1-\mathrm{Spec}_{MGIT}  &\sim Logistic(\mathrm{logit}(0.001), 1) \\
+1-\mathrm{Spec}_{ZN\mbox{-}Smear} &\sim Logistic(\mathrm{logit}(0.001), 1) \\ 
+\mathrm{Sens}_{Xpert},\ \mathrm{Sens}_{MGIT},\ \mathrm{Sens}_{ZN\mbox{-}Smear} &\sim Logistic(0, .5)
 \end{aligned}
 $$ {#eq:priors_response}
 
-
-For coefficients $\gamma$ that form part of the modulating factor model,  we applied the same rules as in the prevalence model. Both latent random effects $r$ and $u$ were assumed to follow a Standard Normal distribution. To avoid sign switching, we constrained $\beta^{(t)}$ and $\upsilon^{(t)}$ to be non-negative. As coefficients $\gamma$ and $\beta^{(t)}$ were multiplied together, to provide a fair penalisation, we divided the penalty term $\sigma'$ for $\gamma$ by the average of $\beta^{(t)}$ over the three tests *t = {ZN-Smear, Mgit, Xpert}*.
+For coefficients $\gamma$ that form part of the modulating factor sub-model,  we applied the same rules as in the prevalence model. Both latent random effects $r$ and $u$ were assumed to follow a Standard Normal distribution. To avoid sign switching, we constrained $\beta^{(t)}$ and $\upsilon^{(t)}$ to be non-negative. As coefficients $\gamma$ and $\beta^{(t)}$ were multiplied together, to provide a fair penalisation, we divided the penalty term $\sigma'$ for $\gamma$ by the average of $\beta^{(t)}$ over the three tests *t = {ZN-Smear, Mgit, Xpert}*.
 
 Hence we chose
 
@@ -369,55 +351,78 @@ $$
 r &\sim Normal(0, 1) \\
 u &\sim Normal(0, 1) \\
 \sigma' &\sim Normal(0, 1) \\
-\beta^{(t)} &\sim Normal(0, \sigma') \\
-\upsilon^{(t)} &\sim Normal(0, \sigma') \\
+\beta^{(t)} &\sim Normal(0, \sigma') \mathsf{T} [0, \infty) \\
+\upsilon^{(t)} &\sim Normal(0, \sigma') \mathsf{T} [0, \infty) \\
 \gamma_{HIV} &\sim t_6(0, \sigma'/\overline{\beta^{(t)}}) \\
 \gamma_{continuous} &\sim t_6(0, \frac{\sigma'}{2sd \times \overline{\beta^{(t)}}})
 \end{aligned}
 $$
 
-where $\gamma_{HIV}$ is the coefficient for HIV status; $\gamma_{continuous}$ is the vector of coefficients for other CSF biomarkers; $\sigma'$ is the penalty term for the bacillary burden model; $\overline{\beta^{(t)}}$ is the average of $\beta^{(t)}$ over (t); $sd$ is the empirical standard deviation of each continuous variable after the imputation and differs per variable.
+where \(\gamma_{HIV}\) is the coefficient for HIV status; \(\gamma_{continuous}\) are the coefficients of CSF biomarkers; \(\sigma'\) is the penalty term for the bacillary burden model; \(\overline{\beta^{(t)}}\) is the average of \(\beta^{(t)}\) over (t); \(sd\) is the empirical standard deviation of each continuous variable after the imputation and differs per variable.
 
-### Imputation model
+#### Imputation model
 
-For the imputation models, $Normal(0, 2.5)$ was chosen as prior distributions for intercepts and coefficients [@prior-choice], except for RGCS (E, V, and M) as their values are constrained on both sides (Section \@ref(data-preprocessing)). The modes of RGCSV, RGCSM, and RGCSE were sampled from an $Exponential(\beta=20)$ truncated within [0, 1], and $Normal(0, 0.25)$ was chosen as the prior distribution for their sd.
+For the imputation models, $Normal(0, 2.5)$ was chosen as prior distributions for intercepts and coefficients [@prior-choice], except for RGCS (E, V, and M) as their values are constrained to be between 0 and 1 (Section \@ref(data-preprocessing)). Their modes of RGCSV, RGCSM, and RGCSE were sampled from an $DoubleExponential(0, 0.05)$ truncated within [0, 1], and $Normal(0, 0.25)$ was chosen as the prior distribution for their sd.
 
-In cases where imputed variables were assumed multivariably correlated, Cholesky decomposition of the variance-covariance matrix was sampled from a *Cholesky Lewandowski-Kurowicka-Joe (LKJ) Correlation* prior with $\eta = 4$ [@stan-doc].
 
-# Model diagnosis and comparison
+$$
+\begin{aligned}
+\psi_0 &\sim Normal(0, 2.5)\\
+\psi &\sim Normal(0, 2.5)\\
+\mathcal{G}(X_{imp}) &\sim \mathcal{D}(\psi_0 + L^T\psi, \Sigma) \\
+\\
+{\psi_{RGCS}}_0 &\sim DoubleExponential(0, 0.05) \\
+\psi_{RGCS} &\sim Normal(0, 0.25)\\
+RGCS &\sim Normal({\psi_{RGCS}}_0 + L^T\psi_{RGCS}, \Sigma_{RGCS})\mathsf{T}[0, 1]
+\end{aligned}
+$$
 
-For each parameter we evaluated Brooks-Gelman-Rubin $\hat{R}$ statistic, effective sample size per individual and Monte Carlo standard errors.  
+where $\psi_0$, $\psi$, and L are the intercept, coefficients, and regressors involved in each imputation model of $X_{imp}$. $\mathcal{G}$ is the link function (logit if $X_{imp}$ is binary and identity otherwise). In the univariate cases, $\mathcal D$ is the univariate Logistic distribution if $X_{imp}$ is binary and Normal distribution otherwise; $\Sigma$ is the standard deviation. In the multivariate cases,  $\mathcal D$ is the corresponding multivariate version and $\Sigma$ is the Cholesky decomposition of the variance-covariance matrix. This matrix is the multiplication of the diagonal matrix $\mathrm{Diag}(\sigma)$ of the standard deviations and the corresponding Choleskly decomposed correlation matrix $\Omega$. In that context, $\Omega$ was sampled from a Cholesky Lewandowski-Kurowicka-Joe (LKJ) Correlation prior with \(\eta = 4\) [@stan-doc].
 
-Model performance was estimated and compared using expected log pointwise density (elpd) [@vehtari2016]. This measure quantifies how likely a new observation (\(y_{new}\)) can be observed given the data $y$, model $\mathcal{M}$, and posterior distributions of the parameters $\theta$. In our case, ($y_{new}$) are the held-out observations. A larger elpd means that the predicted posterior distribution concentrates around the observed response value.
+$$
+\begin{aligned}
+\Sigma &= \mathrm{Diag}(\sigma)\Omega\\
+\Omega &\sim LKJ(\eta=4)\\
+\sigma &\sim Normal(0,1)\mathsf{T}[0,\infty)\\
+\sigma_{RGCS} &\sim Normal(0,0.1)\mathsf{T}[0,\infty)
+\end{aligned}
+$$
 
-All elpd, ROC curves, AUCs, and calibration metrics are calculated using 5 repetitions of 20-fold cross validation. For each repetition, we pooled all held-out folds together to reconstruct a complete dataset, with their predictions coming from the model trained on the complement of the held-out folds. The averaged performance measures were acquired by pooling all held-out folds over the 5 repetitions together.
+## Model diagnosis and comparison
 
-The cross validation procedure for the simplified model was done in the same manner, but adjusted for the fact that the outcome $\hat{C}_i$ is generated from the posterior $\theta_i$; we simulated a different response vector \(\hat{C}_i^k\) (of size 400) for every fold $k$ in each repetition $i$ in which $1 \leq k, i \leq 20$. The final AUC, ROC, and calibration were averaged over these $20\times20=400$ experiments.
+For each parameter we evaluated the Brooks-Gelman-Rubin $\hat{R}$ statistic, effective sample size per individual and Monte Carlo standard errors.  
+
+Model performance was estimated and compared using expected log pointwise density (elpd) [@vehtari2016]. his measure quantifies the likelihood of a new observation (\(y_{new}\)) can be observed given the data $y$, model $\mathcal{M}$, and posterior distributions of the parameters $\theta$. In our case, ($y_{new}$) are the held-out observations using cross-validation (see below). A larger elpd means that the predicted posterior distribution concentrates around the observed response values.
+
+All elpd, ROC curves, AUCs, and calibration metrics are calculated using 5 repetitions of 20-fold cross validation. For each repetition, we pooled all held-out folds together to reconstruct a complete dataset. The models were fitted on the complements of the held-out folds. The averaged performance measures were acquired by pooling all held-out folds over the 5 repetitions.
+
+The cross validation procedure for the simplified model was done in the same manner, but adjusted for the fact that the outcome $\hat{C}_i$ was generated from the posterior $\theta_i$ of the disease prevalence; we simulated a different response vector \(\hat{C}_i^k\) (of size 400) for every fold $k$ in each repetition $i$ in which $1 \leq k, i \leq 20$. The final AUC, ROC, and calibration were averaged over these $20\times20=400$ experiments.
 
 As AUCs and calibrations of the selected model are reported in the main text, here we only report the results of the elpd measure for model comparison.
 
-## Estimated log-pointwise density of each considered model
+### Estimated log-pointwise density of each considered model
 
 ```{r elpd-tbl, tab.id='elpd-tbl', tab.cap = 'Expected elpd of considered models and their standard errors. Model 3 and 4 have comparable elpd. Model 3 is selected because it is simpler.'}
 elpd =  readRDS(file.path(data_dir, '..', 'export/metrics/elpd.RDS'))
 elpd_tbl =
   data.frame(
     Model = names(elpd) |> substr(2,2) |> as.integer(),
-    elpd = sapply(elpd, \(x) x$estimates[,'Estimate'] |> formatC(format = 'f', digits=2)),
-    SE = sapply(elpd, \(x) x$estimates[,'SE']  |> formatC(format = 'f', digits=2))
+    elpd = sapply(elpd, \(x) x$estimates[,'Estimate'] |> formatC(format = 'f', digits=2))
+    # SE = sapply(elpd, \(x) x$estimates[,'SE']  |> formatC(format = 'f', digits=2))
   ) |> arrange(Model)
 
 elpd_tbl |>
   flextable::flextable()|>
   flextable::width(width=1.5) |>
-  flextable::set_header_labels(SE = 'Standard error') |>
+  # flextable::set_header_labels(SE = 'Standard error') |>
   flextable::highlight(i = 3, j = 2) |>
-  flextable::theme_vanilla()
+  flextable::theme_vanilla() |>
+   flextable::align(j=1, part='all', align='center')
 ```
 
-## Sampling diagnosis for the selected model
+### Sampling diagnosis for the selected model
 
-The histogram of the Brooks-Gelman-Rubin $\hat{R}$ statistic, effective sample size, and Monte Carlo standard errors across all parameters are shown in Supplementary Figure \@ref(fig:nut-dx) [@stan-doc]. A good mixing between chains should have $\hat{R}$ near 1, and a Monte Carlo standard error near 0. As MCMC sampling process contains some auto-correlation, effective sample size measures how many Bayesian samples do we have if the sampling process is independent. As a rule of thumbs, a value of at least 400 could be sufficient to approximate the true distribution [@stan-doc]. Overall, no signs of poor chain mixing and unreliable sampling of the posteriors were suggested by the diagnostics plots, with most $\hat{R}$ highly concentrated around $1 \pm .005$ and effective sample size $\geq$ 50% of the data sample size.
+Supplementary Figure \@ref(fig:nut-dx) shows the histogram of the Brooks-Gelman-Rubin $\hat{R}$ statistic, effective sample size, and Monte Carlo standard errors over posterior standard deviation (SD) across all parameters. A good mixing between chains should have $\hat{R}$ near 1. A Monte Carlo standard error over posterior SD near 0 means not much uncertainty in the posterior estimate comes from the MCMC sampling process. The effective sample size measures the equivalent number of independent samples from the posterior distribution our MCMC sampling process represents. As a rule of thumb, an effective sample size of at least 400 is sufficient to approximate the true distribution [@stan-doc]. Overall, no signs of poor chain mixing and unreliable sampling of the posteriors were suggested by the diagnostics plots, with most $\hat{R}$ highly concentrated around $1 \pm .005$ and effective sample size $\geq$ 50% of the number of samples (16000 for the full model, and 40000 for the simplified model).
 
 ```{r load_data, warning=FALSE, include=FALSE}
 stanDx <- c(readRDS(file.path(data_dir, '../export/metrics/m3_diag.RDS')), readRDS(file.path(data_dir, '../export/metrics/s_diag.RDS')))
@@ -428,11 +433,11 @@ stanDx <- c(readRDS(file.path(data_dir, '../export/metrics/m3_diag.RDS')), readR
 wrap_plots(stanDx, ncol=2, byrow=F)
 ```
 
-## Perfomance validation of the selected model on observed manifest variables (i.e. mycobacterial tests)
+### Perfomance validation of the selected model on observed manifest variables (i.e. mycobacterial tests)
 
-The performance of the prevalence model validated on the final hospital diagnosis was performed as a pseudo-validation under the assumption that all the doctors' diagnosis is a perfect gold standard, i.e. 100% sensitive and 100% specific. This may not be true and is the motivation to implement LCM. This supplementary section demonstrates the actual performance of the selected model against the observed mycobacterial tests. 
+As mentioned in the main text, the prevalence model was pseudo-validated on the final hospital diagnosis. Here we performed a proper validation of the selected model on the observed manifest variables (Supplementary Figure \@ref(fig:model-metrics-2) demonstrates the actual performance of the selected model against the observed mycobacterial tests.  
 
-```{r model-metrics-2, fig.align="center", fig.cap='Performance of the selected indicator model (A and B) and the prevalence model (C and D). A: ROC and AUC against confirmatory test results (indicator model); B: calibration against confirmatory test results. For calibration plots, “observed” probabilities are defined as values smoothed by a loess fit against observed events. For ROC plots, AUC values are presented as “average (min - max over 5 repetitions of cross- validation)”. The grey lines are fitted curves from each 20-fold cross validation and coloured lines represent their average' , fig.dim=c(16, 12), message=FALSE, warning=FALSE, out.width='100%', fig.id="model-metrics-2"}
+```{r model-metrics-2, fig.align="center", fig.cap='Performance of the selected indicator model. A: ROC and AUC against confirmatory test results. AUC values are presented as “average (min - max over 5 repetitions of cross-validation)”; B: Calibration plot, showing the relationship between the predicted probability and observed test results, smoothed by a loess curve. The grey lines are fitted curves from each of the five 20-fold cross validations and coloured lines represent their average' , fig.dim=c(16, 12), message=FALSE, warning=FALSE, out.width='100%', fig.id="model-metrics-2"}
 
 roc_y <- do.call(gridExtra::arrangeGrob, m3$ROC$Y)
 m3$calib$Y[[3]] = m3$calib$Y[[3]] + theme(axis.title.y = element_blank())
@@ -442,7 +447,7 @@ m3$calib$Y[[3]] = m3$calib$Y[[3]] + theme(axis.title.y = element_blank())
 
 ```
 
-## Scaled Brier scores of the prevalence models against the final hospital diagnosis
+### Scaled Brier scores of the prevalence models against the final hospital diagnosis
 
 ```{r}
 #| label: scaled_brier_scor
@@ -466,52 +471,59 @@ scaled_b <- {
 
 ```
 
-This section compares the scaled Brier scores (@eq:brier) or explained residual variation of the full and simplified prevalence models against the pseudo-gold standard final hospital diagnosis. The scaled Brier score for the full model is `r formatC(scaled_b$scaled_B_full, format='f', digits=2)` and for the simplified prevalence model `r formatC(scaled_b$scaled_B_sim, format='f', digits=2)`.
+This section compares the scaled Brier scores, also called explained variation or index of predictive accuracy (IPA), of the full and simplified prevalence models against the pseudo-gold standard final hospital diagnosis. In Formula:
 
 $$
 \begin{aligned}
 B &= \frac{1}{N}\sum_{i=1}^N{(\hat{y_i}-y_i)^2}\\
-R^2 &= \frac{p-B}{p}
+\textbf{IPA} &= \frac{B_{\mathrm{null}}-B}{B_{\mathrm{null}}}=1-\frac{B}{B_{\mathrm{null}}}
 \end{aligned}
 $$ {#eq:brier}
 
-> where $B$ is the Brier score, $y_i = {0,1}$ is the observed binary outcome, $0<\hat{y}_i<1$ is the predicted risk, and $p$ is the apparent prevalence of the outcome. The scaled Brier score $R^2$ depicts how much discriminative values gained against the Null model, in which everyone is predicted to have the same risk = prevalence. The worst value is 0 (the model of interest is identical to the Null model) and the best value is 1 (the model of interest has perfect prediction).
+> where $\textbf{B}$ is the Brier score, $y_i = {0,1}$ is the observed binary outcome, $0 \leq \hat{y}_i \leq 1$ is the predicted risk based on the prevalence model. $B_{\mathrm{null}}$ is the Brier score of the null model, i.e. the model that does not include any covariates. This means that everyone is given the same risk, which is the prevalence. The scaled Brier score $\textbf{IPA}$ depicts how much predictive value is gained against the Null model. A scaled Brier score of 0 means that the performance of our model is identical to that of the Null model. The best value is 1 (our model has perfect prediction).
+
+The scaled Brier score for the full model is `r formatC(scaled_b$scaled_B_full, format='f', digits=2)` and for the simplified prevalence model it is `r formatC(scaled_b$scaled_B_sim, format='f', digits=2)`.
 
 
-# Assumption checks and sensitivity analysis {#appendix-sen-analysis}
+## Assumption checks and sensitivity analysis {#appendix-sen-analysis}
 
-## Methods
+### Methods
 
-### Latent class model 
+#### Latent class model 
 
 *Independence of test results.* Apart from model performance metrics, we also checked our conditional independence assumptions, both without (model 1) and with correction for latent bacillary burden (model 2-5). To do this, we plotted the residual pairwise correlation between confirmatory tests, effectively comparing predicted pairwise correlation and observed pairwise correlation  [@qu1996].
 
-*Near-perfect specificity of GeneXpert.* GeneXpert might not have perfect specificity [@nhu2013]. Then some patients with missing Xpert that did not have TBM would have a positive test result. To check this, we did a sensitivity analysis in which we added the presence of an Xpert test as fourth manifest variable to the indicator model. We assumed that observation of Xpert only depends on TBM status of the patient. It is denoted as *obs*. If $obs = 0$, which means Xpert is missing, we marginalised out
+*Near-perfect specificity of GeneXpert.* GeneXpert may not have near-perfect specificity [@nhu2013]. Then some patients with missing Xpert that did not have TBM would have a positive test result. To check this, we did a sensitivity analysis in which we added the presence of an Xpert test as fourth manifest variable to the indicator model. We assumed that observation of Xpert only depends on TBM status of the patient. It is denoted as *obs*.
+
+For model 1, @eq:classic-lca-fml becomes
 
 $$
 \begin{aligned}
-&P(y^{Xpert}_i = x,y^{ZN\mbox{-}Smear}_i = s,y^{Mgit}_i = m | C_i=c, B_i, obs_i=0) \\
-&= \sum_{x=0}^1{P(y^{Xpert}_i = x | y^{ZN\mbox{-}Smear}_i = s,y^{Mgit}_i = m,C_i=c,B_i,obs_i=0)P(y^{ZN\mbox{-}Smear}_i = s,y^{Mgit}_i = m|C_i=c,B_i, obs_i=0)} \\
-&= P(y^{ZN\mbox{-}Smear}_i = s,y^{Mgit}_i = m|C_i=c,B_i,obs_i=0)
-\end{aligned}
-$$
-
-(as Xpert is independent to ZN-Smear and MGIT given $C$, $B$ and $obs$, where $s, m, c, o = {0,1}$ are observed values of $y^{ZN\mbox{-}Smear}$, $y^{Mgit}$, $C$, and *obs* for individual $i$, respectively). The likelihood function (@eq:lca-fml) becomes
-
-
-$$
-\begin{aligned}
-P_i &= P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m,y^{Xpert}_i=x, {obs}_i=o)\\
-&= \theta_i \times I(obs_i=1) \times P(obs_i=1|C_i=1) \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m,y^{Xpert}_i=x|C_i=1, obs_i=1)\\ 
-&\ \ \ \ + \theta_i \times I(obs_i=0) \times (1-P(obs_i=1|C_i=1)) \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m|C_i=1, obs_i=0)\\ 
-&\ \ \ \ + (1-\theta_i) \times I(obs_i=1) \times P(obs_i=1|C_i=0) \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m,y^{Xpert}_i=x|C_i=0, obs_i=1) \\
-&\ \ \ \ + (1-\theta_i) \times I(obs_i=0) \times (1-P(obs_i=1|C_i=0)) \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m|C_i=0, obs_i=0) 
+P_i
+&= \theta_i \times I(obs_i=1) \times P(obs_i=1|C_i=1) \\
+&\qquad \ \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m,y^{Xpert}_i=x|C_i=1, obs_i=1)\\ 
+&\quad + \theta_i \times I(obs_i=0) \times (1-P(obs_i=1|C_i=1)) \\
+&\qquad \quad \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m|C_i=1, obs_i=0)\\ 
+&\quad + (1-\theta_i) \times I(obs_i=1) 
+\times P(obs_i=1|C_i=0) \\ 
+&\qquad \qquad \quad \ \ \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m,y^{Xpert}_i=x|C_i=0, obs_i=1) \\
+&\quad + (1-\theta_i) \times I(obs_i=0) \times (1-P(obs_i=1|C_i=0)) \\
+&\qquad \qquad \quad \ \  \times P(y^{ZN\mbox{-}Smear}_i=s,y^{Mgit}_i=m|C_i=0, obs_i=0) 
 \end{aligned} 
 $$ {#eq:lca-missingXpert-fml}
 
-given that _obs_ is locally independent to the three confirmatory tests. We used a weakly informative prior distribution for the non-TBM group and an informative prior distribution for the TBM group (Supplementary Figure \@ref(fig:prior-obs)) as we believe most patients in the TBM group have been tested with the confirmatory tests. However, we widened the scale enough so that an extreme value of 50% TBM patients who left untested was allowed.
+For the more extended models including bacillary burden, formulae translate analogously. There is potential correlation of _obs_ and test results as some factors can suggest the clinician to prescribe an Xpert tests. For example, HIV infection increases the bacillary burden (and consequently the probability to have positive test results) and, at the same time but via a different pathway, prompts the clinician to perform the confirmatory tests. To correct for this, we regressed _obs_ oon some characteristics that may suggest TBM. In this analysis, we considered HIV, TB-suggestive symptoms and duration, and both Pulmonary TB and miliary TB on X-ray image and used the logistic regression model
 
-```{r prior-obs, fig.align='center', out.width='100%', warning=FALSE, message=FALSE, fig.cap = "Prior distribution for Xpert response rate, in non-TBM patients (top) and TBM patients (bottom). Point, thick lines, and thin lines are the median, 50\\% and 95\\% inter-percentile ranges. Logit scale is used along the x-axis"}
+$$
+\begin{aligned}
+\mathrm{logit}[P(obs = 1| C = c)] = z_{obs}^{c} + V_{obs}^T \gamma_{obs}^{c} 
+\end{aligned}
+$$
+> where $V_{obs}$ is the relevant characteristics that raise the suspicion of TBM, $\beta_{obs}$ is the vector of coefficients, and $z_{obs}^{C=c}$ is the intercept given TBM status $C = c \in \{0,1\}$.
+  
+The priors for $z_{obs}^c$ were chosen as follows. We used a weakly informative symmetric prior distribution around 0.5 for the non-TBM group and a moderately informative skewed prior distribution for the TBM group (Supplementary Figure \@ref(fig:prior-obs)) as we believe most patients in the TBM group have been tested with the confirmatory tests. However, we widened the scale enough so that an extreme value of 50\% TBM patients who left untested was allowed. Subsequently, we extended the scale of $z_{obs}^C$ so that the 95% inter-percentile covered the extreme value of 0.1 (i.e, Xpert was only done for 10% of TBM group), this is denoted as the "Wide prior" model in Supplementary Figure \@ref(fig:plot-missing).
+
+```{r prior-obs, fig.align='center', out.width='100%', warning=FALSE, message=FALSE, fig.cap = "Prior distribution for Xpert response probability intercept, in non-TBM (top) and TBM (bottom) participants without HIV. Point, thick lines, and thin lines are the median, 50\\% and 95\\% inter-percentile ranges. Logit scale is used along the x-axis"}
 
 obs_rng = rbind(
   data.frame(
@@ -547,22 +559,21 @@ obs_logit_plt
   
 ```
 
-To correct for the correlation of _obs_ and test values, we additionally regressed _obs_ on some characteristics that may suggest TBM and thus induce a TBM mycobacterial tests. In this analysis, we considered HIV, TB-suggestive symptoms and duration, Pulmonary and miliary TB on X-ray image.
+#### Imputation model
 
-$$
-  \mathrm{logit}(P_{obs}) \sim X_{obs}^T \beta_{obs}
-$$
-     where $X_{obs}$ is the relevant characteristics that raise the suspicion of TBM, $\beta_{obs}$ is the vector of coefficients.
+\mbox{}
 
-### Imputation model
+To assess the validity and impact of our imputation model, we used three different checks. First, we visually compared the distributions of the imputed data and observed data, conditional on the response propensity. To obtain the response propensity, for each variable of interest \(Y_v\) we fitted a logistic regression with the indicator of missingness as the response variable and the completed variables apart from \(Y_v\) (denoted as \(Y_{-v}\)) as the independent variables. We plotted \(Y_v\) against the propensity of response (\(e_v\)), using different colours for imputed and observed values of \(Y_v\) and added smoothing loess curves with a span of 0.5. Second, we compared the residual of \(Y_v^{imputed}\) and \(Y_v^{observed}\) conditionally on \(e_v\) [@nguyen2017]. To do this, we fitted a standard linear regression for continuous variables and a logistic regression for binary variables. The results were demonstrated using a kernel density plot for the former and  loess curves for the other. Third, we performed a posterior predictive check in which we compared the posterior distribution of the coefficients of interest in the prevalence model based on the completed datasets (which contained observed and imputed values) and 100 replicated datasets in which all variables were imputed based on the imputation model [@nguyen2017; @bondarenko2016]. Each replicated data set was obtained by selecting an iteration and using the values of the coefficients of the imputation models at that iteration to impute values for the variables with missing values for all individuals. This data set was used to obtain a posterior distribution of the coefficients in a separate MCMC procedure. For a good imputation we would expect the distribution of the posteriors for the replicated data sets to be similar to the one for the completed data set.  
 
-To diagnose the validity and impact of our imputation model, we used three different checks. First, we visually compared the distributions of the imputed data and observed data, conditional on the response propensity. To do this, for each variable of interest $Y_v$ we fitted a logistic regression with the indicator of missingness as the response variable and the completed variables apart from $Y_v$ (denoted as $Y_{-v}$) as the independent variables. We plotted $Y_v$ against the propensity of response ($e_v$), using different colours for imputed and observed values of $Y_v$. Second, we compared the residual of $Y_v^{imputed}$ and $Y_v^{observed}$ conditionally on $e_v$. To do this, we fitted a generalised linear model with Gaussian family with identity link function for continuous variables and Binomial with logit link function for binary variables. The results were demonstrated using a kernel density plot for the former and smoothing loess curves for the other. Third, we performed a posterior predictive check in which we compared the posterior distribution of the coefficients of interest in the prevalence model based on the completed datasets (which contained observed and imputed values) and 100 replicated datasets in which all variables were imputed based on the imputation model. For a good imputation we would expect the likelihood to witness the former is not extreme. The details of the methods are outlined and discussed elsewhere [@nguyen2017; @bondarenko2016]. For simplicity we only analysed variables that had more than 10 missing observations.
+For simplicity we only analysed imputation results for variables that had more than 10 missing observations. As *TB-suggestive symptoms* and *focal neurological deficit* are expected to be MNAR on the composite level (Supplementary Table \@ref(tab:missing-handling)), we only performed the posterior predictive check for these two variables.
 
-## Results
+### Results
 
-### Latent class model
+#### Latent class model
 
-The expected residual correlations between 3 pairs of confirmatory tests for 5 model choices are shown in Supplementary Figure \@ref(fig:resid-pwcorr). Except for model 1 which underestimated the observed values, other models that incorporated random effects showed a good correspondence between predicted and observed correlation, in which case all residual values fluctuated around 0. This suggested that a correction for local dependence was indeed necessary.
+\mbox{}
+
+*Independence of test results* The expected residual correlations between 3 pairs of confirmatory tests for 5 model choices are shown in Supplementary Figure \@ref(fig:resid-pwcorr). Except for model 1 which underestimated the observed values, other models that incorporated random effects showed a good correspondence between predicted and observed correlation, in which case all residual values fluctuated around 0. This suggested that our correction for conditional dependence of manifest variables was indeed necessary.
 
 ```{r resid-pwcorr, fig.align='center', fig.cap="Residual correlation plots for five different model choices", fig.id="resid-pwcorr", warning=FALSE, out.width='50%', fig.width=4, message=FALSE}
 rpc_plot = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'rpc_plot.RDS'))
@@ -577,29 +588,34 @@ ggplot(data=rpc_plot$data, aes(x=Pair, color=Model, group=Model)) +
   theme(axis.title = element_blank(), legend.position = 'bottom')
 ```
 
-```{r plot-missing, out.width='100%', fig.dim=c(10, 12.5), fig.align='center', fig.cap='Estimates of model 3 (denoted as Selected model), model 3 with missing Xpert (denoted as Incomplete Xpert), and model 3 with missing Xpert and a wider prior for test specificity (denoted as Incomplete Xpert + Wide prior). From top to bottom are estimates of prevalence model, bacillary burden model, and sensitivity (TPR) and (1 - Specificity) (FPR) for 3 confirmatory tests and the response rates of Xpert for TBM and non-TBM patients. In all plots: dots, thick lines, and thin lines are the means, 50\\%, and 95\\% credible intervals.'}
+```{r plot-missing, out.width='100%', fig.dim=c(10, 12.5), fig.align='center', fig.cap='Estimates of model 3 (denoted as "Selected" ), model 3 with missing Xpert (denoted as "Incomplete Xpert"), and model 3 with missing Xpert and a wider prior for test specificity (denoted as "Incomplete Xpert + Wide prior"). From top to bottom are estimates of prevalence model, bacillary burden model, and sensitivity (TPR) and (1 - Specificity) (FPR) for 3 confirmatory tests and the response probability of Xpert for TBM and non-TBM participants without HIV. In all plots: dots, thick lines, and thin lines are the means, 50\\%, and 95\\% credible intervals.'}
 
 plot_m <- readRDS(file.path(data_dir, '..', 'export', 'm3m_plot.RDS'))
-z_plot <- readRDS(file.path(data_dir, '..', 'export', 'z_plot_u.RDS'))
+# z_plot <- readRDS(file.path(data_dir, '..', 'export', 'z_plot_u.RDS'))
 
-wrap_plots(plot_m[names(plot_m)!='z_plot'], ncol=1) + z_plot + 
+# wrap_plots(plot_m[names(plot_m)!='z_plot'], ncol=1) + z_plot + 
+wrap_plots(plot_m, ncol=1) + 
   plot_layout(guide='collect', heights = c(7,3,3)) +
   plot_annotation(tag_levels = 'A') & theme(legend.position='bottom')
 
 ```
 
-There are no large differences in the posterior estimates of the model with missing Xpert and the selected model (model 3) (Supplementary Figure \@ref(fig:plot-missing)), except for cranial nerve palsy and past noticed TB contact. Overall, the estimates of the selected model is shrunk more towards 0. The response rate for Xpert in the non-TBM group is estimated as `r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]' & Model == "Incomplete Xpert") |> select(m) |> unlist() |> plogis() |> round(2)` (`r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]' & Model == "Incomplete Xpert") |> select(ll) |> unlist() |> plogis() |> round(2)` - `r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]' & Model == "Incomplete Xpert") |> select(hh) |> unlist() |> plogis() |> round(2)`). Almost all TBM patients were tested.
+*Near-perfect specificity of GeneXpert.* There were no large differences in the posterior estimates of the model with missing Xpert and the selected model (model 3) (Supplementary Figure \@ref(fig:plot-missing)), except for cranial nerve palsy and past noticed TB contact. Overall, the estimates of the selected model is shrunk more towards 0. The response probability for Xpert in the non-TBM group was estimated to be `r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]' & Model == "Incomplete Xpert") |> select(m) |> unlist() |> plogis() |> round(2)` (`r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]' & Model == "Incomplete Xpert") |> select(ll) |> unlist() |> plogis() |> round(2)` - `r plot_m$z_plot$data |> filter(parameter == 'z_observe[1]' & Model == "Incomplete Xpert") |> select(hh) |> unlist() |> plogis() |> round(2)`). Almost all TBM patients were tested.
 
-### Imputation of covariables
+#### Imputation of covariables
+
+\mbox{}
 
 ```{r load_impute_data}
 library(ggfx)
 load(file.path(data_dir, '..', 'export', 'impute_chk_plot_hex.Rdata'))
 ```
 
-We can see there are no systematic difference in imputed and observed values conditioned on response propensity for HIV status, symptom duration, and RGCS. There are some discrepancies in the two other variables, whereas the imputed values are consistently lower than observed values. This is expected, as a composite variable is considered unobserved if and only if all of its compartments are either missing or negative (i.e. a MNAR situation). Similar trends are also showed in the residuals against response propensity scores (Supplementary Figure \@ref(fig:impute-plot)). In Supplementary Figure \@ref(fig:impute-ppc), for all coefficients and the intercept, both the posterior distribution and estimated median of the completed dataset do not fall out of the plausible counterparts based on the fully imputed datasets. This suggests that the difference of imputed and observed values might not heavily impact the posterior estimation. The most remarkable shift is TB-suggestive symptoms, of which the estimate of the completed dataset is marginally lower than those of the replicated ones. However, its median is still within the 95% credible intervals and its posterior distribution still overlaps heavily the replicated datasets.
+No systematic differences were seen in imputed and observed values conditional on response propensity for HIV status, symptom duration, and RGCS (Supplementary Figure \@ref(fig:impute-plot)). In Supplementary Figure \@ref(fig:impute-ppc), for all coefficients and the intercept, both the posterior distribution and the estimated median based on the completed dataset do not fall out of the plausible counterparts based on the fully imputed datasets. This suggests that the difference in imputed and observed values does not heavily impact the posterior estimates. The strongest shift is for TB-suggestive symptoms, for which the estimate of the completed dataset is marginally lower than those of the replicated ones. Some discrepancies between completed and fully imputed datasets were expected, as TB-suggestive symptoms and Focal neurological deficit were MNAR on the composite level, as mentioned in the method part and in Supplementary Table \@ref(tab:missing-handling). However, its median is still within the 95% confidence intervals and its posterior distribution still mostly overlaps the replicated datasets.
 
-```{r impute-plot, out.width='75%', fig.dim=c(8,12), fig.align='center', fig.cap = "Diagnostic plots for the imputation model. On the left are hexagonal heatmaps between the reponse propensity and the values observed or imputed, centred and standardised. On the right hand side are the kernel density plots of the residuals for continuous variables and smoothed curve against the response propensity for binary variables of the regression model $y \\sim e_y$ where $y$ is the variable of interest and $e_y$ is the response propensity of that variable."}
+```{r impute-plot, out.width='75%', fig.dim=c(8,10), fig.align='center', fig.cap = "Diagnostic plots for the imputation model. On the left are hexagonal heatmaps between the reponse propensity and the values observed or imputed, centred and standardised. On the right hand side are the kernel density plots of the residuals for continuous variables and smoothed curve of the residuals against the response propensity for the binary variable HIV status, for the regression model $y \\sim e_y$ where $y$ is the variable of interest and $e_y$ is the response propensity of that variable."}
+
+#for continuous variables and smoothed curve against the response propensity for binary variables 
 
 hiv_plot$name = 'HIV +'
 cs_plot$name = 'TB-suggestive symptoms'
@@ -609,7 +625,7 @@ id_plot$name = 'log(Symptom duration, days)'
 impute_plots <- 
   c(
     lapply(
-      list(hiv_plot, cs_plot, mp_plot),
+      list(hiv_plot),#, cs_plot, mp_plot
       function(plt){
        # wrap_elements(grid::textGrob(plt$name, rot=90)) + 
           wrap_ggplot_grob(plt$plot1)  +
@@ -628,12 +644,15 @@ impute_plots <-
     )
   )
 
-plt <- wrap_plots(impute_plots, ncol=1) + plot_annotation(tag_levels = list("HIV", "TB_symptoms", "Local_neuro-defict", "log(Symptom duration, days)", "RGCS (centred)")) + plot_layout(guides='collect')
+plt <- wrap_plots(impute_plots, ncol=1) + plot_annotation(tag_levels = list("HIV", "log(Symptom duration, days)", "RGCS (centred)")) + plot_layout(guides='collect')
+
+#"TB_symptoms", "Local_neuro-defict"
+
   
 plt
 ```
 
-```{r impute-ppc, out.width='100%', fig.dim=c(12,9), fig.cap = "Posterior distributions of parameters for variables with missing values in the prevalence model. The curves are the posterior distributions of the completed dataset in red and 100 fully imputed datasets in grey. The red point is the posterior median of the completed dataset. The grey line is the 95\\% confidence interval of posterior medians of the fully imputed dataset."}
+```{r impute-ppc, out.width='100%', fig.dim=c(12,9), fig.cap = "Posterior distributions of parameters for variables with missing values in the prevalence model. The curves are the posterior distributions based on the completed dataset in red and based on 100 replicated datasets in grey. The red point is the posterior median based on the completed dataset. The black lines are the 95\\% credible intervals of the posterior medians of the replicated datasets."}
 ppc <- readRDS(file.path(data_dir,'../export/ppc_checkresults.RDS'))
 vars <- c('HIV' = 'a1', 
           'TB-suggestive symptoms' = 'a2',
@@ -645,4 +664,12 @@ for (a in seq_along(vars)) ppc[[vars[[a]]]] <- patchwork::wrap_elements(ppc[[var
 patchwork::wrap_plots(ppc, ncol=2, nrow=3) 
 
 
+```
+
+## Analysis session info
+
+```{r ssinfo, results = 'asis'}
+ssinfo <- readRDS(file.path(data_dir, '../export/ssinfo.RDS'))
+
+toLatex(ssinfo, local=FALSE)
 ```

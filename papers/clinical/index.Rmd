@@ -7,13 +7,23 @@ author:
       correspondence: yes
   - Joseph Donovan:
       institute: [oucru, lshtm]
-  - Thu Dang Anh Do:
-      institute: [oucru]
   - Ngoc My Nghiem:
       institute: [oucru, htd]
-  - Tan Van Le:
+  - Thu Dang Anh Do:
+      institute: [oucru]
+  - Nghia Dang Trung Ho:
+      institute: [oucru, htd, tys]
+  - Oanh Kieu Nguyet Pham:
+      institute: [htd]
+  - Phu Hoan Nguyen:
+      institute: [oucru, htd]
+  - Hang Thi Ty Vu:
+      institute: [oucru]
+  - Vinh-Chau Van Nguyen:
+      institute: [oucru, htd, doh]
+  - Thuong-Thuong Thuy Nguyen:
       institute: [oucru, oxford]
-  - Thuong Thuong Thuy Nguyen:
+  - Le Van Tan:
       institute: [oucru, oxford]
   - Guy E. Thwaites:
       institute: [oucru, oxford]
@@ -21,10 +31,12 @@ author:
       institute: [oucru, oxford]
 institute:
   - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Viet Nam 
-  - kcl: King's College London, United Kingdom
-  - lshtm: London School of Hygiene and Tropical Medicine, United Kingdom
-  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, United Kingdom 
-  - htd: Hospital of Tropical Diseases, Ho Chi Minh City, Viet Nam
+  - kcl: King's College London, London, United Kingdom
+  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
+  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, Oxford, United Kingdom 
+  - htd: the Hospital of Tropical Diseases, Ho Chi Minh City, Viet Nam
+  - tys: Pham Ngoc Thach University of Medicine, Ho Chi Minh City, Viet Nam
+  - doh: Ho Chi Minh City Department of Health, Ho Chi Minh City, Viet Nam
 site: bookdown::bookdown_site
 bibliography: includes/references.bib
 csl: includes/clinical-infectious-diseases.csl
@@ -148,4 +160,193 @@ load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
 s_plots <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS'))
 ```
 
-\newpage
+<!-- Code below are for results calculation -->
+
+```{r pop}
+data_dirty = data_dirty[USUBJID!='003-335'] #not-collected
+pop = data_dirty[,
+    (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE) &
+    !((diffday>=7)%in%TRUE) &
+    !(csf_mgit_contaminated %in% T) ]
+var = c()
+var[1] <- nrow(data_dirty)
+var[2] <- sum(is.na(data_dirty$wrong_name) | data_dirty$wrong_name, na.rm=TRUE)
+var[3] <- data_dirty[, sum(
+  (wrong_name%in%F) & 
+    ((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)))]
+var[4] <- with(data_dirty, sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    (is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
+var[5] <- with(data_dirty,sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    !(is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
+var[6] <- with(data_dirty, sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    csf_mgit_contaminated, na.rm=TRUE))
+var[7] <- with(data_dirty,  sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    !(csf_mgit_contaminated %in% T) &
+    (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+    ((csf_smear%in%T)|(csf_mgit%in%T)|(csf_xpert%in%T)), na.rm=TRUE))
+var[8] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      !(other_dis_dx_conf%in%T)&
+      !((DISDIA=='DIA1')%in%TRUE),
+    na.rm=TRUE))
+var[9] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE))  &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)&
+      (other_dis_dx_conf%in%T),
+    na.rm=TRUE))
+var[10] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) & 
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert) &
+      !(other_dis_dx_conf%in%T), 
+    na.rm=TRUE))
+var[11] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      (other_dis_dx_conf%in%T), 
+    na.rm=TRUE))
+var[12] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      # !(other_dis_dx_conf%in%T)&
+      ((DISDIA=='DIA1')%in%TRUE),
+    na.rm=TRUE))
+```
+
+```{r calc_na}
+suspected_hiv <- data_dirty |> filter(DISDIA %in% c('DIA1', 'DIA10', 'DIA12'))
+n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
+```
+
+```{r est_fun, include=FALSE}
+est = \(name, tab, digits=2, transformation = I, ci.sep = ', ', post.fn = I, pre.fn=I) {
+  m <- c(pre.fn(tab[name, c('mean', '50%')]), pre.fn(tab[name, '2.5%']), pre.fn(tab[name, '97.5%'])) |>
+    unlist() |> 
+    transformation() 
+  list(mean = m[1]|> formatC(digits=digits, format='f') |> post.fn(), 
+    median = m[2]|> formatC(digits=digits, format='f') |> post.fn(),
+    ci = paste(min(m[3:4]) |> formatC(digits=digits, format='f') |> post.fn(), 
+          max(m[3:4]) |> formatC(digits=digits, format='f') |> post.fn(), sep=ci.sep))
+}
+
+spc.est = purrr::partial(est,
+                         transformation=\(x) 100*(1-x), ci.sep=' - ', digits=1,
+                         post.fn = \(x) paste0(x, '%'))
+sen.est = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1,
+                         post.fn = \(x) paste0(x, '%'))
+
+spc.est2 = purrr::partial(est,
+                         transformation=\(x)  100*(1-x), ci.sep=' - ', digits=1)
+sen.est2 = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1)
+
+sen = \(name, hiv=NULL, fn=sen.est, sep = ' ', str = '{median} ({ci})') {
+  name = paste0(name, '[2]')
+  out = glue::glue_data(fn(name, 
+                           tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary),
+                        str)
+  # out = do.call(sprintf, as.list(c('%s; %s (%s)', fn(name, 
+                                                # tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary))))
+  gsub('\\s\\(', paste0(sep, '('), out)
+}
+
+spc = \(name, hiv=NULL, fn=spc.est, sep = ' ', str = '{median} ({ci})' ) {
+  name = paste0(name, '[1]')
+  out = glue::glue_data(fn(name, 
+                           tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary),
+                        str)
+  # out = do.call(sprintf, as.list(c('%s; %s (%s)', fn(name,
+                                                # tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary))))
+  gsub('\\s\\(', paste0(sep, '('), out)
+}
+```
+
+<!-- Calculate post-test adjusted risk -->
+```{r post-test-fit, include=FALSE}
+post_test = list()
+post_test$dat <- readRDS(file.path(data_dir, '..', 'export', 'post_test_fraction.RDS'))
+post_test$get_sample <- function(name, hiv=FALSE){
+  n = switch(name, 
+             smear = 'a', xpert = 'b', smear_mgit = 'c', smear_xpert = 'd', all = 'e')
+  with(post_test, {
+    hiv.pop = dat$hiv == hiv
+    target.pop = dat[[n]]
+    # if (inv) target.pop = 1/(target.pop)
+    target.pop[!hiv.pop] = NA
+    target.pop
+    apply(target.pop,1,mean,na.rm=T)
+  })
+}
+
+post_test$get_est <- function(name, hiv=FALSE, inv=FALSE, str = ' {median} ({ci[[1]]} - {ci[[2]]})', digits=1){
+  est = post_test$get_sample(name, hiv)
+  f = if (inv) {\(x) 1/x} else I
+  
+  mean = mean(est, na.rm=TRUE) |> f() |> formatC(digits=digits, format='f')
+  median = median(est, na.rm=TRUE) |> f() |> formatC(digits=digits, format='f')
+  ci = quantile(est, c(.025, .975), na.rm=TRUE) |> f() |> sort() |> formatC(digits=digits, format='f')
+  glue::glue(str)
+}
+
+post_test_tbl = data.frame(
+    Scenario = letters[1:5],
+    Smear = c('-', '?', '-', '-', '-'),
+    MGIT = c('?', '?', '-', '?', '-'),
+    Xpert = c('?', '-', '?', '-', '-'),
+    HIV_neg = c(post_test$get_est("smear", digits=2),
+                post_test$get_est("xpert", digits=2), 
+                post_test$get_est("smear_mgit", digits=2), 
+                post_test$get_est("smear_xpert", digits=2),
+                # post_test$get_est("mgit_xpert"),
+                post_test$get_est("all", digits=2)
+                ),
+    HIV_pos = c(post_test$get_est("smear", hiv=TRUE, digits=2),
+                post_test$get_est("xpert", hiv=TRUE, digits=2), 
+                post_test$get_est("smear_mgit", hiv=TRUE, digits=2), 
+                post_test$get_est("smear_xpert", hiv=TRUE, digits=2), 
+                # post_test$get_est("mgit_xpert", hiv=TRUE),
+                post_test$get_est("all", hiv=TRUE, digits=2))
+  )
+
+post_test_tbl_inv = data.frame(
+    Scenario = letters[1:5],
+    Smear = c('-', '?', '-', '-',  '-'),
+    MGIT = c('?', '?', '-', '?', '-'),
+    Xpert = c('?', '-', '?', '-','-'),
+    HIV_neg = c(post_test$get_est("smear", inv = TRUE),
+                post_test$get_est("xpert", inv = TRUE), 
+                post_test$get_est("smear_mgit", inv = TRUE), 
+                post_test$get_est("smear_xpert", inv = TRUE),
+                # post_test$get_est("mgit_xpert", inv = TRUE),
+                post_test$get_est("all", inv = TRUE)
+                ),
+    HIV_pos = c(post_test$get_est("smear", hiv=TRUE, inv = TRUE),
+                post_test$get_est("xpert", hiv=TRUE, inv = TRUE), 
+                post_test$get_est("smear_mgit", hiv=TRUE, inv = TRUE), 
+                post_test$get_est("smear_xpert", hiv=TRUE, inv = TRUE), 
+                # post_test$get_est("mgit_xpert", hiv=TRUE, inv = TRUE),
+                post_test$get_est("all", hiv=TRUE, inv = TRUE))
+  )
+```
+

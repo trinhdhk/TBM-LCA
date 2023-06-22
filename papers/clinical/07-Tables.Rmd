@@ -5,7 +5,7 @@
 
 <!---BLOCK_LANDSCAPE_START--->
 
-```{r test-bl-tbl, echo=FALSE, tab.cap="Baseline characteristics of all study patients.", tab.id="test-bl-tbl"}
+```{r test-bl-tbl, echo=FALSE, tab.cap="Baseline characteristics of all study participants", tab.id="test-bl-tbl"}
 
 bl_tbl_data <- 
   data_dirty |>
@@ -61,7 +61,7 @@ bl_tbl <-
     hiv_stat          = 'HIV positive', 
     clin_illness_day  = 'Symptom duration (day)',
     clin_symptoms     = 'TB-suggested systemic symptoms',
-    clin_contact_tb   = 'Noticeable TB contact within the last 12 months',
+    clin_contact_tb   = 'Noticed TB contact within the last 12 months',
     clin_motor_palsy  = 'Focal neurological deficit',
     clin_nerve_palsy  = 'Cranial nerve palsy',
     clin_fever        = 'Fever',
@@ -72,18 +72,18 @@ bl_tbl <-
     # GCSM              = 'Glasgow Coma Scale-Motor',
     # GCSE              = 'Glasgow Coma Scale-Eyes',
     clin_gcs          = 'Glasgow Coma Score',
-    xray_pul_tb       = 'X-Ray Pulmonary TB (excluding Miliary TB)',
-    xray_miliary_tb   = 'X-Ray Miliary TB',
-    csf_lympho        = 'CSF Lymphocyte Count (cell/mm^3^)',
-    csf_wbc           = 'CSF WBC Count (cell/mm^3^)',
+    xray_pul_tb       = 'X-ray pulmonary TB (excluding miliary TB)',
+    xray_miliary_tb   = 'X-ray miliary TB',
+    csf_lympho        = 'CSF lymphocyte count (cell/mm^3^)',
+    csf_wbc           = 'CSF WCC (cell/mm^3^)',
     # csf_neutro        = 'CSF Neutrophil Count',
-    csf_eos           = 'CSF Eosinophil Count (cell/mm^3^)',
-    csf_rbc           = 'CSF Red blood cell Count (cell/mm^3^)',
-    csf_protein       = 'CSF Protein (g/l)',
-    csf_lactate       = 'CSF Lactate (mmol/l)',
-    csf_glucose       = 'CSF Glucose (mmol/l)',
-    bld_glucose       = 'Paired Blood Glucose (mmol/l)',
-    csf_crypto        = 'Cryptococcal Antigen/Indian Ink +',
+    csf_eos           = 'CSF eosinophil count (cell/mm^3^)',
+    csf_rbc           = 'CSF RBC Count (cell/mm^3^)',
+    csf_protein       = 'CSF protein (g/l)',
+    csf_lactate       = 'CSF lactate (mmol/l)',
+    csf_glucose       = 'CSF glucose (mmol/l)',
+    bld_glucose       = 'Paired blood glucose (mmol/l)',
+    csf_crypto        = 'Cryptococcal antigen/Indian ink +',
     csf_gram          = 'Positive CSF Gram stain'
   ) |>
   tbl_strata(
@@ -106,15 +106,16 @@ bl_tbl <-
 
 bl_tbl |> 
   modify_column_hide(c('n_2', 'n_3', 'n_4','stat_3_2', 'stat_3_3', 'stat_3_4')) |>
+  modify_header('n_1'='N = 659') |>
   as_flex_table() |>
   # flextable::set_caption('Baseline characteristics') |>
   flextable::width(width = .82) |>
   flextable::width(j = 1, width = 1.1) |>
-  flextable::width(j = c(2), width = .23) |>
+  flextable::width(j = c(2), width = 0.5) |>
   flextable::fontsize(size=10, part = 'header') |>
   ftExtra::colformat_md(1, part='body') |>
   flextable::add_footer_lines(values = c(
-    glue::glue('In the Any test stratum: positive at least one amongst ZN-Smear, MGIT, or Xpert is positive.\nZN-Smear, MGIT, and Xpert are the sub-populations where the respective microbacterial test was performed (N={nrow(bl_tbl_data |> filter(Test=="Any test" & Result != "Missing"))})'))
+    glue::glue('In the “Any test” stratum: positive at least one amongst ZN-Smear, MGIT, or Xpert is positive.\nZN-Smear, MGIT, and Xpert are the sub-populations where the respective microbacterial test was performed (N={nrow(bl_tbl_data |> filter(Test=="Any test" & Result != "Missing"))})'))
     ) |> 
   flextable::theme_vanilla()
 ```
@@ -125,57 +126,39 @@ bl_tbl |>
 
 \newpage
 
-```{r mv-posterior, tab.cap="Posterior estimates of test sensitivities and specificities, for overall population, and stratified by HIV", tab.id="mv-posterior"}
+```{r mv-posterior, tab.cap="Posterior estimates of test specificities and sensitivities to diagnose TBM, for overall population, and stratified by HIV infection. Test specificities are the same for all strata.", tab.id="mv-posterior"}
 # Use 
-pr_neg <- matrix(c(
-  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
-  # c('Test', rep(c('Estimates'),2)),
-  c('Smear',
-    spc("z_Smear", hiv=FALSE, fn=spc.est2, sep='\n'),
-    sen("z_Smear", hiv=FALSE, fn=sen.est2, sep='\n')),
+pr_spc <- matrix(c(
+  c('Test', '(All strata)'),
+  c('ZN-Smear',
+    spc("z_Smear", hiv=NULL, fn=spc.est2, sep='\n')),
   c('MGIT',
-    spc("z_Mgit", hiv=FALSE, fn=spc.est2, sep='\n'),
-    sen("z_Mgit", hiv=FALSE, fn=sen.est2, sep='\n')),
+    spc("z_Mgit", hiv=NULL, fn=spc.est2, sep='\n')),
   c('Xpert',
-    spc("z_Xpert", hiv=FALSE, fn=spc.est2, sep='\n'),
-    sen("z_Xpert", hiv=FALSE, fn=sen.est2, sep='\n'))
+    spc("z_Xpert", hiv=NULL, fn=spc.est2, sep='\n'))
+), byrow=T, nrow=4)
+pr_sen <- matrix(c(
+  c('Overall', 'HIV infected', 'HIV naive'),
+  sen("z_Smear", hiv=NULL, fn=sen.est2, sep='\n'),sen("z_Smear", hiv=TRUE, fn=sen.est2, sep='\n'),sen("z_Smear", hiv=FALSE, fn=sen.est2, sep='\n'),
+  sen("z_Mgit", hiv=NULL, fn=sen.est2, sep='\n'),sen("z_Mgit", hiv=TRUE, fn=sen.est2, sep='\n'),sen("z_Mgit", hiv=FALSE, fn=sen.est2, sep='\n'),
+  sen("z_Xpert", hiv=NULL, fn=sen.est2, sep='\n'),sen("z_Xpert", hiv=TRUE, fn=sen.est2, sep='\n'),sen("z_Xpert", hiv=FALSE, fn=sen.est2, sep='\n')
 ), byrow=T, nrow=4)
 
-pr_pos <- matrix(c(
-  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
-  c('Smear',
-    spc("z_Smear", hiv=TRUE, fn=spc.est2, sep='\n'),
-    sen("z_Smear", hiv=TRUE, fn=sen.est2, sep='\n')),
-  c('MGIT',
-    spc("z_Mgit", hiv=TRUE, fn=spc.est2, sep='\n'),
-    sen("z_Mgit", hiv=TRUE, fn=sen.est2, sep='\n')),
-  c('Xpert',
-    spc("z_Xpert", hiv=TRUE, fn=spc.est2, sep='\n'),
-    sen("z_Xpert", hiv=TRUE, fn=sen.est2, sep='\n'))
-), byrow=T, nrow=4)
 
-pr <- matrix(c(
-  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
-  c('Smear',
-    spc("z_Smear", hiv=NULL, fn=spc.est2, sep='\n'),
-    sen("z_Smear", hiv=NULL, fn=sen.est2, sep='\n')),
-  c('MGIT',
-    spc("z_Mgit", hiv=NULL, fn=spc.est2, sep='\n'),
-    sen("z_Mgit", hiv=NULL, fn=sen.est2, sep='\n')),
-  c('Xpert',
-    spc("z_Xpert", hiv=NULL, fn=spc.est2, sep='\n'),
-    sen("z_Xpert", hiv=NULL, fn=sen.est2, sep='\n'))
-), byrow=T, nrow=4)
-huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
+
+# huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
+huxtable::as_hux(cbind(pr_spc, pr_sen)) |>
   huxtable::as_flextable() |>
-  flextable::add_header_row(values=c("", rep("Overall",2), rep("HIV (-)",2), rep("HIV (+)",2))) |>
+  flextable::add_header_row(values=c("", "Specificity (%)", rep("Sensitivity (%)",3))) |>
   flextable::merge_h(i=1, part='header') |>
-  flextable::width(width = .8) |>
+  # flextable::merge_h(i=1, part='body') |>
+  flextable::width(width = 1.2) |>
   flextable::bold(i=1) |>
   flextable::theme_vanilla() |>
   flextable::align(i=1, align='center') |>
   flextable::align(i=1, align='center', part='header') |>
-  flextable::add_footer_row(top=F, values="Values are in the form Median (95% Credible interval)", colwidths = 7) -> restab
+  flextable::vline(j=1:2, border = officer::fp_border()) |> 
+  flextable::add_footer_row(top=F, values="Values are in the form Median (95% Credible interval)", colwidths = 5) -> restab
 # restab_raster = flextable::as_raster(restab |> flextable::width(width=1.2), zoom=1.2)
 restab
 ```
@@ -192,12 +175,12 @@ flextable::flextable(post_test_tbl) |>
   flextable::add_footer_lines(top=F, values=c(
     "Values are in the form Median (95% Credible interval)",
     "Assuming pre-test risk is 1, the values measure post-test risk in each scenario",
-    "In each scenario, ``-\" represents a negative test result and ``?\" represents an unknown (or unretrieved) test result"))
+    "In each scenario, “-” represents a negative test result and “?” represents an unknown (or unretrieved) test result"))
 ```
 
 \newpage
 
-```{r fit-post-test-change, fig.align='center', fig.cap='Changes in TBM risk over time in a hypothetical scenario when ZN Smear, Xpert, and MGIT culturing sequentially returned negative', fig.dim=c(10,5), dpi=600, message=FALSE, warning=FALSE, include=F, eval=F}
+```{r fit-post-test-change, fig.align='center', fig.cap='Change in probability of TBM after one or more negative confirmatory test results, relative to TBM probability when no test results are known', fig.dim=c(10,5), dpi=600, message=FALSE, warning=FALSE, include=F, eval=F}
 post_test$data = post_test$fit@frame |>
   filter(
     time %in% c("no_test", "smear_neg", "smear_xpert_neg", "all_neg")
@@ -217,7 +200,7 @@ ggplot(data=post_test$data, aes(x = time, y = value, color=hiv)) +
 
 \newpage
 
-```{r score-table, tab.cap="TBM risk score table for screening, derived from the simpilifed prevalence model. To simplify to calculation, the estimates were doubled before chosing the scores. The decision threshold was decided by the cutpoint in the total score that maximises Youden's Index. Continuous features were cut into bins so that each bin accounts for `01` incremental points.", tab.id = "score-table"}
+```{r score-table, tab.cap="TBM risk score table for screening, derived from the simplified prevalence model. To simplify to calculation, the estimates were doubled before choosing the scores. The decision threshold was decided by the cutpoint in the total score that maximises Youden’s Index. Continuous features were cut into bins so that each bin accounts for 1 incremental points.", tab.id = "score-table"}
 
 risk_score_tbl = data.frame(
   Criterion = c(
@@ -229,7 +212,7 @@ risk_score_tbl = data.frame(
     rep('GCS',4),
     'Pulmonary TB/X-ray',
     'Miliary TB/X-ray',
-    rep('Symptom duration\n(days)',6),
+    rep('Symptom duration\n (days)',6),
     'Headache',
     'Fever',
     'Neck stiffness',
@@ -285,6 +268,7 @@ flextable::flextable(risk_score_tbl) |>
   flextable::set_header_labels(Estimated = '50% CrI') |>
   ftExtra::colformat_md(j=c(1,2), md_extensions = "+hard_line_breaks") |>
   flextable::width(width=1.2) |>
+  flextable::width(j = 1, width=1.6) |>
   flextable::theme_vanilla()
 
 

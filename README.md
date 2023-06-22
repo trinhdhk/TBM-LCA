@@ -16,7 +16,7 @@ Prerequisites:
 
 -   R ( \>= 4.1)
 
--   Packages used: 
+-   Packages used: (**!IMPORTANT** rstan on CRAN would *NOT* work. Please download the experimental version on GitHub or official version on Stan's own repository, cmdstanr is currently imperfectly supported due to its consuming a lot of memory and disk space when the project was being done; this is subject to be fixed in a future project of mine - if I decided to use cmdstanr)
 
     ```
     abind_1.4-5             askpass_1.1             assertthat_0.2.1       

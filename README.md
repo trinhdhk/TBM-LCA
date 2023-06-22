@@ -4,6 +4,10 @@
 
 This is the repository for the TBM-LCA project. The main objectives of the project are to (1) provide a statistically calibrated diagnostic model for TBM patients and (2) provide an estimation of current myco-bacterial tests and guide for future ones.
 
+## Shiny app
+
+An Shiny app is available at: ![](trinhdong.shinyapps.io/TBMLCA). Source code for the Shiny app is available at: ![](github.com/trinhdhk/Shiny.TBMLCA) (to be updated).
+
 ## Reproduction
 
 The main program to fit the LCA model is `sample.R`. The program providing the simplication is `simplify.R`.

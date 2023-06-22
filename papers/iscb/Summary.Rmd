@@ -1,0 +1,407 @@
+---
+title: 'In search of a novel scoring system for Tuberculous Meningitis Diagnosis: a Bayesian Latent Class Model'
+site: bookdown::bookdown_site
+bibliography: includes/references.bib
+csl: includes/clinical-infectious-diseases.csl
+output:
+  bookdown::pdf_book:
+    base_format: rmarkdown::latex_document
+    toc: no
+    pandoc_args:
+      - '--lua-filter=includes/scholarly-metadata.lua'
+      - '--lua-filter=includes/author-info-blocks.lua'
+      - '--standalone'
+    latex_engine: xelatex
+    highlight: pygments
+    includes:
+      in_header: includes/header.tex
+---
+
+```{r setup, include=FALSE}
+options(tinytex.engine_args = '-shell-escape')
+knitr::opts_chunk$set(echo = FALSE, dpi=300) #, dev = 'png'
+flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='fixed')
+```
+
+```{r library, include=FALSE}
+library(gtsummary)
+library(dplyr)
+library(data.table)
+library(magrittr, include.only = '%$%')
+library(ggplot2)
+library(patchwork)
+library(officedown)
+
+# All the misc functions go here.
+my_fn <- new.env()
+
+## Add labels accross a tbl
+my_fn$add_labels <- \(.data, ...){
+  cols <- list(...)
+  for (i in seq_along(cols))
+    attr(.data[[names(cols)[i]]], 'label') <- cols[[i]]
+  .data
+}
+
+## Register a knit engine for stan code highlight
+my_fn$stan_knitr_engine <- \(options){
+  out <- c('\\begin{Shaded}','\\begin{minted}{stan}', options$code, '\\end{minted}','\\end{Shaded}')
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(stan_code = my_fn$stan_knitr_engine)
+
+## Gist to number equations
+## https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
+my_fn$is_docx_output <- function (fmt = knitr:::pandoc_to()) {
+  if (length(fmt) == 0) {
+    return(FALSE)
+  } else {
+    return(fmt == "docx")
+  }
+}
+
+my_fn$numberEq.docx <- function (eq, lab, envir = docx.eqcounter) {
+  assign(x = "counter", value = get(x = "counter", envir = envir)+1, envir = envir)
+  assign(x = gsub("eq:", "", lab), value = get(x = "counter", envir = envir), envir = envir)
+  lab <- get("counter", envir = envir)
+  return(c('$$', eq, '\\;\\;\\;\\;(', lab, ')', '$$'))
+}
+my_fn$labEq.docx <- function (lab, envir = docx.eqcounter) {
+  return(paste0('(', get(x = gsub("eq:", "", lab), envir = envir), ')'))
+}
+
+docx.eqcounter <- new.env()
+docx.eqcounter$counter <- 0
+  
+# Register a knit engine for formula
+my_fn$aligned_formula_knit <- \(options){
+  out <- my_fn$numberEq.docx(options$code, lab = options$fml.lab)
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
+
+# Register diagrammer graphviz
+my_fn$diagrammer_engine <- \(options){
+  grviz_opt = formals(DiagrammeR::grViz)
+  grviz_opt = grviz_opt[names(grviz_opt) != 'diagram']
+  new_opt = options[names(options) %in% names(grviz_opt)]
+  # not_grviz_opt = opt[!names(opt %in% c('diagram', name(grviz_opt)))]
+  grviz_opt = modifyList(grviz_opt, new_opt)
+  dia_call <- purrr::partial(DiagrammeR::grViz, diagram = options$code)
+  
+  out <- do.call(dia_call, grviz_opt) 
+  options$code <- out$x$diagram
+  options$engine <- 'dot'
+  options$echo <- FALSE
+  knitr::knit_engines$get('dot')(options)
+  # options$results <- 'asis'
+  # knitr::engine_output(options, options$code, '')
+}
+knitr::knit_engines$set(diagrammer = my_fn$diagrammer_engine)
+
+# Global theming for ggplots
+my_fn$plot_theme <-
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+na = \(x) sum(is.na(x))
+```
+
+```{r data, include=FALSE}
+data_dir <- '../../data/cleaned/'
+load(file.path(data_dir, 'data_input.Rdata'))
+data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
+setDT(data_dirty)
+load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'))
+# m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3.RDS'))
+m3 = new.env()
+load(file.path(data_dir, '..', 'export', 'metrics', 'm3_calibROC.Rdata'), envir = m3)
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
+m3$rocs = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_roc_iscb.RDS'))
+m3$calib = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_calib_updated.RDS'))
+```
+\doublespacing
+# Introduction
+
+*Tuberculous meningitis (TBM)* is the most lethal form of tuberculosis. The diagnosis of TBM is notoriously challenging, as there is no gold standard. Bacterial detection methods include Ziehl-Neelsen staining (Smear), GeneXpert MTB/RIF (Xpert), and culturing in Mycobacteria Growth Indicator Tube (MGIT) for cerebrospinal fluid (CSF) samples. All are delayed and lack sensitivity [@nhu2013; @chen2020]. In 2010, a uniform case definition was agreed amongst experts as a standardised approach in TBM research [@marais2010]. As it did not provide a formal quantification, the scoring system was intended neither as a diagnostic tool nor as a gold standard. Given the disease is almost always fatal if not treated properly, physicians usually incorporate their experience to decide. Under- and over-treatment are thereby inevitable.
+
+*Latent class analysis (LCA)* is a modelling technique that incorporates hidden traits and assigns a probability to have such traits based on a combination of observed dichotomous indicators, called manifest variables. <!--It has been used in social science, psychology [@Weller2020], and medical studies [@schumacher2016; @stout2018; @lahuerta-marin2018; @adams2019]. --> The main objective of LCA is to group patients into clusters based on patterns of manifest variables. Some auxiliary variables could be added to guide the task. However, our aim is instead, based on those auxiliary variables, to build a calibrated scoring system that estimates the latent probability of TBM.
+
+# Methods
+
+We used data from an observational study of brain infection conducted on the neuro-infection ward of the Hospital for Tropical Diseases (HTD), Ho Chi Minh City, Vietnam. Our model consists of two components. The basic component links three manifest variables ($Y^{(t)}$ with *t* = {Smear, MGIT, Xpert}) to the latent TBM status $C$. <!--All manifest variables are different methods to detect bacteria, via direct visualisation (Smear), DNA detection (Xpert), and culture growth (MGIT).-->Local dependence between manifest variables was taken into account by adding a standardised representation of bacillary burden (*B*), modelled as a combination of an unmeasured random effect *r* [@qu1996] and covariates (*V*). The second component of our model is a logistic regression prevalence model that relates TBM status to the set of risk factors (*X*). We considered risk factors for TBM based on the uniform case definition [@marais2010]. At discharge or death, a final diagnosis was recorded, denoted as "hospital diagnosis". With the exception of the false positive rate ($\zeta^{(t)}_0$) for which we chose a strong prior so that all tests have specificity larger than 95% [@nhu2013], we used weakly informative priors for the parameters. All covariates were transformed to a similar scale [@gelman2008].
+
+$$
+\rho^{(t)} 
+=\sum_{c=0}^1Pr(C=c) * Pr(Y^{(t)}=1|C=c)
+= \theta * logit^{-1}(\zeta_1^{(t)} + \beta^{(t)}B) + (1 - \theta) * logit^{-1}(\zeta_0^{(t)})
+$$
+$$
+\begin{aligned}
+Y^{(t)} &\sim Bernoulli(\rho^{(t)})
+&\zeta^{(t)}_1 &\sim Logistic(0,0.35) 
+&\theta &= X^T \alpha &B &= V^T \gamma + r \\
+r &\sim \mathcal{N}(0, 1) 
+&{\alpha,\ \beta^{(t)}} &\sim t_5(0, s);\ \gamma \sim t_5(0, \frac{s}{\overline{\beta^{(t)}}})
+&s &\sim \mathcal{N}(0, 1.5)
+\end{aligned}
+$$
+*where $\theta$ is the probability of a TBM diagnosis ($Pr(C=1)$), $\rho^{(t)}$ is the probability of a positive test (t = {Smear, MGIT, Xpert}) whose observed values are $Y^{(t)}$, $\alpha$, $\beta$, $\gamma$ are the vectors of coefficients for $X$, $B$, and $V$. To avoid sign switching, $\beta$ is positive-constrained. <!--$\zeta^{(t)}_0$ and $\zeta^{(t)}_1$ are the based probability of positive test $t$ given $B = 0$, for non-TBM and TBM class, respectively.-->*
+
+<!-- The basic component in the latent class model (LCM) links TBM status to the three above confirmatory tests <!-- Additional variables that explain the test results can be included in this model. --><!--All tests are different methods to detect bacteria, via direct visualisation (ZN Smear), DNA detection (Xpert), and culture growth (MGIT). Local dependence between manifest variables was corrected adding bacillary burden, modelled as a random effect [@qu1996], and in turn depends on HIV status and the CSF values. The second component is a logistic regression prevalence model that relates TBM status to the set of risk factors. We considered risk factors for TBM in general based on the uniform definition [@marais2010]. <!-- wadded three covariates that indicate alternative diagnoses: CSF eosinophil count for eosinophilic meningitis, CSF lateral flow antigen/Indian Ink tests for cryptococcal meningitis, and CSF Gram stain for non-acid-fast bacterial meningitis; and CSF red cell count whose high numbers being a marker of traumatic lumbar puncture [@greenberg2008; @nigrovic2011; @mehl1986]. If TBM status were known for every individual, the prevalence model would be all we need to come up with a diagnostic score. We need the LCM to provide additional information on unknown TBM status. The LCM provides individual estimates of the probability to have TBM based on the test results and the additional characteristics. These individual probabilities provide the data to compute sensitivity and specificity of each of the three test procedures and to relate TBM status to the diagnostic variables in the prevalence model. --> 
+
+
+<!--The basic design of our model is shown in Figure \@ref(fig:skeleton-model).-->
+<!-- difference in approach compared to the schumacher2016 -->
+<!-- formula of LCA -->
+<!-- replace table 1 w. missing tabel -->
+<!-- focus on the prev model -->
+We considered four different models. In model 1, similar to M1 in a previous study [@schumacher2016], tests are assumed locally independent ($B = 0$). Model 2 added bacillary burden but its impact on test results are constrained to be equal ($\beta^{Smear} = \beta^{MGIT} = \beta^{Xpert}$), which was lifted in model 3. In model 4, a second random effect was added separately from $B$ as the fluctuation in the sample quality. Model 5 was similar to model M4 in [@schumacher2016], as all covariates $V$ was directly linked to $\rho^{(t)}$. We addressed local independence satisfaction by looking at residual pairwise correlation between manifest variables [@qu1996]. _Expected log point-wise predictive density (elpd)_ [@vehtari2016] was used as a metric to select the best model. We evaluated diagnostic performance by: calibration [@VanCalster2019], receiver operating characteristic (ROC) curves and area under the curve (AUC) for the three tests. We explored how the prevalence model corresponds to hospital diagnosis by using it as a pseudo-gold standard. 5 repeated 20-fold cross validations were used in all validations. Missing covariates were imputed on a case-by-case basis (Table \@ref(tab:missing-handling)). In missing-at-random cases, potentially correlated variables were grouped and modelled by a multivariate normal distribution [@stan-doc; @albert1993]. We fitted the model in 4 MCMC chains with 10000 iterations. All analyses were performed on statistical package \textsf{R}, version 4.1.1 [@rcoreteam] and \textsf{Stan}, version 2.27 [@stan-doc].<!-- All code were published on [project's github repo](github.com/TBM-LCA).-->
+
+# Results
+
+```{r est_fun, include=FALSE}
+est = \(name, tab, digits=2, transformation = I, ci.sep = ', ', post.fn = I, pre.fn=I) {
+  m <- c(pre.fn(tab[name, 'mean']), pre.fn(tab[name, '2.5%']), pre.fn(tab[name, '97.5%'])) |> transformation() 
+  c(m[1]|> formatC(digits=digits, format='f') |> post.fn(),
+    # m[2]|> formatC(digits=digits, format='f') |> post.fn(), 
+    paste(min(m[2:3]) |> formatC(digits=digits, format='f') |> post.fn(), 
+          max(m[2:3]) |> formatC(digits=digits, format='f') |> post.fn(), sep=ci.sep))
+}
+
+spc.est = purrr::partial(est,
+                         transformation=\(x) 100*(1-x), ci.sep=' - ', digits=1,
+                         post.fn = \(x) paste0(x, '%'))
+sen.est = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1,
+                         post.fn = \(x) paste0(x, '%'))
+
+spc.est2 = purrr::partial(est,
+                         transformation=\(x)  100*(1-x), ci.sep=', ', digits=1)
+sen.est2 = purrr::partial(est, transformation=\(x) 100*x, ci.sep=', ', digits=1)
+
+sen = \(name, hiv=NULL, fn=sen.est, sep = ' ') {
+  name = paste0(name, '[2]')
+  out = do.call(sprintf, as.list(c('%s (%s)', fn(name, 
+                                                tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary))))
+  gsub('\\s\\(', paste0(sep, '('), out)
+}
+
+spc = \(name, hiv=NULL, fn=spc.est, sep = ' ') {
+  name = paste0(name, '[1]')
+  out = do.call(sprintf, as.list(c('%s (%s)', fn(name,
+                                                tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary))))
+  gsub('\\s\\(', paste0(sep, '('), out)
+}
+```
+
+Estimated coefficients are shown in Figure \@ref(fig:fig-est). In brief, patients with HIV, Miliary TB, long symptom duration, and past TBM contacts were in the higher risk group of TBM. Of the laboratory variables, increased TBM risk was associated with low CSF glucose, low paired blood glucose, and high CSF lymphocyte. Amongst the factors that impact bacillary burden, HIV and higher CSF protein were both associated with higher burden. Although higher CSF lymphocyte relates to TBM, it was associated with a reduction in the bacillary burden, which reduced detection rates. 
+
+Except for model 1, all residual pairwise correlations all fluctuated around 0. Model 3 was selected with highest $elpd = -347.1$ $(SE = 24.9)$. Model 1 and 5 had lowest elpd with $-379.7$ $(SE = 26.5)$ and $-354.7$ $(SE = 25.7)$. Selected model was well-calibrated (intercept = 0.05 - 0.17 and slope = 1.1 - 1.3) and have high discriminative values against confirmatory tests, with AUC 92.4% - 96.4% (Figure \@ref(fig:model-metrics)). Against hospital diagnosis, we also saw good calibration (intercept = -0.01, slope= 0.97) and high AUC (93.9%). <!--elpd of model 1, 2, and 5 were lower at $-379.7$ $(SE = 26.5)$, $-353.3$ $(SE = 25.4)$, and $-354.7$ $(SE = 25.7)$. Model 4 has a slightly lower elpd compared with model 3: $-347.2$ $(SE=25.0)$.-->
+
+# Discussions
+
+<!-- leave this out 
+We utilised LCM to re-evaluate performance of the confirmatory assays Ziehl--Neelsen Smear, MGIT and GeneXpert.<!-- Ziehl--Neelsen Smear had highest sensitivity of `r sen('z_Xpert', hiv=NULL)`, confirming prior studies [@nhu2013; @donovan2020].--><!-- GeneXpert performed poorly in HIV negative individuals. All test performed much better in the HIV positive group, due to higher bacillary burden. With sensitivity and specificity both higher than 90%, either of the three tests can be used as a reliable standard for HIV-infected individuals. Our estimated sensitivities were lower than in a recent study [@donovan2020]. However, since that study focused on TBM-suspected patients, HIV positive cases were more prevalent. Stratified by HIV status, values were more comparable. -->
+We developed a statistical TBM diagnosis model using LCA, taken into account the local dependence between tests. Different to a previous study [@schumacher2016], all impacting factors (*V*) were wrapped inside the bacillary burden (*B*); this design both gained us some degrees of freedom and provided an insight of the mechanistic pathway from disease status to test results. Peaked elpd at model 3 indicated that our parametrisation were robust and any higher flexibility did not add any value. The calibration against confirmatory tests showed a drop at the upper tails for MGIT and Xpert; this was due to the scarcity of patients with extreme probability of positive tests. The calibration against hospital diagnosis showed in overall good trend, suggesting a good correspondence between our model and clinical practice.
+
+Our study has some limitations. For missing data we had to make assumptions that can underpower the results. We also had to depend on another hypothesised variable (bacillary burden) that cannot be validated until further research. The last issue is the wide credible intervals of some posterior estimates due to rare events. However, with the Bayesian setup, this can be updated with future data.  <!-- Another disadvantage is the population from which our sample originated. Our study cohort was patients with suspected neurological infection, which implies some level of arbitrariness. Estimated TBM prevalence overestimated that in the general population. In most studies, they are the cohort of interest. However, when doing population surveillance, this must be taken into account.-->
+
+# Conclusion
+
+Our model provides a well-calibrated and highly predictive diagnostic model for TBM diagnosis. Until a true gold standard being developed, our model can be an effective diagnostic tool and baseline severity estimator in both clinical practice and research for TBM patients.
+
+# References
+
+::: {#refs}
+:::
+
+\newpage
+
+```{r skeleton-model, eval=FALSE, fig.align="center", fig.cap="Basic model design: TBM risk factors predict individual's TBM status. Unknown TBM status is linked with test results. The probability of a positive test depends on bacillary burden. Test positive probabilities are for demonstration only and do not correspond to the real one.", fig.id='skeleton-model', fig.show='hold', include=FALSE, out.height='10cm', out.width="100%"}
+
+fig_svg <- cowplot::ggdraw() + 
+  cowplot::draw_image(magick::image_read_svg("includes/classicLCA.svg", width=212*5, height=159*5))
+plot(fig_svg)
+```
+\singlespacing
+```{r missing-handling, tab.cap="Rationales and measures to handle missing values", tab.id="missing-handling", out.width='100%'}
+na = \(x) sum(is.na(x))
+pop = data_dirty[,(wrong_name%in%F) &
+    !((Volume<3)%in%TRUE) &
+    !(csf_mgit_contaminated %in% T) ]
+data_dirty$csf_neutro <- data_dirty$NEUPER * data_dirty$csf_wbc / 100
+data_dirty |>
+  dplyr::filter(pop) %$%
+  # dplyr::filter(!(wrong_name %in% TRUE) & !(csf_mgit_contaminated %in% TRUE)) %$%
+  tibble::tribble(
+     ~ 'Variable'           , ~ 'N\n missing'     ,  ~ 'Expected Reason of Missingness'                      , ~ 'Mechanism',        ~ 'Handling method' ,
+    'ZN Smear'              , na(csf_smear)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'MGIT'                  , na(csf_mgit)        , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'Xpert'                 , na(csf_xpert)       , 'Not suspected TBM'                                      , 'MNAR'               , 'Set = 0'          , 
+    'HIV Status'            , na(hiv_stat)        , 'Not suspected HIV'                                     , 'MNAR'           , 'Set = 0'       ,
+    'TB-suggested symptoms' , na(clin_symptoms)   , 'Unmeasured / Unnoticed / Unconscious'                   , 'MAR'       , 'Imputation'       ,
+    'Focal neuro-deficit'   , na(clin_motor_palsy), 'Unconscious / Pre-existed'                              , 'MAR'           , 'Imputation'       ,
+    'Glasgow Coma Score'    , na(clin_gcs)        , 'Ventilated (GCSV) / Input error'       , 'MAR'                , 'Imputation'       ,
+    'Illness days'          , na(clin_illness_day), 'Patients forget / Unconscious'                          , 'MAR'                , 'Imputation'       ,
+    # 'Blood Lymphocyte'      , na(LYMP)            , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    # 'Blood Neutrophil'      , na(NEUTRO)          , 'Unmeasured (premature death)'                           , 'MAR'                , 'Imputation'       ,
+    'Blood Glucose'         , na(BLDGLU)          , 'Most likely input error / Unmeasured (premature death)', 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF glucose'           , na(csf_glucose)     , 'Unmeasured (premature death)'                           , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lymphocyte count'  , na(csf_lympho)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
+    'CSF WBC count'  , na(csf_wbc)      , 'Very low or zero / Input error / Unmeasured (premature death)', 'MNAR/MAR'           , 'Manually set/Imputation',
+    'CSF protein'           , na(csf_protein)     , 'Data input error / Unmeasured (premature death)'       , 'MAR/MCAR'           , 'Imputation'       ,
+    'CSF lactate'           , na(csf_lactate)     , 'Unmeasured (premature death)'                              , 'MAR/MCAR'           , 'Imputation' ,    
+    # 'CSF RBC count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0',
+    # 'CSF eosinophil count'         , na(csf_rbc)         , 'Zero cell count'                                        , 'MNAR'               , 'Set = 0',
+    'Cryptococcal test'         , sum(!(CRYTO=='NOT DONE'&INDIAINK=='NOT DONE')%in%F) , 'Not suspected cryptococcal meningitis'                                        , 'MNAR'               , 'Set = 0',
+    'Gram stain'         , sum(is.na(GRAM) | GRAM=='NOT DONE') , 'Not suspected bacterial meningitis'                                        , 'MNAR'               , 'Set = 0'
+  ) |>
+  flextable::flextable() |>
+  # flextable::set_caption('Rationale and method of missing values handling') |>
+  flextable::width(width = 1.25) |>
+  # flextable::footnote(i = c(11,12),j = 1,inline=FALSE,
+  #                     value=flextable::as_paragraph(rep('CSF Lymphocyte count was calculated by CSF WBC count * Lymphocyte% / 100; if very low, then one Lymphocyte%, our Neutrophils% had value, the other were left missing, implying a 0 or left over')),
+  #                     part = 'body') |>
+  flextable::add_footer_row(values = 'MAR: missing at random; MNAR: missing not at random; MCAR: missing completely at random', colwidths = 5) |>
+  flextable::merge_v(part='footer') |>
+  flextable::theme_vanilla() |>
+  flextable::bold(bold=FALSE, part='footer') |>
+  flextable::italic(italic=TRUE, part='footer')
+```
+
+```{r mv-posterior, tab.cap="Posterior estimates of test sensitivities and specificities, for overall population, and stratified by HIV", tab.id="mv-posterior", include=FALSE}
+# Use %
+pr_neg <- matrix(c(
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
+  # c('Test', rep(c('Estimates'),2)),
+  c('Smear',
+    spc("z_Smear", hiv=FALSE, fn=spc.est2, sep='\n'),
+    sen("z_Smear", hiv=FALSE, fn=sen.est2, sep='\n')),
+  c('MGIT',
+    spc("z_Mgit", hiv=FALSE, fn=spc.est2, sep='\n'),
+    sen("z_Mgit", hiv=FALSE, fn=sen.est2, sep='\n')),
+  c('Xpert',
+    spc("z_Xpert", hiv=FALSE, fn=spc.est2, sep='\n'),
+    sen("z_Xpert", hiv=FALSE, fn=sen.est2, sep='\n'))
+), byrow=T, nrow=4)
+
+pr_pos <- matrix(c(
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
+  c('Smear',
+    spc("z_Smear", hiv=TRUE, fn=spc.est2, sep='\n'),
+    sen("z_Smear", hiv=TRUE, fn=sen.est2, sep='\n')),
+  c('MGIT',
+    spc("z_Mgit", hiv=TRUE, fn=spc.est2, sep='\n'),
+    sen("z_Mgit", hiv=TRUE, fn=sen.est2, sep='\n')),
+  c('Xpert',
+    spc("z_Xpert", hiv=TRUE, fn=spc.est2, sep='\n'),
+    sen("z_Xpert", hiv=TRUE, fn=sen.est2, sep='\n'))
+), byrow=T, nrow=4)
+
+pr <- matrix(c(
+  c('Test', rep(c('Specificity (%)'),1), rep(c('Sensitivity (%)'),1)),
+  c('Smear',
+    spc("z_Smear", hiv=NULL, fn=spc.est2, sep='\n'),
+    sen("z_Smear", hiv=NULL, fn=sen.est2, sep='\n')),
+  c('MGIT',
+    spc("z_Mgit", hiv=NULL, fn=spc.est2, sep='\n'),
+    sen("z_Mgit", hiv=NULL, fn=sen.est2, sep='\n')),
+  c('Xpert',
+    spc("z_Xpert", hiv=NULL, fn=spc.est2, sep='\n'),
+    sen("z_Xpert", hiv=NULL, fn=sen.est2, sep='\n'))
+), byrow=T, nrow=4)
+
+huxtable::as_hux(cbind(pr, pr_neg[,-1], pr_pos[,-1])) |>
+  huxtable::as_flextable() |>
+  flextable::add_header_row(values=c("", rep("Overall",2), rep("HIV (-)",2), rep("HIV (+)",2))) |>
+  flextable::merge_h(i=1, part='header') |>
+  flextable::width(width = .8) |>
+  flextable::bold(i=1) |>
+  flextable::theme_vanilla() |>
+  flextable::align(i=1, align='center') |>
+  flextable::align(i=1, align='center', part='header') |>
+  flextable::add_footer_row(top=F, values="Values are in the form Mean (95% Credible interval)", colwidths = 7) -> restab
+# restab_raster = flextable::as_raster(restab |> flextable::width(width=1.2), zoom=1.2)
+restab
+```
+
+<!-- \newpage -->
+<!-- \blandscape -->
+
+```{r fig-est, out.width="100%", fig.dim=c(8, 10), fig.align="center", fig.cap="A: Estimates of TBM odd ratios in prevalence model for different covariates, excluding WBC count; B: Estimates of TBM odd ratio given number of CSF WBC count; C: Estimates of factors impacting individual's bacillary burden, given they have TBM. In A and C, dot, thick lines, and thin lines are posterior expected values, 50\\% and 95\\% credible intervals. In B: the blue line is expected odd, the inner ribbon and outer ribbon are 50\\% and 95\\% credible intervals.", fig.id="fig-est", warning=FALSE, message=FALSE}
+
+library(patchwork)
+
+# rotate xlab 45deg
+# log10(eos) > 0 wrong -> eos > 0
+# odd ratio
+# C: standardised bacillary burden #explain in text
+y_labs = m3$a_plot$scales$get_scales('y')$labels
+y_labs[3] = "*log<sub>10</sub>* (CSF RBC)"
+y_labs[4] = "*log<sub>10</sub>* (CSF Eosinophil)" 
+y_labs[5] = 'CSF Eosinophil > 0'
+y_labs[6] = "*log<sub>10</sub>* (CSF Lymphocyte)"
+
+y_labs2 = m3$b_plot$scales$get_scales('y')$labels
+y_labs2[1] = "*log<sub>10</sub>* (CSF WBC)"  
+y_labs2[2] = "*log<sub>10</sub>* (CSF Lymphocyte)"
+
+ab_plot = ((m3$a_plot |> td.misc::change_ylabs(rev(y_labs), top_down = TRUE)) + ggtitle("Prevalence model") + 
+             scale_x_continuous(
+               name="TBM odd ratio",
+               breaks = m3$a_plot$scales$get_scales('x')$breaks,
+               labels = m3$a_plot$scales$get_scales('x')$labels) + 
+             theme(axis.text.y = ggtext::element_markdown())) / 
+  (m3$wbc_plot + theme(axis.title.y=element_text(size=8, face='bold',vjust=-45, color=grey(.3))) +
+     scale_y_continuous(
+    name = 'TBM odd ratio',
+    breaks = log(10^c(-24,-20, -16,-12, -8,-4,-2, -1, 0)),
+    labels = c('1e-24','1e-20','1e-16','1e-12','1e-8', '1e-4', 0.01, .1, 1)
+  )) /
+  ((m3$b_plot |> td.misc::change_ylabs(rev(y_labs2), top_down = TRUE)) + 
+     ggtitle("Bacillary burden model") + 
+     theme(axis.text.y = ggtext::element_markdown()) + 
+     scale_x_continuous(name='Standardised bacillary burden')) /
+  # grid::rasterGrob(restab_raster) + 
+  patchwork::plot_layout(ncol=1, nrow=3, 
+                         heights = c(6,2,2)) + 
+  plot_annotation(tag_levels="A")
+
+#ggtitle("CSF WBC count") + theme(title = element_text(face='bold',size=6), title.po
+
+# plt = patchwork::wrap_plots(ab_plot, m3$plot.multggplotGrob(m3$rocs)) + plot_annotation(tag_levels="A")
+# plot(plt)
+ab_plot
+```
+
+```{r model-metrics, fig.align="center", fig.cap='Model performance. A: ROC and AUC against confirmatory test results; B: calibration against confimatory test results; C: ROC and AUC against hospital diagnosis; D: Calibration against hospital diagnosis. For calibration plots, “observed” probabilities are defined as values smoothed by a loess fit against observed binary events, in which the translucent ribbons represent the level of uncertainty of the smoothing. For ROC plots, AUC values are presented as “average (min - max over 5 repetitions of cross-validation)”. In all plots, grey lines are individual corresponding fitted curves from each 20-fold cross validation and coloured lines represent an average over them.' , fig.dim=c(9, 12), fig.show='hold', message=FALSE, warning=FALSE, out.width='80%', fig.id="model-metrics"}
+
+design <- "
+1111
+2222
+3333
+"
+#remove youden index
+#look for the scale of calib
+#remove 
+
+roc_y <- do.call(gridExtra::arrangeGrob, m3$rocs$Y)
+m3$calib$Y2[[3]] = m3$calib$Y2[[3]] + theme(axis.title.y = element_blank())
+(wrap_elements(roc_y) / wrap_elements(m3$calib$Y2)) /
+  (wrap_elements(m3$rocs$C) + wrap_elements(m3$calib$C)) + 
+  plot_layout(design = design, 
+              # widths=c(1,33,33,33),
+              heights=c(2,2,3)) +
+  plot_annotation(tag_levels = 'A')
+
+
+```
+
+<!-- \elandscape -->

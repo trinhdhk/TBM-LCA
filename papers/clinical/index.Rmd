@@ -1,0 +1,352 @@
+---
+title: 'A novel scoring system to diagnose Tuberculous meningitis using Bayesian Latent class analysis'
+author:
+  - Trinh Huu Khanh Dong:
+      email: trinhdhk@oucru.org
+      institute: [oucru, kcl]
+      correspondence: yes
+  - Joseph Donovan:
+      institute: [oucru, lshtm]
+  - Ngoc My Nghiem:
+      institute: [oucru, htd]
+  - Thu Dang Anh Do:
+      institute: [oucru]
+  - Nghia Dang Trung Ho:
+      institute: [oucru, htd, tys]
+  - Oanh Kieu Nguyet Pham:
+      institute: [htd]
+  - Phu Hoan Nguyen:
+      institute: [oucru, htd]
+  - Hang Thi Ty Vu:
+      institute: [oucru]
+  - Vinh-Chau Van Nguyen:
+      institute: [oucru, htd, doh]
+  - Thuong-Thuong Thuy Nguyen:
+      institute: [oucru, oxford]
+  - Le Van Tan:
+      institute: [oucru, oxford]
+  - Guy E. Thwaites:
+      institute: [oucru, oxford]
+  - Ronald B. Geskus:
+      institute: [oucru, oxford]
+institute:
+  - oucru: Oxford University Clinical Research Unit, Centre for Tropical Medicine, Ho Chi Minh City, Viet Nam 
+  - kcl: King's College London, London, United Kingdom
+  - lshtm: London School of Hygiene and Tropical Medicine, London, United Kingdom
+  - oxford: Centre for Tropical Medicine and Global Health, Nuffield Department of Medicine, University of Oxford, Oxford, United Kingdom 
+  - htd: the Hospital of Tropical Diseases, Ho Chi Minh City, Viet Nam
+  - tys: Pham Ngoc Thach University of Medicine, Ho Chi Minh City, Viet Nam
+  - doh: Ho Chi Minh City Department of Health, Ho Chi Minh City, Viet Nam
+site: bookdown::bookdown_site
+bibliography: includes/references.bib
+csl: includes/clinical-infectious-diseases.csl
+eqnPrefix: 
+  - "Formula"
+  - "Formulae"
+params:
+  dev: "cairo_pdf"
+---
+
+```{r setup, include=FALSE}
+options(tinytex.engine_args = '-shell-escape')
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, dpi=300, dev=params$dev) #, dev = 'png'
+flextable::set_flextable_defaults(fonts_ignore=TRUE, font.size=9, table.layout='fixed')
+```
+
+```{r library, include=FALSE}
+library(gtsummary)
+library(dplyr)
+library(data.table)
+library(magrittr, include.only = '%$%')
+library(ggplot2)
+library(patchwork)
+library(officedown)
+
+# All the misc functions go here.
+my_fn <- new.env()
+
+## Add labels accross a tbl
+my_fn$add_labels <- \(.data, ...){
+  cols <- list(...)
+  for (i in seq_along(cols))
+    attr(.data[[names(cols)[i]]], 'label') <- cols[[i]]
+  .data
+}
+
+## Register a knit engine for stan code highlight
+my_fn$stan_knitr_engine <- \(options){
+  out <- c('\\begin{Shaded}','\\begin{minted}{stan}', options$code, '\\end{minted}','\\end{Shaded}')
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(stan_code = my_fn$stan_knitr_engine)
+
+## Gist to number equations
+## https://gist.github.com/mcanouil/eb75057432ff77846f4273d8808e615a
+my_fn$is_docx_output <- function (fmt = knitr:::pandoc_to()) {
+  if (length(fmt) == 0) {
+    return(FALSE)
+  } else {
+    return(fmt == "docx")
+  }
+}
+
+my_fn$numberEq.docx <- function (eq, lab, envir = docx.eqcounter) {
+  assign(x = "counter", value = get(x = "counter", envir = envir)+1, envir = envir)
+  assign(x = gsub("eq:", "", lab), value = get(x = "counter", envir = envir), envir = envir)
+  lab <- get("counter", envir = envir)
+  return(c('$$', eq, '\\;\\;\\;\\;(', lab, ')', '$$'))
+}
+my_fn$labEq.docx <- function (lab, envir = docx.eqcounter) {
+  return(paste0('(', get(x = gsub("eq:", "", lab), envir = envir), ')'))
+}
+
+docx.eqcounter <- new.env()
+docx.eqcounter$counter <- 0
+  
+# Register a knit engine for formula
+my_fn$aligned_formula_knit <- \(options){
+  out <- my_fn$numberEq.docx(options$code, lab = options$fml.lab)
+  options$echo <- FALSE
+  options$results <- "asis"
+  knitr::engine_output(options, options$code, out)
+}
+knitr::knit_engines$set(aligned_formula = my_fn$aligned_formula_knit)
+
+# Register diagrammer graphviz
+my_fn$diagrammer_engine <- \(options){
+   # browser()
+  grviz_opt = formals(DiagrammeR::grViz)
+  grviz_opt = grviz_opt[names(grviz_opt) != 'diagram']
+  new_opt = options[names(options) %in% names(grviz_opt)]
+  # not_grviz_opt = opt[!names(opt %in% c('diagram', name(grviz_opt)))]
+  grviz_opt = modifyList(grviz_opt, new_opt)
+  dia_call <- purrr::partial(DiagrammeR::grViz, diagram = options$code)
+  grviz_opt$envir <- parent.frame(9)
+  
+  out <- do.call(dia_call, grviz_opt) 
+  options$code <- out$x$diagram
+  options$engine <- 'dot'
+  options$echo <- FALSE
+  
+  knitr::knit_engines$get('dot')(options)
+  # options$results <- 'asis'
+  # knitr::engine_output(options, options$code, '')
+}
+knitr::knit_engines$set(diagrammer = my_fn$diagrammer_engine)
+
+# Global theming for ggplots
+my_fn$plot_theme <-
+  theme(text = element_text('serif', size = 9), 
+        plot.tag = element_text('serif', size = 9),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+na = \(x) sum(is.na(x))
+```
+
+```{r data, include=FALSE}
+data_dir <- '../../data/cleaned/'
+load(file.path(data_dir, 'data_input.Rdata'))
+data_dirty <- readRDS(file.path(data_dir, 'data_dirty.RDS'))
+setDT(data_dirty)
+
+# Load model 3's fit and metrics
+load(file.path(data_dir, '..', 'export', 'm3_summary.Rdata'))
+m3 = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3_plot.RDS')) |> as.environment()
+m3$p = readRDS(file.path(data_dir, '..', 'export', 'metrics', 'm3p.RDS'))
+load(file.path(data_dir, '..', 'export', 'm3_plot.Rdata'), envir = m3)
+s_plots <- readRDS(file.path(data_dir, '..', 'export', 'a_plot_s.RDS'))
+```
+
+<!-- Code below are for results calculation -->
+
+```{r pop}
+data_dirty = data_dirty[USUBJID!='003-335'] #not-collected
+pop = data_dirty[,
+    (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE) &
+    !((diffday>=7)%in%TRUE) &
+    !(csf_mgit_contaminated %in% T) ]
+var = c()
+var[1] <- nrow(data_dirty)
+var[2] <- sum(is.na(data_dirty$wrong_name) | data_dirty$wrong_name, na.rm=TRUE)
+var[3] <- data_dirty[, sum(
+  (wrong_name%in%F) & 
+    ((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)))]
+var[4] <- with(data_dirty, sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    (is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
+var[5] <- with(data_dirty,sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    !(is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)), na.rm=T))
+var[6] <- with(data_dirty, sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    csf_mgit_contaminated, na.rm=TRUE))
+var[7] <- with(data_dirty,  sum(
+  (wrong_name%in%F) &
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+    !(csf_mgit_contaminated %in% T) &
+    (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+    ((csf_smear%in%T)|(csf_mgit%in%T)|(csf_xpert%in%T)), na.rm=TRUE))
+var[8] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      !(other_dis_dx_conf%in%T)&
+      !((DISDIA=='DIA1')%in%TRUE),
+    na.rm=TRUE))
+var[9] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE))  &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert)&
+      (other_dis_dx_conf%in%T),
+    na.rm=TRUE))
+var[10] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) & 
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      is.na(csf_smear)&is.na(csf_mgit)&is.na(csf_xpert) &
+      !(other_dis_dx_conf%in%T), 
+    na.rm=TRUE))
+var[11] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      (other_dis_dx_conf%in%T), 
+    na.rm=TRUE))
+var[12] <- with(data_dirty, sum(
+    !((Volume<3)%in%TRUE | ((diffday>=7) %in% TRUE)) &
+      (wrong_name%in%F) &
+      !(csf_mgit_contaminated %in% T) &
+      (!is.na(csf_smear)|!is.na(csf_mgit)|!is.na(csf_xpert))&
+      (!(csf_smear%in%T)&!(csf_mgit%in%T)&!(csf_xpert%in%T)) & 
+      # !(other_dis_dx_conf%in%T)&
+      ((DISDIA=='DIA1')%in%TRUE),
+    na.rm=TRUE))
+```
+
+```{r calc_na}
+suspected_hiv <- data_dirty |> filter(DISDIA %in% c('DIA1', 'DIA10', 'DIA12'))
+n_test_suspected_hiv <- nrow(suspected_hiv) - na(suspected_hiv$hiv_stat)
+```
+
+```{r est_fun, include=FALSE}
+est = \(name, tab, digits=2, transformation = I, ci.sep = ', ', post.fn = I, pre.fn=I) {
+  m <- c(pre.fn(tab[name, c('mean', '50%')]), pre.fn(tab[name, '2.5%']), pre.fn(tab[name, '97.5%'])) |>
+    unlist() |> 
+    transformation() 
+  list(mean = m[1]|> formatC(digits=digits, format='f') |> post.fn(), 
+    median = m[2]|> formatC(digits=digits, format='f') |> post.fn(),
+    ci = paste(min(m[3:4]) |> formatC(digits=digits, format='f') |> post.fn(), 
+          max(m[3:4]) |> formatC(digits=digits, format='f') |> post.fn(), sep=ci.sep))
+}
+
+spc.est = purrr::partial(est,
+                         transformation=\(x) 100*(1-x), ci.sep=' - ', digits=1,
+                         post.fn = \(x) paste0(x, '%'))
+sen.est = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1,
+                         post.fn = \(x) paste0(x, '%'))
+
+spc.est2 = purrr::partial(est,
+                         transformation=\(x)  100*(1-x), ci.sep=' - ', digits=1)
+sen.est2 = purrr::partial(est, transformation=\(x) 100*x, ci.sep=' - ', digits=1)
+
+sen = \(name, hiv=NULL, fn=sen.est, sep = ' ', str = '{median} ({ci})') {
+  name = paste0(name, '[2]')
+  out = glue::glue_data(fn(name, 
+                           tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary),
+                        str)
+  # out = do.call(sprintf, as.list(c('%s; %s (%s)', fn(name, 
+                                                # tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary))))
+  gsub('\\s\\(', paste0(sep, '('), out)
+}
+
+spc = \(name, hiv=NULL, fn=spc.est, sep = ' ', str = '{median} ({ci})' ) {
+  name = paste0(name, '[1]')
+  out = glue::glue_data(fn(name, 
+                           tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary),
+                        str)
+  # out = do.call(sprintf, as.list(c('%s; %s (%s)', fn(name,
+                                                # tab = if (!length(hiv)) p_summary else if(hiv) p_hiv_pos_summary else p_hiv_neg_summary))))
+  gsub('\\s\\(', paste0(sep, '('), out)
+}
+```
+
+<!-- Calculate post-test adjusted risk -->
+```{r post-test-fit, include=FALSE}
+post_test = list()
+post_test$dat <- readRDS(file.path(data_dir, '..', 'export', 'post_test_fraction.RDS'))
+post_test$get_sample <- function(name, hiv=FALSE){
+  n = switch(name, 
+             smear = 'a', xpert = 'b', smear_mgit = 'c', smear_xpert = 'd', all = 'e')
+  with(post_test, {
+    hiv.pop = dat$hiv == hiv
+    target.pop = dat[[n]]
+    # if (inv) target.pop = 1/(target.pop)
+    target.pop[!hiv.pop] = NA
+    target.pop
+    apply(target.pop,1,mean,na.rm=T)
+  })
+}
+
+post_test$get_est <- function(name, hiv=FALSE, inv=FALSE, str = ' {median} ({ci[[1]]} - {ci[[2]]})', digits=1){
+  est = post_test$get_sample(name, hiv)
+  f = if (inv) {\(x) 1/x} else I
+  
+  mean = mean(est, na.rm=TRUE) |> f() |> formatC(digits=digits, format='f')
+  median = median(est, na.rm=TRUE) |> f() |> formatC(digits=digits, format='f')
+  ci = quantile(est, c(.025, .975), na.rm=TRUE) |> f() |> sort() |> formatC(digits=digits, format='f')
+  glue::glue(str)
+}
+
+post_test_tbl = data.frame(
+    Scenario = letters[1:5],
+    Smear = c('-', '?', '-', '-', '-'),
+    MGIT = c('?', '?', '-', '?', '-'),
+    Xpert = c('?', '-', '?', '-', '-'),
+    HIV_neg = c(post_test$get_est("smear", digits=2),
+                post_test$get_est("xpert", digits=2), 
+                post_test$get_est("smear_mgit", digits=2), 
+                post_test$get_est("smear_xpert", digits=2),
+                # post_test$get_est("mgit_xpert"),
+                post_test$get_est("all", digits=2)
+                ),
+    HIV_pos = c(post_test$get_est("smear", hiv=TRUE, digits=2),
+                post_test$get_est("xpert", hiv=TRUE, digits=2), 
+                post_test$get_est("smear_mgit", hiv=TRUE, digits=2), 
+                post_test$get_est("smear_xpert", hiv=TRUE, digits=2), 
+                # post_test$get_est("mgit_xpert", hiv=TRUE),
+                post_test$get_est("all", hiv=TRUE, digits=2))
+  )
+
+post_test_tbl_inv = data.frame(
+    Scenario = letters[1:5],
+    Smear = c('-', '?', '-', '-',  '-'),
+    MGIT = c('?', '?', '-', '?', '-'),
+    Xpert = c('?', '-', '?', '-','-'),
+    HIV_neg = c(post_test$get_est("smear", inv = TRUE),
+                post_test$get_est("xpert", inv = TRUE), 
+                post_test$get_est("smear_mgit", inv = TRUE), 
+                post_test$get_est("smear_xpert", inv = TRUE),
+                # post_test$get_est("mgit_xpert", inv = TRUE),
+                post_test$get_est("all", inv = TRUE)
+                ),
+    HIV_pos = c(post_test$get_est("smear", hiv=TRUE, inv = TRUE),
+                post_test$get_est("xpert", hiv=TRUE, inv = TRUE), 
+                post_test$get_est("smear_mgit", hiv=TRUE, inv = TRUE), 
+                post_test$get_est("smear_xpert", hiv=TRUE, inv = TRUE), 
+                # post_test$get_est("mgit_xpert", hiv=TRUE, inv = TRUE),
+                post_test$get_est("all", hiv=TRUE, inv = TRUE))
+  )
+```
+

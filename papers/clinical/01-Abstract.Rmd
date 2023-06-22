@@ -1,0 +1,23 @@
+**Summary** Diagnosis of tuberculous meningitis is hampered by the lack of gold standard. We developed a diagnostic model using latent class analysis, combining confirmatory test results and risk factors. Models were accurate, well-calibrated, and can support both clinical practice and research. 
+
+**Keywords** tuberculosis, tuberculous meningitis, diagnosis, latent class model, gold standard
+
+# Abstract {-}
+
+## Background {-}
+
+Diagnosis of tuberculous meningitis (TBM) is hampered by the lack of a gold standard. Current microbiological tests lack sensitivity and clinical diagnostic approaches are subjective. We therefore built a diagnostic model that can be used before microbiological test results are known.
+
+## Methods {-}
+
+We included 659 individuals aged $\geq 16$ years with suspected brain infection from a prospective observational study conducted in Vietnam. We fitted a logistic regression diagnostic model for TBM status, with unknown values estimated via a latent class model on three mycobacterial tests: Ziehl-Neelsen smear, Mycobacterial culture, and GeneXpert. We additionally re-evaluated mycobacterial test performance, estimated individual mycobacillary burden, and quantified the reduction in TBM risk after confirmatory tests were negative. We also fitted a simplified model and developed a scoring table for early screening. All models were compared and validated internally.
+
+## Results {-}
+
+Participants with HIV, miliary TB, long symptom duration, and high cerebrospinal fluid (CSF) lymphocyte count were more likely to have TBM. HIV and higher CSF protein were associated with higher mycobacillary burden. In the simplified model, HIV infection, clinical symptoms with long duration, and clinical or radiological evidence of extra-neural TB were associated with TBM At the cutpoints based on Youden’s Index, the sensitivity and specificity in diagnosing TBM for our full and simplified models were 86.0% and 79.0%, and 88.0% and 75.0% respectively.
+
+## Conclusion {-}
+
+Our diagnostic model shows reliable performance and can be developed as a decision assistant for clinicians to detect patients at high risk of TBM.
+
+\newpage

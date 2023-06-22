@@ -25,11 +25,12 @@ int<lower=1,upper=N> n_neg_mp[sum2d(obs_mp) - size(n_pos_mp)];
 int<lower=1,upper=3> d_neg_mp[size(n_neg_mp)];
 
 // * CSF laboratory test Xc[3:8] --------------------------------------------
-int obs_csf = sum2d(obs_Xc[:,3:8]);
+int obs_csf = sum2d(obs_Xc[:,2:7]);
 
 // * GCS
 int obs_gcs_compartments = sum2d(obs_Tc[:,1:3]);
-int obs_gcs = sum(obs_Xc[:,9]);
+int obs_gcs = sum(obs_Xc[:,8]);
+// vector<lower=0, upper=1>[3] gcs_a0 = [0, 0, 0]';
 
 // * Blood test
 int obs_bld = sum2d(obs_Tc[:,4:5]);
@@ -87,3 +88,10 @@ N_miss_mp = size(n_miss_mp);
     }
   }
 }
+
+for (n in 1:N_all){
+  obs_test_all[n] = obs_Smear_all[n] + obs_Mgit_all[n] + obs_Xpert_all[n] > 0;
+  test_all[n] = Y_Smear_all[n] + Y_Mgit_all[n] + Y_Xpert_all[n] > 0;
+}
+obs_test = obs_test_all[which(keptin)];
+test = test_all[which(keptin)];

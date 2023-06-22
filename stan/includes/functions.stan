@@ -179,10 +179,12 @@ Trinh Dong, 2021
         }
       }
       
+      
       pat += a_pattern[:,i];
       log_probs += log(probs_pattern[:,i]);
     }
     
+    // print(obs_pattern);
     out[1] = log_probs;
     out[2] = pat;
     return(out);
@@ -197,7 +199,7 @@ Trinh Dong, 2021
     
     if (size(obs)!=N||size(z)!=N) reject("Size mismatched!");
     
-    for (n in 1:N) imp[n] = (obs[n] == 1) ? raw[n] : Phi(z[n]);
+    for (n in 1:N) imp[n] = (obs[n] == 1) ? raw[n] : inv_logit(z[n]);
     
     return imp;
   }

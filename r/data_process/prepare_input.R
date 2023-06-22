@@ -7,13 +7,14 @@ library(dplyr)
 data_19EI <- readRDS('data/cleaned/data_19EI_3.RDS')
 
 data_19EI[is.na(GCSV) & GLASCOW == 15, GCSV := 5]
-data_19EI[is.na(GCSE) & GLASCOW == 15, GCSV := 5]
-data_19EI[is.na(GCSM) & GLASCOW == 15, GCSV := 5]
+data_19EI[is.na(GCSE) & GLASCOW == 15, GCSE := 4]
+data_19EI[is.na(GCSM) & GLASCOW == 15, GCSM := 6]
 data_19EI[, clin_contact_tb := clin_contact_tb %in% TRUE]
-data_19EI <- data_19EI[!USUBJID %in% c("003-306","003-335", "003-102")] # death?
+# data_19EI <- data_19EI[!USUBJID %in% c("003-102")] # death?
+# data_19EI <- data_19EI[!USUBJID %in% c("003-306","003-335", "003-102")] # death?
 ## Add some known test result from other sources and remove unknown one (for now)
 
-data_19EI <- data_19EI[!USUBJID %in% c('003-407')]
+# data_19EI <- data_19EI[!USUBJID %in% c('003-407')] # no information on TBM group side
 # data_19EI[USUBJID == "003-038", c("csf_smear", "csf_mgit", "csf_xpert", "XpertLevel") := list(1,1,1, "very low")] 
 # data_19EI[USUBJID == "003-100", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,1,0)] 
 # data_19EI[USUBJID == "003-132", c("csf_smear", "csf_mgit", "csf_xpert") := list(0,0,0)] 
@@ -29,7 +30,8 @@ data_19EI <- data_19EI[!USUBJID %in% c('003-407')]
 #                  (XpertLevel == "medium") %in% TRUE)]
 
 # Load cleaned data export from TB Group
-test_data = readRDS('data/cleaned/full_tb_test_extracted.RDS')
+test_data = readRDS('data/cleaned/full_tb_test_extracted_good.RDS')
+# test_data = readRDS('data/cleaned/full_tb_test_extracted_good.RDS')
 setDT(test_data)
 #remove age=0 bc outlier, replace it with the one in the test data
 new_age = test_data[PatientCode==data_19EI[age==0, USUBJID],Age]
@@ -40,18 +42,29 @@ data_19EI[, age := ifelse(age==0, new_age, age)]
 data_19EI[,csf_rbc:=ifelse(is.na(REDCELL),0,REDCELL)]
 
 #join the test results & remove conataminated
-data_19EI = merge(
-  data_19EI |> dplyr::select(-csf_xpert, -csf_mgit, -csf_smear),
+data_19EI = dplyr::left_join(
+  data_19EI |> dplyr::select(-csf_xpert, -csf_mgit, -csf_smear, XpertLevel_EI=XpertLevel),
   test_data |> dplyr::select(USUBJID=PatientCode,
                              csf_smear=ZielNeelsen,
                              csf_mgit=MGITculture,
                              csf_xpert=GeneXpert,
                              csf_mgit_contaminated = Contaminated,
-                             Volume),
-  all=TRUE) |>
-  filter(is.na(csf_mgit_contaminated) | !csf_mgit_contaminated)
+                             Volume, diffday, wrong_name, GrowthUnit, TimeToPositive, XpertLevel),
+  by='USUBJID') |> filter(USUBJID != '003-335') #not really in the study
+
+#csf smear should not be missing if xpert or mgit is available. they were forgotten to input
+data_19EI[, csf_smear := ifelse(is.na(csf_smear)&(!is.na(csf_mgit)|!is.na(csf_xpert)), FALSE, csf_smear)]
+data_19EI[USUBJID == '003-357', age := 30]
 
 saveRDS(data_19EI, 'export/data_dirty.RDS')
+
+# filter out only those with uncontaminated CSF, Volume >= 3, diffday <= 7
+data_19EI = data_19EI |>
+  filter(is.na(csf_mgit_contaminated) | !csf_mgit_contaminated) |>
+  filter(is.na(Volume) | Volume >= 3) |>
+  filter(is.na(diffday) | diffday < 7) |>
+  filter(!wrong_name)
+  # filter(!USUBJID%in% c('003-102', '003-407'))  #death
 
 data_19EI[, `:=`(
   Volume    = fifelse(is.na(Volume), 6, Volume),
@@ -70,11 +83,11 @@ debloody = function(csf_cell, bld_cell, csf_rbc, bld_rbc){
 }
 data_19EI[, `:=`(
   csf_neutro = csf_wbc - csf_lympho - csf_eos)][, `:=`(
-  csf_wbc_corrected = debloody(csf_wbc, WHITE*1000, REDCELL, HEMO*1e6),
-  csf_lympho_corrected = debloody(csf_lympho, LYMP/100*WHITE*1000, REDCELL, HEMO*1e6),
-  csf_neutro_corrected = debloody(csf_neutro, NEUTRO/100*WHITE*1000, REDCELL, HEMO*1e6),
-  csf_eos_corrected = debloody(csf_eos, EOSI/100*WHITE*1000, REDCELL, HEMO*1e6),
-  csf_protein_corrected = csf_protein - 0.011 * REDCELL / 1000
+  csf_wbc_corrected = debloody(csf_wbc, WHITE*1000, csf_rbc, HEMO*1e6),
+  csf_lympho_corrected = debloody(csf_lympho, LYMP/100*WHITE*1000, csf_rbc, HEMO*1e6),
+  csf_neutro_corrected = debloody(csf_neutro, NEUTRO/100*WHITE*1000, csf_rbc, HEMO*1e6),
+  csf_eos_corrected = debloody(csf_eos, EOSI/100*WHITE*1000, csf_rbc, HEMO*1e6),
+  csf_protein_corrected = csf_protein - 0.011 * csf_rbc / 1000
 )]
 ################ Not used
 #impute gcsv using: https://pubmed.ncbi.nlm.nih.gov/32898843/
@@ -100,7 +113,6 @@ data_19EI[, `:=`(
 #                              c("GCSE", "GCSM", "GCSV", "WHITE", "LYMP", "NEUTRO", "EOSI", "PLATE") := NULL], imp_19EI) # "csf_wbc"
 ##################### End not used
 
-
 Xd <- data_19EI %$% cbind(
   hiv_stat,                                                                 #1
   clin_symptoms,                                                            #2
@@ -109,23 +121,29 @@ Xd <- data_19EI %$% cbind(
   clin_contact_tb,                                                          #5
   xray_pul_tb,                                                              #6
   xray_miliary_tb,                                                          #7
-  csf_ink | csf_crypto                                                      #8
+  csf_ink | csf_crypto ,                                                    #8
+  GRAM = csf_gram,                                                          #9
+  eos = csf_eos_corrected > 0                                               #10
 )
 
-Xc <- data_19EI %$% cbind(
-  age=scale(log2(age), scale=T),                                      #1    #9 
-  id=scale(log2(clin_illness_day),scale=T),                           #2    #10
-  glu=scale(log2(BLDGLU), scale=T),                                   #3    #11 
-  csfglu=scale(log2(1+csf_glucose), scale=T),                         #4    #12
-  csflym=scale(log10(csf_lympho_corrected+1), scale=T),                         #5    #13   
-  csfpro=scale(log2(csf_protein_corrected), scale=T),                           #6    #14   
-  csflac=scale(log2(csf_lactate), scale=T),                           #7    #15   
-  # csfneu=scale(log10(csf_neutro_corrected+1), scale=T),   #8.   #16
-  csfwbc=scale(log10(csf_wbc_corrected+1), scale=T),        #8    #16
-  gcs=(15-clin_gcs)/3,                                                    #9    #17
-  csfeos=scale(log10(csf_eos_corrected+1), scale=T),                            #10   #18
-  csfred=scale(log10(REDCELL+1), scale=T)                             #11   #19
+scale.nonzero = function(x, ...) {
+  x[x==0] = NA;
+  scale(x, ...)
+}
+Xc <- data_19EI %$% tibble(
+  id=scale(log2(clin_illness_day),scale=T),                          #1    #11
+  glu=scale(log2(BLDGLU), scale=T),                                  #2    #12 
+  csfglu=scale(log2(.1+csf_glucose), scale=T),                       #3    #13
+  csflym=scale(log10(csf_lympho_corrected+1), scale=T),              #4    #14   
+  csfpro=scale(log2(csf_protein_corrected), scale=T),                #5    #15   
+  csflac=scale(log2(csf_lactate), scale=T),                          #6    #16   
+  csfwbc=scale(log10(csf_wbc_corrected+1), scale=T),                 #7    #17
+  gcs=structure((15-clin_gcs - 3)/3, dim=c(nrow(data_19EI),1), `scaled:center`=3, `scaled:scale`=3),  #8    #18
+  csfeos=scale.nonzero(log10(csf_eos_corrected+1), scale=T),                 #9   #19
+  csfred=scale(log10(csf_rbc+1), scale=T)                            #10   #20
 )
+
+scale_Xc <- summarise(Xc, across(everything(), attributes)) |> as.list() 
 
 Td <- data_19EI %$% cbind(
   ISWEIGHT,                                                           #1
@@ -133,8 +151,15 @@ Td <- data_19EI %$% cbind(
   ISCOUGH,                                                            #3
   HEMIPLEGIA,                                                         #4
   PARAPLEGIA,                                                         #5
-  TETRAPLEGIA                                                         #6
+  TETRAPLEGIA,                                                        #6
+  suspectedHIV = DISDIA %in% c('DIA1', 'DIA10', 'DIA12', 'DIA3') | ISTBTREAT == 'C49488' | !is.na(TBTREATDATE),     #7
+  sex = sex                                                           #8
 )
+ 
+#Td[Td[,6]==1, 4:5] <- 1 #everyone has tetra must have semi and para
+#Td[Td[,4]==0&Td[,5]==0, 6] <- 0 #''
+Xd[,3] = apply(Td[,4:6],1, any)
+Xd[,2] = apply(Td[,1:3],1, any)
 
 
 Tc <- data_19EI %$% cbind(
@@ -168,5 +193,5 @@ Tc <- my.replace_na(Tc)
 D  <- my.replace_na(D, 6)
 
 # Prepare the input ----
-save(data_19EI, Xc, Xd, Td, Tc, obs_Xc, obs_Xd, obs_Td, obs_Tc, D,
+save(data_19EI, Xc, Xd, Td, Tc, obs_Xc, obs_Xd, obs_Td, obs_Tc, D, scale_Xc,
      file='data/cleaned/data_input.Rdata')

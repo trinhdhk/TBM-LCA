@@ -28,6 +28,7 @@ papers/clinical/*.png
 .DS_Store
 desktop.files.json
 papers/clinical/desktop.files.json
+
 papers/clinical/includes/classicLCA.vectornator/UndoHistory.json
 papers/clinical/includes/classicLCA.vectornator/Artboard0.json
 papers/clinical/includes/classicLCA.vectornator/Document.json
@@ -40,3 +41,6 @@ papers/clinical/LCApaper.aux
 *.aux
 papers/clinical/Output/LCA_paper.tex
 *.aux
+
+r/data_process
+

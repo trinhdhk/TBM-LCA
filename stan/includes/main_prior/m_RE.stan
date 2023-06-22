@@ -8,7 +8,7 @@ if (penalty_family == 0){
 }
 if (penalty_family == 1){
   b_RE_raw  ~ double_exponential(0, 1);
-  b_HIV ~ double_exponential(0, 2);
+  b_HIV_raw ~ double_exponential(0, 2);
   // b_raw ~ double_exponential(0, 1);
 }
 if (penalty_family == 2){

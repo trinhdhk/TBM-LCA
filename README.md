@@ -6,7 +6,7 @@ This is the repository for the TBM-LCA project. The main objectives of the proje
 
 ## Shiny app
 
-An Shiny app is available at: ![](trinhdong.shinyapps.io/TBMLCA). Source code for the Shiny app is available at: ![](github.com/trinhdhk/Shiny.TBMLCA) (to be updated).
+An Shiny app is available at: ![https://trinhdong.shinyapps.io/TBMLCA](https://trinhdong.shinyapps.io/TBMLCA). Source code for the Shiny app is available at: ![github.com/trinhdhk/Shiny.TBMLCA](github.com/trinhdhk/Shiny.TBMLCA) (to be updated).
 
 ## Reproduction
 

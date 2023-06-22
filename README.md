@@ -111,7 +111,7 @@ Run the program:
     
 To seek help use flag `--help`.
 
-&copy; Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2022##TO-DO
+&copy; Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2020-2023
 
 ## TO-DO
 

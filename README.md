@@ -111,4 +111,14 @@ Run the program:
     
 To seek help use flag `--help`.
 
-&copy; Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2022
+&copy; Trinh Huu-Khanh Dong \@ Biostatistics Group - Oxford University Clinical Research Unit - Viet Nam 2022##TO-DO
+
+## TO-DO
+
+To-do To-do To-do To-do To-do To-do To-do do do do do do...
+
+1. Create a simulation code and simulated data
+2. Remove more unused code
+3. ..
+4. ..
+N. Make documentation
